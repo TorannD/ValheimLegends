@@ -1,0 +1,10 @@
+C:\Users\Gladius\OneDrive\Modding\Valheim\ValheimLegends\ValheimLegends\bin\Debug\ValheimLegends.dll
+C:\Users\Gladius\OneDrive\Modding\Valheim\ValheimLegends\ValheimLegends\bin\Debug\ValheimLegends.pdb
+C:\Users\Gladius\OneDrive\Modding\Valheim\ValheimLegends\ValheimLegends\bin\Debug\0Harmony.dll
+C:\Users\Gladius\OneDrive\Modding\Valheim\ValheimLegends\ValheimLegends\bin\Debug\0Harmony.xml
+C:\Users\Gladius\OneDrive\Modding\Valheim\ValheimLegends\ValheimLegends\obj\Debug\ValheimLegends.csproj.CoreCompileInputs.cache
+C:\Users\Gladius\OneDrive\Modding\Valheim\ValheimLegends\ValheimLegends\obj\Debug\ValheimLegends.dll
+C:\Users\Gladius\OneDrive\Modding\Valheim\ValheimLegends\ValheimLegends\obj\Debug\ValheimLegends.pdb
+E:\Programs\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimLegends.dll
+E:\Programs\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimLegends.pdb
+C:\Users\Gladius\OneDrive\Modding\Valheim\ValheimLegends\ValheimLegends\obj\Debug\ValheimLegends.csprojAssemblyReference.cache
