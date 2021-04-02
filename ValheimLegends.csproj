@@ -107,8 +107,13 @@
       <HintPath>E:\Programs\Steam\steamapps\common\Valheim\valheim_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\..\..\..\unstripped_corlib\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SE_Slow.cs" />
     <Compile Include="VL_SkillData.cs" />
     <Compile Include="SE_Ability3_CD.cs" />
     <Compile Include="SE_Ability2_CD.cs" />

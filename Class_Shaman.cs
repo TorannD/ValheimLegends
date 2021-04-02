@@ -21,7 +21,7 @@ namespace ValheimLegends
         {
             System.Random rnd = new System.Random();
             Vector3 pVec = default(Vector3);
-            if (Input.GetKeyDown(ValheimLegends.Ability3_Hotkey.Value.ToLower()))
+            if (VL_Utility.Ability3_Input_Down)
             {
                 //player.Message(MessageHud.MessageType.Center, "Spirit Bomb"); //deals moderate spirit damage in PBAoE and applies spirit dot
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability3_CD"))
@@ -78,7 +78,7 @@ namespace ValheimLegends
                     player.Message(MessageHud.MessageType.TopLeft, "Ability not ready");
                 }
             }
-            else if(Input.GetKeyDown(ValheimLegends.Ability2_Hotkey.Value.ToLower()))
+            else if(VL_Utility.Ability2_Input_Down)
             {                
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability2_CD"))
                 {
@@ -131,7 +131,7 @@ namespace ValheimLegends
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("sfx_wraith_death"), player.transform.position, Quaternion.identity);
 
                         //Skill gain
-                        player.UseStamina(VL_Utility.GetShellSkillGain(player));
+                        player.RaiseSkill(ValheimLegends.AbjurationSkill, VL_Utility.GetShellSkillGain(player));
                     }
                     else
                     {
@@ -143,7 +143,7 @@ namespace ValheimLegends
                     player.Message(MessageHud.MessageType.TopLeft, "Ability not ready");
                 }
             }
-            else if (Input.GetKeyDown(ValheimLegends.Ability1_Hotkey.Value.ToLower()))
+            else if (VL_Utility.Ability1_Input_Down)
             {
                 //add movement speed, stamina regeneration
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability1_CD"))
@@ -177,7 +177,7 @@ namespace ValheimLegends
                         //Apply effects
                         GameObject effectApplied = ZNetScene.instance.GetPrefab("fx_GP_Activation");
                         List<Player> allPlayers = new List<Player>();
-                        Player.GetPlayersInRange(player.transform.position, 20f, allPlayers);
+                        Player.GetPlayersInRange(player.transform.position, 30f, allPlayers);
                         SE_Enrage se_enrage = (SE_Enrage)ScriptableObject.CreateInstance(typeof(SE_Enrage));
                         se_enrage.m_ttl = 30f + (.3f * sLevel);
                         se_enrage.staminaModifier = 5f + (.1f * sLevel);
@@ -200,7 +200,7 @@ namespace ValheimLegends
                         }
 
                         //Skill gain
-                        player.UseStamina(VL_Utility.GetEnrageSkillGain(player));
+                        player.RaiseSkill(ValheimLegends.AlterationSkill, VL_Utility.GetEnrageSkillGain(player));
                     }
                     else
                     {

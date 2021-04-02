@@ -52,7 +52,7 @@ namespace ValheimLegends
             {
                 m_timer = m_interval;
                 HitData hitData = new HitData();
-                hitData.m_damage.m_spirit = Mathf.Clamp(.05f * m_character.GetMaxHealth(), 1f, 10f);
+                hitData.m_damage.m_spirit = Mathf.Clamp(.05f * m_character.GetMaxHealth(), 1f, 15f);
                 hitData.m_point = m_character.GetEyePoint();
                 m_character.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);
                 UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_deathsquito_hit"), m_character.GetCenterPoint(), Quaternion.identity);

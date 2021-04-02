@@ -23,7 +23,7 @@ namespace ValheimLegends
         {
             System.Random rnd = new System.Random();
             Vector3 pVec = default(Vector3);
-            if (Input.GetKeyDown(ValheimLegends.Ability3_Hotkey.Value.ToLower()))
+            if (VL_Utility.Ability3_Input_Down)
             {
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability3_CD"))
                 {
@@ -44,11 +44,12 @@ namespace ValheimLegends
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_crit"), player.GetCenterPoint(), Quaternion.identity);
 
                         //Lingering effects
-                        StatusEffect se_powershot = (SE_PowerShot)ScriptableObject.CreateInstance(typeof(SE_PowerShot));
-                        se_powershot.m_ttl = SE_PowerShot.m_baseTTL + Mathf.RoundToInt(.04f * player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AlterationSkillDef).m_level);
+                        SE_PowerShot se_powershot = (SE_PowerShot)ScriptableObject.CreateInstance(typeof(SE_PowerShot));
+                        se_powershot.m_ttl = SE_PowerShot.m_baseTTL + Mathf.RoundToInt(.05f * player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AlterationSkillDef).m_level);
+                        se_powershot.hitCount = Mathf.RoundToInt(3f + .05f * player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AlterationSkillDef).m_level);
 
                         //Apply effects
-                        if(player.GetSEMan().HaveStatusEffect("SE_VL_PowerShot"))
+                        if (player.GetSEMan().HaveStatusEffect("SE_VL_PowerShot"))
                         {
                             StatusEffect se_pw_rem = player.GetSEMan().GetStatusEffect("SE_VL_PowerShot");
                             player.GetSEMan().RemoveStatusEffect(se_pw_rem);
@@ -68,7 +69,7 @@ namespace ValheimLegends
                     player.Message(MessageHud.MessageType.TopLeft, "Ability not ready");
                 }
             }
-            else if(Input.GetKeyDown(ValheimLegends.Ability2_Hotkey.Value.ToLower()))
+            else if(VL_Utility.Ability2_Input_Down)
             {
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability2_CD"))
                 {
@@ -104,12 +105,12 @@ namespace ValheimLegends
                             ch.m_faction = Character.Faction.Players;
                             ch.SetTamed(true);
                             float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.ConjurationSkillDef).m_level;
-                            ch.SetMaxHealth(50 + (5 + sLevel));
+                            ch.SetMaxHealth(25 + (7 + sLevel));
                             ch.transform.localScale = (.5f + (.01f * sLevel)) * Vector3.one;
                             ch.m_swimSpeed *= 2f;
                             SE_Companion se_companion = (SE_Companion)ScriptableObject.CreateInstance(typeof(SE_Companion));
                             se_companion.m_ttl = SE_Companion.m_baseTTL;
-                            se_companion.damageModifier = .1f + (.01f * sLevel);
+                            se_companion.damageModifier = .05f + (.01f * sLevel);
                             se_companion.healthRegen = .5f + (.05f * sLevel);
                             se_companion.speedModifier = 1.2f;
                             se_companion.summoner = player;
@@ -142,7 +143,7 @@ namespace ValheimLegends
                     player.Message(MessageHud.MessageType.TopLeft, "Ability not ready");
                 }
             }
-            else if (Input.GetKeyDown(ValheimLegends.Ability1_Hotkey.Value.ToLower()))
+            else if (VL_Utility.Ability1_Input_Down)
             {
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability1_CD"))
                 {
@@ -173,6 +174,22 @@ namespace ValheimLegends
 
                         //Apply effects
                         player.GetSEMan().AddStatusEffect(se_shadowstalk);
+
+                        List<Character> allCharacters = new List<Character>();
+                        allCharacters.Clear();
+                        Character.GetCharactersInRange(player.GetCenterPoint(), 500f, allCharacters);
+                        foreach (Character ch in allCharacters)
+                        {
+                            if (ch.GetBaseAI() != null && ch.GetBaseAI() is MonsterAI && ch.GetBaseAI().IsEnemey(player))
+                            {
+                                MonsterAI ai = ch.GetBaseAI() as MonsterAI;
+                                if(ai.GetTargetCreature() == player)
+                                {
+                                    Traverse.Create(root: ai).Field("m_alerted").SetValue(false);
+                                    Traverse.Create(root: ai).Field("m_targetCreature").SetValue(null);
+                                }
+                            }
+                        }
 
 
                         //Skill gain

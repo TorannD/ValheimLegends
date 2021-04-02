@@ -13,7 +13,10 @@ namespace ValheimLegends
 {
     public class Class_Berserker
     {
-        private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock");        
+        //private static int Script_Layermask = LayerMask.GetMask("static_solid", "piece_nonsolid", "terrain", "vehicle", "piece");
+        //private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock");
+        private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "character_trigger", "viewblock", "Water", "WaterVolume", "character", "item", "character_noenv");
+        private static int Player_Layermask = LayerMask.GetMask("character");
 
         private static GameObject GO_CastFX;
 
@@ -25,12 +28,13 @@ namespace ValheimLegends
             float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
             float sDamageMultiplier = .8f + (sLevel * .005f);
 
-            RaycastHit hitInfo = default(RaycastHit);
-            Vector3 vector = player.GetLookDir();
-            vector.y = 0f;
-            Vector3 hitVec = default(Vector3);
-            player.transform.rotation = Quaternion.LookRotation(vector);
-            vector = player.transform.forward;
+            //RaycastHit hitInfo = default(RaycastHit);
+            Vector3 lookVec = player.GetLookDir();
+            lookVec.y = 0f;
+            player.transform.rotation = Quaternion.LookRotation(lookVec);
+
+            Vector3 hitVec = default(Vector3);            
+            Vector3 fwdVec = player.transform.forward;
             Vector3 moveVec= player.transform.position;
             Vector3 yVec = player.transform.position;
             yVec.y += 0.1f;
@@ -38,29 +42,31 @@ namespace ValheimLegends
             int i = 0;
             for (; i <= 10; i++)
             {
+                RaycastHit hitInfo = default(RaycastHit);
                 bool flag = false;
                 for (int j = 0; j <= 10; j++)
                 {
-                    Vector3 _v = Vector3.MoveTowards(player.transform.position, player.transform.position + vector * 100f, (float)((float)i + (float)j * 0.1f));
+                    Vector3 _v = Vector3.MoveTowards(player.transform.position, player.transform.position + fwdVec * 100f, (float)((float)i + (float)j * 0.1f));
                     _v.y = yVec.y;
                     if (_v.y < ZoneSystem.instance.GetGroundHeight(_v))
                     {
                         yVec.y = ZoneSystem.instance.GetGroundHeight(_v) + 1f;
                         _v.y = yVec.y;
                     }
-                    flag = Physics.SphereCast(_v, 0.05f, vector, out hitInfo, float.PositiveInfinity, ~Script_Layermask);
+                    flag = Physics.SphereCast(_v, 0.05f, fwdVec, out hitInfo, float.PositiveInfinity, ~Script_Layermask);
                     if (flag && (bool)hitInfo.collider)
                     {
                         hitVec = hitInfo.point;
                         break;
                     }
                 }
-                moveVec= Vector3.MoveTowards(player.transform.position, player.transform.position + vector * 100f, (float)i);
+                moveVec= Vector3.MoveTowards(player.transform.position, player.transform.position + fwdVec * 100f, (float)i);
                 moveVec.y = ((ZoneSystem.instance.GetSolidHeight(moveVec) - ZoneSystem.instance.GetGroundHeight(moveVec) <= 1f) ? ZoneSystem.instance.GetSolidHeight(moveVec) : ZoneSystem.instance.GetGroundHeight(moveVec));
                 //GameObject go_dasheffects = ZNetScene.instance.GetPrefab("vfx_stonegolem_attack_hit");
                 //go_dasheffects.transform.localScale = Vector3.one * .5f;
-                if (flag && Vector3.Distance(new Vector3(moveVec.x, yVec.y, moveVec.z), hitVec) <= 1.5f)
+                if (flag && Vector3.Distance(new Vector3(moveVec.x, yVec.y, moveVec.z), hitVec) <= 1.5f)// && !flag2)
                 {
+                    //ZLog.Log("breaking out due to <= 1.5f: " + Vector3.Distance(new Vector3(moveVec.x, yVec.y, moveVec.z), hitVec));
                     yVec = Vector3.MoveTowards(hitVec, yVec, 1f);
                     //UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_stonegolem_attack_hit"), moveVec, Quaternion.identity);
                     //UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_barley_destroyed"), moveVec, Quaternion.identity);
@@ -93,14 +99,14 @@ namespace ValheimLegends
             }
             player.transform.position = yVec;
             altitude = 0f;
-            player.transform.rotation = Quaternion.LookRotation(vector);
+            player.transform.rotation = Quaternion.LookRotation(fwdVec);
         }
 
         public static void Process_Input(Player player, ref float altitude)
         {
             System.Random rnd = new System.Random();
             Vector3 pVec = default(Vector3);
-            if (Input.GetKeyDown(ValheimLegends.Ability3_Hotkey.Value.ToLower()))
+            if (VL_Utility.Ability3_Input_Down)
             {
                 //dash forward and hit enemies along the way
                 //player.Message(MessageHud.MessageType.Center, "Dash");
@@ -139,7 +145,7 @@ namespace ValheimLegends
                     player.Message(MessageHud.MessageType.TopLeft, "Ability not ready");
                 }
             }
-            else if(Input.GetKeyDown(ValheimLegends.Ability2_Hotkey.Value.ToLower()))
+            else if(VL_Utility.Ability2_Input_Down)
             {
                 //enters unique enraged state (take periodic damage, no delay to stamina regen, absorb life on hit, bonus damage, increased move speed)
                 //player.Message(MessageHud.MessageType.Center, "Berserk Rage");
@@ -166,8 +172,8 @@ namespace ValheimLegends
                         float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AlterationSkillDef).m_level;
                         SE_Berserk se_berserk = (SE_Berserk)ScriptableObject.CreateInstance(typeof(SE_Berserk));
                         se_berserk.m_ttl = SE_Berserk.m_baseTTL;
-                        se_berserk.speedModifier = 1.2f + (.004f * sLevel);
-                        se_berserk.damageModifier = 1.2f + (.003f * sLevel);
+                        se_berserk.speedModifier = 1.2f + (.006f * sLevel);
+                        se_berserk.damageModifier = 1.2f + (.006f * sLevel);
                         se_berserk.healthAbsorbPercent = .2f + (.002f * sLevel);
 
                         //Apply effects
@@ -186,7 +192,7 @@ namespace ValheimLegends
                     player.Message(MessageHud.MessageType.TopLeft, "Ability not ready");
                 }
             }
-            else if (Input.GetKeyDown(ValheimLegends.Ability1_Hotkey.Value.ToLower()))
+            else if (VL_Utility.Ability1_Input_Down)
             {
                 //next attack is a garunteed crit
                 //player.Message(MessageHud.MessageType.Center, "Execute");

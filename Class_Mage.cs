@@ -35,7 +35,7 @@ namespace ValheimLegends
         public static void Process_Input(Player player, float altitude)
         {
             System.Random rnd = new System.Random();
-            if (Input.GetKeyDown(ValheimLegends.Ability3_Hotkey.Value.ToLower()) && !meteorCharging)
+            if (VL_Utility.Ability3_Input_Down && !meteorCharging)
             {
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability3_CD"))
                 {
@@ -82,7 +82,7 @@ namespace ValheimLegends
                     player.Message(MessageHud.MessageType.TopLeft, "Ability not ready");
                 }
             }
-            else if (Input.GetKey(ValheimLegends.Ability3_Hotkey.Value.ToLower()) && meteorCharging && player.GetStamina() > 1 && Mathf.Max(0f, altitude - player.transform.position.y) <= .5f)
+            else if (VL_Utility.Ability3_Input_Pressed && meteorCharging && player.GetStamina() > 1 && Mathf.Max(0f, altitude - player.transform.position.y) <= 1f)
             {
                 meteorChargeAmount++;                
                 player.UseStamina(VL_Utility.GetMeteorCostPerUpdate);
@@ -100,7 +100,7 @@ namespace ValheimLegends
                     meteorSkillGain += .2f;
                 }
             }
-            else if(((Input.GetKeyUp(ValheimLegends.Ability3_Hotkey.Value.ToLower()) || player.GetStamina() <= 1) && meteorCharging) || Mathf.Max(0f, altitude - player.transform.position.y) > .5f)
+            else if((VL_Utility.Ability3_Input_Up || player.GetStamina() <= 1 || Mathf.Max(0f, altitude - player.transform.position.y) > 1f) && meteorCharging)
             { 
                 //player.Message(MessageHud.MessageType.Center, "Meteor - activate");               
                 
@@ -132,7 +132,7 @@ namespace ValheimLegends
                     hitData.m_damage.m_blunt = UnityEngine.Random.Range(15 + (.25f * sLevel), 30 + (.5f * sLevel)) * ValheimLegends.abilityDamageMultiplier.Value;
                     hitData.m_pushForce = 10f;
                     Vector3 a = Vector3.MoveTowards(GO_Meteor.transform.position, target, 1f);
-                    P_Meteor.Setup(null, (a - GO_Meteor.transform.position) * UnityEngine.Random.Range(45f, 55f), -1f, hitData, null);
+                    P_Meteor.Setup(null, (a - GO_Meteor.transform.position) * UnityEngine.Random.Range(58f, 63f), -1f, hitData, null);
                     GO_CastFX = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_guardstone_permitted_removed"), player.transform.position + player.transform.right * UnityEngine.Random.Range(-1f, 1f) + player.transform.up * UnityEngine.Random.Range(0, 1.5f), Quaternion.identity);
                 }
 
@@ -142,6 +142,7 @@ namespace ValheimLegends
                 GO_Meteor = null;
                 //Skill gain
                 player.RaiseSkill(ValheimLegends.EvocationSkill, meteorSkillGain);
+                meteorSkillGain = 0f;
                 ValheimLegends.isChanneling = false;
                 //GO_CastFX.transform.position = GO_CastFX.transform.position + FireCastFx.transform.up * 1.5f;
                 //if ((bool)FireCastFx && FireCastFx.activeSelf)
@@ -150,7 +151,7 @@ namespace ValheimLegends
                 //}
                 //FireCastFx = null;
             }
-            else if(Input.GetKeyDown(ValheimLegends.Ability2_Hotkey.Value.ToLower()))
+            else if(VL_Utility.Ability2_Input_Down)
             {
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability2_CD"))
                 {
@@ -176,11 +177,15 @@ namespace ValheimLegends
                         //Lingering effects
 
                         //Apply effects
+                        if(player.GetSEMan().HaveStatusEffect("Burning"))
+                        {
+                            player.GetSEMan().RemoveStatusEffect("Burning");
+                        }
 
                         List<Character> allCharacters = Character.GetAllCharacters();                        
                         foreach (Character ch in allCharacters)
                         {
-                            if (BaseAI.IsEnemy(player, ch) && ((ch.transform.position - player.transform.position).magnitude <= (8f + (.05f * sLevel))))
+                            if (BaseAI.IsEnemy(player, ch) && ((ch.transform.position - player.transform.position).magnitude <= (10f + (.1f * sLevel))))
                             {
                                 Vector3 direction = (ch.transform.position - player.transform.position);
                                 HitData hitData = new HitData();
@@ -189,6 +194,8 @@ namespace ValheimLegends
                                 hitData.m_point = ch.GetEyePoint();
                                 hitData.m_dir = (player.transform.position - ch.transform.position);
                                 ch.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);
+                                SE_Slow se_frost = (SE_Slow)ScriptableObject.CreateInstance(typeof(SE_Slow));
+                                ch.GetSEMan().AddStatusEffect(se_frost.name, true);
                             }
                         }
 
@@ -206,7 +213,7 @@ namespace ValheimLegends
                 }
 
             }
-            else if (Input.GetKeyDown(ValheimLegends.Ability1_Hotkey.Value.ToLower()))
+            else if (VL_Utility.Ability1_Input_Down)
             {
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability1_CD"))
                 {
@@ -227,8 +234,7 @@ namespace ValheimLegends
 
                         //Effects, animations, and sounds
                         ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("gpower");
-                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetSpeed(2f);
-                        ValheimLegends.isChanneling = true;
+                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetSpeed(3f);
                         //player.StartEmote("point");
                         GO_CastFX = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_GP_Stone"), player.transform.position, Quaternion.identity);
 
@@ -236,9 +242,9 @@ namespace ValheimLegends
 
                         //Apply effects
 
-                        Vector3 vector = player.transform.position + player.transform.up * 1.25f + player.GetLookDir() * 1f;
+                        Vector3 vector = player.transform.position + player.transform.up * 1.25f + player.GetLookDir() * 2f;
                         GameObject prefab = ZNetScene.instance.GetPrefab("Imp_fireball_projectile");
-                        GO_Fireball = UnityEngine.Object.Instantiate(prefab, new Vector3(vector.x, vector.y + 2.5f, vector.z), Quaternion.identity);
+                        GO_Fireball = UnityEngine.Object.Instantiate(prefab, new Vector3(vector.x, vector.y + 2f, vector.z), Quaternion.identity);
                         P_Fireball = GO_Fireball.GetComponent<Projectile>();
                         P_Fireball.name = "Fireball";
                         P_Fireball.m_respawnItemOnHit = false;

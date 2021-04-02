@@ -25,7 +25,7 @@ namespace ValheimLegends
             System.Random rnd = new System.Random();
             Vector3 pVec = default(Vector3);
             
-            if (Input.GetKeyDown(ValheimLegends.Ability3_Hotkey.Value.ToLower()))
+            if (VL_Utility.Ability3_Input_Down)
             {
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability3_CD"))
                 {
@@ -70,7 +70,7 @@ namespace ValheimLegends
                     player.Message(MessageHud.MessageType.TopLeft, "Ability not ready");
                 }
             }
-            else if(Input.GetKeyDown(ValheimLegends.Ability2_Hotkey.Value.ToLower()))
+            else if(VL_Utility.Ability2_Input_Down)
             {
                 //player.Message(MessageHud.MessageType.Center, "Stagger");
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability2_CD"))
@@ -116,7 +116,7 @@ namespace ValheimLegends
                     player.Message(MessageHud.MessageType.TopLeft, "Ability not ready");
                 }
             }
-            else if (Input.GetKeyDown(ValheimLegends.Ability1_Hotkey.Value.ToLower()))
+            else if (VL_Utility.Ability1_Input_Down)
             {
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability1_CD"))
                 {                    
@@ -161,7 +161,7 @@ namespace ValheimLegends
             }
         }
 
-        public static void Impact_Effect(Player player)
+        public static void Impact_Effect(Player player, float altitude)
         {
             List<Character> allCharacters = Character.GetAllCharacters();
             //player.Message(MessageHud.MessageType.Center, "valkyrie impact");
@@ -169,11 +169,11 @@ namespace ValheimLegends
             foreach (Character ch in allCharacters)
             {
                 float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
-                if (BaseAI.IsEnemy(player, ch) && (ch.transform.position - player.transform.position).magnitude <= (6f + (.05f * sLevel)))
+                if (BaseAI.IsEnemy(player, ch) && (ch.transform.position - player.transform.position).magnitude <= (8f + (.05f * sLevel)))
                 {
                     Vector3 direction = (ch.transform.position - player.transform.position);
                     HitData hitData = new HitData();
-                    hitData.m_damage.m_blunt = 5 + 2 * UnityEngine.Random.Range(sLevel, 2.5f * sLevel) * ValheimLegends.abilityDamageMultiplier.Value;
+                    hitData.m_damage.m_blunt = 5 + (3f * altitude) + 2f * UnityEngine.Random.Range(sLevel, 3f * sLevel) * ValheimLegends.abilityDamageMultiplier.Value;
                     hitData.m_pushForce = 20f * ValheimLegends.abilityDamageMultiplier.Value;
                     hitData.m_point = ch.GetEyePoint();
                     hitData.m_dir = (player.transform.position - ch.transform.position);

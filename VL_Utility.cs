@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using HarmonyLib;
 using System.IO;
+using UnityEngine.UI;
 
 namespace ValheimLegends
 {
@@ -54,6 +55,39 @@ namespace ValheimLegends
             return result;
         }
 
+        public static void InitiateAbilityStatus(Hud hud)
+        {
+            if(ValheimLegends.ClassIsValid)
+            {
+                float xStep = 75f;                
+                float yStep = 0f;
+                float yOffset = 20f;
+                if(ValheimLegends.iconAlignment.Value.ToLower() == "vertical")
+                {
+                    xStep = 0f;
+                    yStep = 100f;
+                }
+
+                ValheimLegends.abilitiesStatus = new List<RectTransform>();
+                ValheimLegends.abilitiesStatus.Clear();
+                RectTransform rectTransform = UnityEngine.Object.Instantiate(hud.m_statusEffectTemplate, hud.m_gpRoot);
+                rectTransform.gameObject.SetActive(value: true);
+                rectTransform.anchoredPosition = new Vector3(xStep, yOffset + yStep, 0f);
+                rectTransform.GetComponentInChildren<Text>().text = Localization.instance.Localize((ValheimLegends.Ability1_Name).ToString());
+                ValheimLegends.abilitiesStatus.Add(rectTransform);
+                RectTransform rectTransform2 = UnityEngine.Object.Instantiate(hud.m_statusEffectTemplate, hud.m_gpRoot);
+                rectTransform2.gameObject.SetActive(value: true);
+                rectTransform2.anchoredPosition = new Vector3(xStep * 2f, yOffset + (yStep *2f), 0f);
+                rectTransform2.GetComponentInChildren<Text>().text = Localization.instance.Localize((ValheimLegends.Ability2_Name).ToString());
+                ValheimLegends.abilitiesStatus.Add(rectTransform2);
+                RectTransform rectTransform3 = UnityEngine.Object.Instantiate(hud.m_statusEffectTemplate, hud.m_gpRoot);
+                rectTransform3.gameObject.SetActive(value: true);
+                rectTransform3.anchoredPosition = new Vector3(xStep * 3, yOffset + (yStep * 3f), 0f);
+                rectTransform3.GetComponentInChildren<Text>().text = Localization.instance.Localize((ValheimLegends.Ability3_Name).ToString());
+                ValheimLegends.abilitiesStatus.Add(rectTransform3);
+            }
+        }
+
         /// 
         //MAGE
         ///
@@ -62,70 +96,70 @@ namespace ValheimLegends
         {
             get
             {
-                return 70f;
+                return 70f * ValheimLegends.energyCostMultiplier.Value;
             }
         }
         public static float GetFireballCooldownTime
         {
             get
             {
-                return 5f;
+                return 5f * ValheimLegends.cooldownMultiplier.Value;
             }
         }
         public static float GetFireballSkillGain
         {
             get
             {
-                return .6f;
+                return .6f * ValheimLegends.skillGainMultiplier.Value;
             }
         }
         public static float GetMeteorCost
         {
             get
             {
-                return 40f;
+                return 40f * ValheimLegends.energyCostMultiplier.Value;
             }
         }
         public static float GetMeteorCostPerUpdate
         {
             get
             {
-                return .5f;
+                return .5f * ValheimLegends.energyCostMultiplier.Value;
             }
         }
         public static float GetMeteorCooldownTime
         {
             get
             {
-                return 300f;
+                return 180f * ValheimLegends.cooldownMultiplier.Value;
             }
         }
         public static float GetMeteorSkillGain
         {
             get
             {
-                return 1.6f;
+                return 1.6f * ValheimLegends.skillGainMultiplier.Value;
             }
         }
         public static float GetFrostNovaCost
         {
             get
             {
-                return 40f;
+                return 40f * ValheimLegends.energyCostMultiplier.Value;
             }
         }
         public static float GetFrostNovaCooldownTime
         {
             get
             {
-                return 30f;
+                return 30f * ValheimLegends.cooldownMultiplier.Value;
             }
         }
         public static float GetFrostNovaSkillGain
         {
             get
             {
-                return .75f;
+                return .75f * ValheimLegends.skillGainMultiplier.Value; 
             }
         }
 
@@ -137,63 +171,63 @@ namespace ValheimLegends
         {
             get
             {
-                return 60f;
+                return 60f * ValheimLegends.energyCostMultiplier.Value;
             }
         }
         public static float GetBulwarkCooldownTime
         {
             get
             {
-                return 120f;
+                return 120f * ValheimLegends.cooldownMultiplier.Value;
             }
         }
         public static float GetBulwarkSkillGain
         {
             get
             {
-                return 1.5f;
+                return 1.5f * ValheimLegends.skillGainMultiplier.Value;
             }
         }
         public static float GetLeapCost
         {
             get
             {
-                return 30f;
+                return 30f * ValheimLegends.energyCostMultiplier.Value;
             }
         }
         public static float GetLeapCooldownTime
         {
             get
             {
-                return 15f;
+                return 15f * ValheimLegends.cooldownMultiplier.Value;
             }
         }
         public static float GetLeapSkillGain
         {
             get
             {
-                return .4f;
+                return .4f * ValheimLegends.skillGainMultiplier.Value;
             }
         }
         public static float GetStaggerCost
         {
             get
             {
-                return 40f;
+                return 40f * ValheimLegends.energyCostMultiplier.Value;
             }
         }
         public static float GetStaggerCooldownTime
         {
             get
             {
-                return 20f;
+                return 20f * ValheimLegends.cooldownMultiplier.Value;
             }
         }
         public static float GetStaggerSkillGain
         {
             get
             {
-                return .6f;
+                return .6f * ValheimLegends.skillGainMultiplier.Value;
             }
         }
 
@@ -205,70 +239,70 @@ namespace ValheimLegends
         {
             get
             {
-                return 60f;
+                return 60f * ValheimLegends.energyCostMultiplier.Value;
             }
         }
         public static float GetRegenerationCooldownTime
         {
             get
             {
-                return 180f;
+                return 180f * ValheimLegends.cooldownMultiplier.Value;
             }
         }
         public static float GetRegenerationSkillGain
         {
             get
             {
-                return 2f;
+                return 2f * ValheimLegends.skillGainMultiplier.Value;
             }
         }
         public static float GetRootCost
         {
             get
             {
-                return 30f;
+                return 30f * ValheimLegends.energyCostMultiplier.Value;
             }
         }
         public static float GetRootCostPerUpdate
         {
             get
             {
-                return .25f;
+                return .25f * ValheimLegends.energyCostMultiplier.Value;
             }
         }
         public static float GetRootCooldownTime
         {
             get
             {
-                return 60f;
+                return 60f * ValheimLegends.cooldownMultiplier.Value;
             }
         }
         public static float GetRootSkillGain
         {
             get
             {
-                return .6f;
+                return .6f * ValheimLegends.skillGainMultiplier.Value;
             }
         }
         public static float GetDefenderCost
         {
             get
             {
-                return 60f;
+                return 60f * ValheimLegends.energyCostMultiplier.Value;
             }
         }
         public static float GetDefenderCooldownTime
         {
             get
             {
-                return 120f;
+                return 120f * ValheimLegends.cooldownMultiplier.Value;
             }
         }
         public static float GetDefenderSkillGain
         {
             get
             {
-                return 1.5f;
+                return 1.5f * ValheimLegends.skillGainMultiplier.Value;
             }
         }
 
@@ -278,47 +312,47 @@ namespace ValheimLegends
 
         public static float GetEnrageCost(Player p)
         {
-            float cost = 50f;
+            float cost = 50f * ValheimLegends.energyCostMultiplier.Value;
             return cost;
         }
         public static float GetEnrageCooldown(Player p)
         {
-            float time = 180;
+            float time = 180 * ValheimLegends.cooldownMultiplier.Value;
             return time;
         }
         public static float GetEnrageSkillGain(Player p)
         {
-            float xp = 1.5f;
+            float xp = 1.5f * ValheimLegends.skillGainMultiplier.Value;
             return xp;
         }
         public static float GetSpiritBombCost(Player p)
         {
-            float cost = 80f;
+            float cost = 80f * ValheimLegends.energyCostMultiplier.Value;
             return cost;
         }
         public static float GetSpiritBombCooldown(Player p)
         {
-            float time = 60;
+            float time = 60 * ValheimLegends.cooldownMultiplier.Value;
             return time;
         }
         public static float GetSpiritBombSkillGain(Player p)
         {
-            float xp = .9f;
+            float xp = .9f * ValheimLegends.skillGainMultiplier.Value;
             return xp;
         }
         public static float GetShellCost(Player p)
         {
-            float cost = 100f;
+            float cost = 100f * ValheimLegends.energyCostMultiplier.Value;
             return cost;
         }
         public static float GetShellCooldown(Player p)
         {
-            float time = 120;
+            float time = 120 * ValheimLegends.cooldownMultiplier.Value;
             return time;
         }
         public static float GetShellSkillGain(Player p)
         {
-            float xp = 1.7f;
+            float xp = 1.7f * ValheimLegends.skillGainMultiplier.Value;
             return xp;
         }
 
@@ -328,47 +362,47 @@ namespace ValheimLegends
 
         public static float GetDashCost(Player p)
         {
-            float cost = 70f;
+            float cost = 70f * ValheimLegends.energyCostMultiplier.Value;
             return cost;
         }
         public static float GetDashCooldown(Player p)
         {
-            float time = 10;
+            float time = 10 * ValheimLegends.cooldownMultiplier.Value;
             return time;
         }
         public static float GetDashSkillGain (Player p)
         {
-            float xp = .45f;
+            float xp = .45f * ValheimLegends.skillGainMultiplier.Value;
             return xp;
         }
         public static float GetBerserkCost(Player p)
         {
-            float cost = 50f;
+            float cost = 50f * ValheimLegends.energyCostMultiplier.Value;
             return cost;
         }
         public static float GetBerserkCooldown(Player p)
         {
-            float time = 180;
+            float time = 180 * ValheimLegends.cooldownMultiplier.Value;
             return time;
         }
         public static float GetBerserkSkillGain(Player p)
         {
-            float xp = 1.8f;
+            float xp = 1.8f * ValheimLegends.skillGainMultiplier.Value;
             return xp;
         }
         public static float GetExecuteCost(Player p)
         {
-            float cost = 50f;
+            float cost = 50f * ValheimLegends.energyCostMultiplier.Value;
             return cost;
         }
         public static float GetExecuteCooldown(Player p)
         {
-            float time = 120;
+            float time = 120 * ValheimLegends.cooldownMultiplier.Value;
             return time;
         }
         public static float GetExecuteSkillGain(Player p)
         {
-            float xp = 1.2f;
+            float xp = 1.2f * ValheimLegends.skillGainMultiplier.Value;
             return xp;
         }
 
@@ -378,48 +412,160 @@ namespace ValheimLegends
 
         public static float GetPowerShotCost(Player p)
         {
-            float cost = 60f;
+            float cost = 60f * ValheimLegends.energyCostMultiplier.Value;
             return cost;
         }
         public static float GetPowerShotCooldown(Player p)
         {
-            float time = 60;
+            float time = 60 * ValheimLegends.cooldownMultiplier.Value;
             return time;
         }
         public static float GetPowerShotSkillGain(Player p)
         {
-            float xp = .9f;
+            float xp = .9f * ValheimLegends.skillGainMultiplier.Value;
             return xp;
         }
         public static float GetShadowStalkCost(Player p)
         {
-            float cost = 40f;
+            float cost = 40f * ValheimLegends.energyCostMultiplier.Value;
             return cost;
         }
         public static float GetShadowStalkCooldown(Player p)
         {
-            float time = 120;
+            float time = 120 * ValheimLegends.cooldownMultiplier.Value;
             return time;
         }
         public static float GetShadowStalkSkillGain(Player p)
         {
-            float xp = 1.4f;
+            float xp = 1.4f * ValheimLegends.skillGainMultiplier.Value;
             return xp;
         }
         public static float GetSummonWolfCost(Player p)
         {
-            float cost = 75f;
+            float cost = 75f * ValheimLegends.energyCostMultiplier.Value;
             return cost;
         }
         public static float GetSummonWolfCooldown(Player p)
         {
-            float time = 900;
+            float time = 900 * ValheimLegends.cooldownMultiplier.Value;
             return time;
         }
         public static float GetSummonWolfSkillGain(Player p)
         {
-            float xp = 3.5f;
+            float xp = 3.5f * ValheimLegends.skillGainMultiplier.Value;
             return xp;
+        }
+
+        //Button press validation
+        public static bool Ability1_Input_Down
+        {
+            get
+            {
+                if(ValheimLegends.Ability1_Hotkey.Value == "")
+                {
+                    return false;
+                }
+                else if(ValheimLegends.Ability1_Hotkey_Combo.Value == "")
+                {
+                    return Input.GetKeyDown(ValheimLegends.Ability1_Hotkey.Value.ToLower()) || Input.GetButtonDown(ValheimLegends.Ability1_Hotkey.Value.ToLower());
+                }
+                else if((Input.GetKeyDown(ValheimLegends.Ability1_Hotkey.Value.ToLower()) && Input.GetKey(ValheimLegends.Ability1_Hotkey_Combo.Value.ToLower())) ||
+                    (Input.GetKey(ValheimLegends.Ability1_Hotkey.Value.ToLower()) && Input.GetKeyDown(ValheimLegends.Ability1_Hotkey_Combo.Value.ToLower())) || 
+                    (Input.GetButtonDown(ValheimLegends.Ability1_Hotkey.Value.ToLower()) && Input.GetButton(ValheimLegends.Ability1_Hotkey_Combo.Value.ToLower())) ||
+                    (Input.GetButton(ValheimLegends.Ability1_Hotkey.Value.ToLower()) && Input.GetButtonDown(ValheimLegends.Ability1_Hotkey_Combo.Value.ToLower())))
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        public static bool Ability2_Input_Down
+        {
+            get
+            {
+                if (ValheimLegends.Ability2_Hotkey.Value == "")
+                {
+                    return false;
+                }
+                else if (ValheimLegends.Ability2_Hotkey_Combo.Value == "")
+                {
+                    return Input.GetKeyDown(ValheimLegends.Ability2_Hotkey.Value.ToLower()) || Input.GetButtonDown(ValheimLegends.Ability2_Hotkey.Value.ToLower());
+                }
+                else if ((Input.GetKeyDown(ValheimLegends.Ability2_Hotkey.Value.ToLower()) && Input.GetKey(ValheimLegends.Ability2_Hotkey_Combo.Value.ToLower())) ||
+                    (Input.GetKey(ValheimLegends.Ability2_Hotkey.Value.ToLower()) && Input.GetKeyDown(ValheimLegends.Ability2_Hotkey_Combo.Value.ToLower())) ||
+                    (Input.GetButtonDown(ValheimLegends.Ability2_Hotkey.Value.ToLower()) && Input.GetButton(ValheimLegends.Ability2_Hotkey_Combo.Value.ToLower())) ||
+                    (Input.GetButton(ValheimLegends.Ability2_Hotkey.Value.ToLower()) && Input.GetButtonDown(ValheimLegends.Ability2_Hotkey_Combo.Value.ToLower())))
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        public static bool Ability3_Input_Down
+        {
+            get
+            {
+                if (ValheimLegends.Ability3_Hotkey.Value == "")
+                {
+                    return false;
+                }
+                else if (ValheimLegends.Ability3_Hotkey_Combo.Value == "")
+                {
+                    return Input.GetKeyDown(ValheimLegends.Ability3_Hotkey.Value.ToLower()) || Input.GetButtonDown(ValheimLegends.Ability3_Hotkey.Value.ToLower());
+                }
+                else if ((Input.GetKeyDown(ValheimLegends.Ability3_Hotkey.Value.ToLower()) && Input.GetKey(ValheimLegends.Ability3_Hotkey_Combo.Value.ToLower())) ||
+                    (Input.GetKey(ValheimLegends.Ability3_Hotkey.Value.ToLower()) && Input.GetKeyDown(ValheimLegends.Ability3_Hotkey_Combo.Value.ToLower())) ||
+                    (Input.GetButtonDown(ValheimLegends.Ability3_Hotkey.Value.ToLower()) && Input.GetButton(ValheimLegends.Ability3_Hotkey_Combo.Value.ToLower())) ||
+                    (Input.GetButton(ValheimLegends.Ability3_Hotkey.Value.ToLower()) && Input.GetButtonDown(ValheimLegends.Ability3_Hotkey_Combo.Value.ToLower())))
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        public static bool Ability3_Input_Pressed
+        {
+            get
+            {
+                if (ValheimLegends.Ability3_Hotkey.Value == "")
+                {
+                    return false;
+                }
+                else if (ValheimLegends.Ability3_Hotkey_Combo.Value == "")
+                {
+                    return Input.GetKey(ValheimLegends.Ability3_Hotkey.Value.ToLower()) || Input.GetButton(ValheimLegends.Ability3_Hotkey.Value.ToLower());
+                }
+                else if (Input.GetKey(ValheimLegends.Ability3_Hotkey.Value.ToLower()) && Input.GetKey(ValheimLegends.Ability3_Hotkey_Combo.Value.ToLower()) ||
+                    Input.GetButton(ValheimLegends.Ability3_Hotkey.Value.ToLower()) && Input.GetButton(ValheimLegends.Ability3_Hotkey_Combo.Value.ToLower()))
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        public static bool Ability3_Input_Up
+        {
+            get
+            {
+                if (ValheimLegends.Ability3_Hotkey.Value == "")
+                {
+                    return false;
+                }
+                else if (ValheimLegends.Ability3_Hotkey_Combo.Value == "")
+                {
+                    return Input.GetKeyUp(ValheimLegends.Ability3_Hotkey.Value.ToLower()) || Input.GetButtonUp(ValheimLegends.Ability3_Hotkey.Value.ToLower());
+                }
+                else if (Input.GetKeyUp(ValheimLegends.Ability3_Hotkey.Value.ToLower()) || Input.GetKeyUp(ValheimLegends.Ability3_Hotkey_Combo.Value.ToLower()) ||
+                    Input.GetButtonUp(ValheimLegends.Ability3_Hotkey.Value.ToLower()) || Input.GetButtonUp(ValheimLegends.Ability3_Hotkey_Combo.Value.ToLower()))
+                {
+                    return true;
+                }
+                return false;
+            }
         }
 
     }

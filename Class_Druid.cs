@@ -30,7 +30,7 @@ namespace ValheimLegends
         {
             System.Random rnd = new System.Random();
             Vector3 rootVec = default(Vector3);
-            if (Input.GetKeyDown(ValheimLegends.Ability3_Hotkey.Value.ToLower()))
+            if (VL_Utility.Ability3_Input_Down)
             {
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability3_CD"))
                 {
@@ -94,7 +94,7 @@ namespace ValheimLegends
                     player.Message(MessageHud.MessageType.TopLeft, "Ability not ready");
                 }
             }
-            else if (Input.GetKey(ValheimLegends.Ability3_Hotkey.Value.ToLower()) && player.GetStamina() > VL_Utility.GetRootCostPerUpdate && ValheimLegends.isChanneling && Mathf.Max(0f, altitude - player.transform.position.y) <= .5f)
+            else if (VL_Utility.Ability3_Input_Pressed && player.GetStamina() > VL_Utility.GetRootCostPerUpdate && ValheimLegends.isChanneling && Mathf.Max(0f, altitude - player.transform.position.y) <= 2f)
             {
                 rootCount++;
                 player.UseStamina(VL_Utility.GetRootCostPerUpdate);
@@ -147,10 +147,10 @@ namespace ValheimLegends
                     //P_Root.Setup(player, Vector3.zero, -1f, null, null);
                 }
             }
-            else if (((Input.GetKeyUp(ValheimLegends.Ability3_Hotkey.Value.ToLower()) || player.GetStamina() <= VL_Utility.GetRootCostPerUpdate) && ValheimLegends.isChanneling) || Mathf.Max(0f, altitude - player.transform.position.y) > .5f)
+            else if (((VL_Utility.Ability3_Input_Up || player.GetStamina() <= VL_Utility.GetRootCostPerUpdate) && ValheimLegends.isChanneling) || Mathf.Max(0f, altitude - player.transform.position.y) > 2f)
             {
                 //player.Message(MessageHud.MessageType.Center, "root - deactivate");
-                ZLog.Log("altitude is " + altitude);
+                //ZLog.Log("altitude is " + altitude);
                 if (GO_Root != null && GO_Root.transform != null)
                 {
                     RaycastHit hitInfo = default(RaycastHit);
@@ -167,7 +167,7 @@ namespace ValheimLegends
                 GO_Root = null;
                 ValheimLegends.isChanneling = false;
             }
-            else if(Input.GetKeyDown(ValheimLegends.Ability2_Hotkey.Value.ToLower()))
+            else if(VL_Utility.Ability2_Input_Down)
             {
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability2_CD"))
                 {
@@ -195,14 +195,17 @@ namespace ValheimLegends
 
                         //Apply effects
                         GameObject prefab = ZNetScene.instance.GetPrefab("TentaRoot");
-                        int rootDefenderCount = 1 + Mathf.RoundToInt(.1f * sLevel);
+                        
+                        int rootDefenderCount = 3 + Mathf.RoundToInt(.125f * sLevel);
                         for (int i = 0; i < rootDefenderCount; i++)
                         {
-                            rootVec = player.transform.position + (player.transform.right * (UnityEngine.Random.Range(-rootDefenderCount, rootDefenderCount) * 2f) + (player.GetLookDir() * 3f * UnityEngine.Random.Range(1, 1 + rootDefenderCount)));
+                            rootVec = player.transform.position + (player.transform.right * (UnityEngine.Random.Range(-rootDefenderCount * 3f, rootDefenderCount * 3f)) + (player.GetLookDir() * 3f * UnityEngine.Random.Range(1,  2 * rootDefenderCount)));
                             GO_RootDefender = UnityEngine.Object.Instantiate(prefab, new Vector3(rootVec.x, rootVec.y, rootVec.z), Quaternion.identity);
                             Character ch = GO_RootDefender.GetComponent<Character>();
                             if (ch != null)
                             {
+                                ch.SetMaxHealth(50 + Mathf.RoundToInt(UnityEngine.Random.Range(sLevel, 3f * sLevel)));
+                                ch.transform.localScale = (.75f + (.005f * sLevel)) * Vector3.one;                                
                                 ch.m_faction = Character.Faction.Players;
                                 ch.SetTamed(true);
                             }
@@ -222,7 +225,7 @@ namespace ValheimLegends
                     player.Message(MessageHud.MessageType.TopLeft, "Ability not ready");
                 }
             }
-            else if (Input.GetKeyDown(ValheimLegends.Ability1_Hotkey.Value.ToLower()))
+            else if (VL_Utility.Ability1_Input_Down)
             {
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability1_CD"))
                 {
@@ -256,7 +259,7 @@ namespace ValheimLegends
                         //Apply effects
                         List<Player> allPlayers = new List<Player>();
                         allPlayers.Clear();
-                        Player.GetPlayersInRange(player.GetCenterPoint(), 16f + (.2f * sLevel), allPlayers);
+                        Player.GetPlayersInRange(player.GetCenterPoint(), 24f + (.2f * sLevel), allPlayers);
                         foreach (Player p in allPlayers)
                         {
                             if(p == Player.m_localPlayer)
