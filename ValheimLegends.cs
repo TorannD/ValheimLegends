@@ -14,11 +14,39 @@ using UnityEngine.UI;
 
 namespace ValheimLegends
 {
-    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.2.1")]
+    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.2.3")]
     [BepInProcess("valheim.exe")]
     public class ValheimLegends : BaseUnityPlugin
     {
+        private static Harmony _Harmony;
+
+        public const string Version = "0.2.3";
+        public const string ModName = "Valheim Legends";
+
+        //loaded info
+        public static List<VL_Player> vl_playerList;
+        public static VL_Player vl_player;
+
         //configs
+        //public static ConfigVariable<bool> modEnabled;
+        //public static ConfigVariable<string> Ability1_Hotkey;
+        //public static ConfigVariable<string> Ability1_Hotkey_Combo;
+        //public static ConfigVariable<string> Ability2_Hotkey;
+        //public static ConfigVariable<string> Ability2_Hotkey_Combo;
+        //public static ConfigVariable<string> Ability3_Hotkey;
+        //public static ConfigVariable<string> Ability3_Hotkey_Combo;
+
+        //public static ConfigVariable<float> energyCostMultiplier;
+        //public static ConfigVariable<float> cooldownMultiplier;
+        //public static ConfigVariable<float> abilityDamageMultiplier;
+        //public static ConfigVariable<float> skillGainMultiplier;
+
+        //public static ConfigVariable<float> icon_X_Offset;
+        //public static ConfigVariable<float> icon_Y_Offset;
+
+        //public static ConfigVariable<bool> showAbilityIcons;
+        //public static ConfigVariable<string> iconAlignment;
+
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<string> Ability1_Hotkey;
         public static ConfigEntry<string> Ability1_Hotkey_Combo;
@@ -31,25 +59,188 @@ namespace ValheimLegends
         public static ConfigEntry<float> cooldownMultiplier;
         public static ConfigEntry<float> abilityDamageMultiplier;
         public static ConfigEntry<float> skillGainMultiplier;
-
-        public static ConfigEntry<string> chosenClass;
-        public static readonly Color abilityCooldownColor = new Color(1f, .3f, .3f, .5f);
+        
+        public static ConfigEntry<float> icon_X_Offset;
+        public static ConfigEntry<float> icon_Y_Offset;
 
         public static ConfigEntry<bool> showAbilityIcons;
         public static ConfigEntry<string> iconAlignment;
+
+        //public static ConfigVariable<string> chosenClass;
+        public static readonly Color abilityCooldownColor = new Color(1f, .3f, .3f, .5f);
+
+        
+
+        public static float m_ec;
+        public static float m_cd;
+        public static float m_dmg;
+        public static float m_xp;
+
+        //Save and load data
+
+        public class VL_Player
+        {
+            public string vl_name;
+            public PlayerClass vl_class;
+        }
+
+        public enum PlayerClass
+        {
+            None = 0,
+            Berserker = 1,
+            Druid = 2,
+            Mage = 4,
+            Ranger = 8,
+            Shaman = 16,
+            Valkyrie = 32
+        }
+
+        public static int GetPlayerClassNum
+        {
+            get
+            {
+                if(vl_player.vl_class == PlayerClass.Berserker)
+                {
+                    return (int)PlayerClass.Berserker;
+                }
+                else if(vl_player.vl_class == PlayerClass.Druid)
+                {
+                    return (int)PlayerClass.Druid;
+                }
+                else if (vl_player.vl_class == PlayerClass.Mage)
+                {
+                    return (int)PlayerClass.Mage;
+                }
+                else if (vl_player.vl_class == PlayerClass.Ranger)
+                {
+                    return (int)PlayerClass.Ranger;
+                }
+                else if (vl_player.vl_class == PlayerClass.Shaman)
+                {
+                    return (int)PlayerClass.Shaman;
+                }
+                else if (vl_player.vl_class == PlayerClass.Valkyrie)
+                {
+                    return (int)PlayerClass.Valkyrie;
+                }
+                else
+                {
+                    return (int)PlayerClass.None;
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(PlayerProfile), "SavePlayerToDisk", null)]
+        public class SaveVLPlayer_Patch
+        {
+            public static void Postfix(PlayerProfile __instance, string ___m_filename, string ___m_playerName)
+            {
+                try
+                {
+                    Directory.CreateDirectory(Utils.GetSaveDataPath() + "/characters/VL");
+                    string text = Utils.GetSaveDataPath() + "/characters/VL/" + ___m_filename + "_vl.fch";
+                    string text3 = Utils.GetSaveDataPath() + "/characters/VL/" + ___m_filename + "_vl.fch.new";
+                    ZPackage zPackage = new ZPackage();
+                    zPackage.Write(GetPlayerClassNum);
+                    byte[] array = zPackage.GenerateHash();
+                    byte[] array2 = zPackage.GetArray();
+                    FileStream fileStream = File.Create(text3);
+                    BinaryWriter binaryWriter = new BinaryWriter(fileStream);
+                    binaryWriter.Write(array2.Length);
+                    binaryWriter.Write(array2);
+                    binaryWriter.Write(array.Length);
+                    binaryWriter.Write(array);
+                    binaryWriter.Flush();
+                    fileStream.Flush(flushToDisk: true);
+                    fileStream.Close();
+                    fileStream.Dispose();
+                    if (File.Exists(text))
+                    {
+                        File.Delete(text);
+                    }
+                    File.Move(text3, text);
+                }
+                catch(NullReferenceException ex)
+                {
+                    //failed to save, return to normal process
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(PlayerProfile), "LoadPlayerFromDisk", null)]
+        public class LoadVLPlayer_Patch
+        {
+            public static void Postfix(PlayerProfile __instance, string ___m_filename, string ___m_playerName)
+            {
+                //ZLog.Log("Loading player: (" + ___m_playerName + ")");
+                try
+                {
+                    if(vl_playerList == null)
+                    {
+                        vl_playerList = new List<VL_Player>();                        
+                    }
+                    vl_playerList.Clear();
+                    ZPackage zPackage = LoadPlayerDataFromDisk(___m_filename);
+                    if (zPackage == null)
+                    {
+                        //ZLog.LogWarning("No player data for valheim legends");
+                        goto LoadExit;
+                    }
+                    int num = zPackage.ReadInt();
+                    VL_Player newLegend = new VL_Player();
+                    newLegend.vl_name = ___m_playerName;
+                    newLegend.vl_class = (PlayerClass)num;
+                    vl_playerList.Add(newLegend);
+                    //ZLog.Log("VL adding " + ___m_playerName + " as class num " + num);
+                }
+                catch (Exception ex)
+                {
+                    ZLog.LogWarning("Exception while loading player VL profile: " + ex.ToString());
+                }
+                LoadExit:;
+            }
+
+            private static ZPackage LoadPlayerDataFromDisk(string m_filename)
+            {
+                string text = Utils.GetSaveDataPath() + "/characters/VL/" + m_filename + "_vl.fch";
+                //ZLog.Log("Player load file is : (" + text + ")");
+                FileStream fileStream;
+                try
+                {
+                    fileStream = File.OpenRead(text);
+                }
+                catch
+                {
+                    //ZLog.Log("  failed to load " + text);
+                    return null;
+                }
+                byte[] data;
+                try
+                {
+                    BinaryReader binaryReader = new BinaryReader(fileStream);
+                    int count = binaryReader.ReadInt32();
+                    data = binaryReader.ReadBytes(count);
+                    int count2 = binaryReader.ReadInt32();
+                    binaryReader.ReadBytes(count2);
+                }
+                catch
+                {
+                    ZLog.LogError("  error loading VL player data");
+                    fileStream.Dispose();
+                    return null;
+                }
+                fileStream.Dispose();
+                return new ZPackage(data);
+            }
+        }
 
         public static bool ClassIsValid
         {
             get
             {
-                if (chosenClass.Value?.ToString() == "Valkyrie" ||
-                chosenClass.Value?.ToString() == "Mage" ||
-                chosenClass.Value?.ToString() == "Berserker" ||
-                chosenClass.Value?.ToString() == "Druid" ||
-                chosenClass.Value?.ToString() == "Ranger" ||
-                chosenClass.Value?.ToString() == "Shaman")
+                if(vl_player != null)
                 {
-                    return true;
+                    return vl_player.vl_class != PlayerClass.None;
                 }
                 return false;
             }
@@ -75,6 +266,8 @@ namespace ValheimLegends
         public static int channelingCancelDelay = 0;
         public static bool isChargingDash = false;
         public static int dashCounter = 0;
+
+        public static int animationCountdown = 0;
 
         //Skills
         public static readonly int DisciplineSkillID = 781;
@@ -108,12 +301,38 @@ namespace ValheimLegends
         //    }
         //}
 
+        //[HarmonyPatch(typeof(ZSyncAnimation), "SetTrigger", null)]
+        //public class AnimationTrigger_Prevention_Patch
+        //{
+        //    public static bool Prefix(ZSyncAnimation __instance, string name, ref Animator ___m_animator)
+        //    {
+        //        if(name == "gpower")
+        //        {
+        //            ___m_animator.speed = 5f;
+        //        }
+        //        return true;
+        //    }
+        //}
+
         //[HarmonyPatch(typeof(ZSyncAnimation), "RPC_SetTrigger", null)]
         //public class AnimationTrigger_Monitor_Patch
         //{
         //    public static void Postfix(ZSyncAnimation __instance, long sender, string name)
         //    {
         //        ZLog.Log("animation: " + name);
+        //    }
+        //}
+
+        //[HarmonyPatch(typeof(CharacterTimedDestruction), "Trigger", new Type[]
+        //{
+        //    typeof(float)
+        //})]
+        //public class TimedDestruction_testpatch
+        //{
+        //    public static bool Prefix(CharacterTimedDestruction __instance, Character ___m_character)
+        //    {
+        //        ZLog.Log("destroying " + ___m_character.name + " from timed event of " + __instance.m_timeoutMin + "min " + __instance.m_timeoutMax + "max");
+        //        return true;
         //    }
         //}
 
@@ -268,10 +487,10 @@ namespace ValheimLegends
                     ValheimLegends.shouldValkyrieImpact = false;
                     Class_Valkyrie.Impact_Effect(Player.m_localPlayer, maxAltitude);
                     Class_Valkyrie.inFlight = false;
-                    if (maxAltitude > 4f)
-                    {
-                        Class_Valkyrie.inFlight = true;
-                    }
+                    //if (maxAltitude > 4f)
+                    //{
+                    //    Class_Valkyrie.inFlight = true;
+                    //}
 
                 }
             }
@@ -280,51 +499,52 @@ namespace ValheimLegends
         [HarmonyPatch(typeof(OfferingBowl), "UseItem", null)]
         public class OfferingForClass_Patch
         {
-            public static bool Prefix(OfferingBowl __instance, Humanoid user, ItemDrop.ItemData item, Transform ___m_itemSpawnPoint, EffectList ___m_fuelAddedEffects)
+            public static bool Prefix(OfferingBowl __instance, Humanoid user, ItemDrop.ItemData item, Transform ___m_itemSpawnPoint, EffectList ___m_fuelAddedEffects, ref bool __result)
             {
                 //ZLog.Log("offered item is " + item.m_shared.m_name + " to string " + item.ToString());
                 int num = user.GetInventory().CountItems(item.m_shared.m_name);
                 bool flag = false;
-                if (item.m_shared.m_name.Contains("item_greydwarfeye") && chosenClass.Value != "Shaman")
+                if (item.m_shared.m_name.Contains("item_greydwarfeye") && vl_player.vl_class != PlayerClass.Shaman)
                 {                    
                     user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Shaman");
-                    ValheimLegends.chosenClass.Value = "Shaman";
+                    vl_player.vl_class = PlayerClass.Shaman;
                     flag = true;
                 }
-                else if (item.m_shared.m_name.Contains("item_meat_raw") && chosenClass.Value != "Ranger")
+                else if (item.m_shared.m_name.Contains("item_meat_raw") && vl_player.vl_class != PlayerClass.Ranger)
                 {
                     user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Ranger");
-                    ValheimLegends.chosenClass.Value = "Ranger";
+                    vl_player.vl_class = PlayerClass.Ranger;
                     flag = true;
                 }
-                else if (item.m_shared.m_name.Contains("item_coal") && chosenClass.Value != "Mage")
+                else if (item.m_shared.m_name.Contains("item_coal") && vl_player.vl_class != PlayerClass.Mage)
                 {
                     user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Mage");
-                    ValheimLegends.chosenClass.Value = "Mage";
+                    vl_player.vl_class = PlayerClass.Mage;
                     flag = true;
                 }
-                else if (item.m_shared.m_name.Contains("item_flint") && chosenClass.Value != "Valkyrie")
+                else if (item.m_shared.m_name.Contains("item_flint") && vl_player.vl_class != PlayerClass.Valkyrie)
                 {
                     user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Valkyrie");
-                    ValheimLegends.chosenClass.Value = "Valkyrie";
+                    vl_player.vl_class = PlayerClass.Valkyrie;
                     flag = true;
                 }
-                else if (item.m_shared.m_name.Contains("item_dandelion") && chosenClass.Value != "Druid")
+                else if (item.m_shared.m_name.Contains("item_dandelion") && vl_player.vl_class != PlayerClass.Druid)
                 {
                     user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Druid");
-                    ValheimLegends.chosenClass.Value = "Druid";
+                    vl_player.vl_class = PlayerClass.Druid;
                     flag = true;
                 }
-                else if (item.m_shared.m_name.Contains("item_bonefragments") && chosenClass.Value != "Berserker")
+                else if (item.m_shared.m_name.Contains("item_bonefragments") && vl_player.vl_class != PlayerClass.Berserker)
                 {
                     user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Berserker");
-                    ValheimLegends.chosenClass.Value = "Berserker";
+                    vl_player.vl_class = PlayerClass.Berserker;
                     flag = true;
                 }
                 if (flag)
                 {
                     user.GetInventory().RemoveItem(item.m_shared.m_name, 1);
                     user.ShowRemovedMessage(item, 1);
+                    UpdateVLPlayer(Player.m_localPlayer);
                     NameCooldowns();
                     if ((bool)___m_itemSpawnPoint && ___m_fuelAddedEffects != null)
                     {
@@ -332,11 +552,18 @@ namespace ValheimLegends
                     }
                     UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_GP_Activation"), user.GetCenterPoint(), Quaternion.identity);
 
-                    foreach (RectTransform ability in ValheimLegends.abilitiesStatus)
+                    if (ValheimLegends.abilitiesStatus != null)
                     {
-                        UnityEngine.Object.Destroy(ability.gameObject);
+                        foreach (RectTransform ability in ValheimLegends.abilitiesStatus)
+                        {
+                            if (ability.gameObject != null)
+                            {
+                                UnityEngine.Object.Destroy(ability.gameObject);
+                            }
+                        }
+                        ValheimLegends.abilitiesStatus.Clear();
                     }
-                    ValheimLegends.abilitiesStatus.Clear();
+                    __result = true;
                     return false;
                 }
                 return true;
@@ -359,7 +586,7 @@ namespace ValheimLegends
                     if(__instance.GetSEMan().HaveStatusEffect("SE_VL_Bulwark"))
                     {
                         //ZLog.Log("has status effect SE_VL_Bulwark");
-                        hit.m_damage.Modify(.75f - (Player.m_localPlayer.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AbjurationSkillDef).m_level/10f));
+                        hit.m_damage.Modify(.75f - (Player.m_localPlayer.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AbjurationSkillDef).m_level/200f));
                     }                    
                 }
 
@@ -398,6 +625,11 @@ namespace ValheimLegends
                     {
                         SE_Companion se_companion = attacker.GetSEMan().GetStatusEffect("SE_VL_Companion") as SE_Companion;
                         hit.m_damage.Modify(se_companion.damageModifier);
+                    }
+                    if (attacker.GetSEMan().HaveStatusEffect("SE_VL_RootsBuff"))
+                    {
+                        SE_RootsBuff se_RootsBuff = attacker.GetSEMan().GetStatusEffect("SE_VL_RootsBuff") as SE_RootsBuff;
+                        hit.m_damage.Modify(se_RootsBuff.damageModifier);
                     }
                 }
 
@@ -513,9 +745,7 @@ namespace ValheimLegends
             {                
                 if (Class_Valkyrie.isBlocking)
                 {
-                    //ZLog.Log("block power " + __result);
                     __result += 20f;
-                    //ZLog.Log("modified " + __result);
                 }
             }
         }
@@ -584,12 +814,18 @@ namespace ValheimLegends
         {
             public static bool Prefix()
             {
-                foreach (RectTransform ability in ValheimLegends.abilitiesStatus)
+                if (abilitiesStatus != null)
                 {
-                    UnityEngine.Object.Destroy(ability.gameObject);
+                    foreach (RectTransform ability in ValheimLegends.abilitiesStatus)
+                    {
+                        if (ability.gameObject != null)
+                        {
+                            UnityEngine.Object.Destroy(ability.gameObject);
+                        }
+                    }
+                    abilitiesStatus.Clear();
+                    abilitiesStatus = null;
                 }
-                abilitiesStatus.Clear();
-                abilitiesStatus = null;
                 return true;
             }
         }
@@ -712,38 +948,79 @@ namespace ValheimLegends
                 return true;
             }
         }
-        
+
+        [HarmonyPatch(typeof(Player), "OnSpawned", null)]
+        public class SetLegendClass_Postfix
+        {
+            public static void Postfix(Player __instance)
+            {
+                if (vl_player == null || vl_player.vl_name != __instance.GetPlayerName())
+                {
+                    SetVLPlayer(__instance);
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(Player), "RaiseSkill", null)]
+        public static class VinesHit_SkillRaise_Prefix
+        {
+            public static bool Prefix(Player __instance, Skills.SkillType skill, ref float value)
+            {
+                if (__instance.IsPlayer() && skill == ValheimLegends.ConjurationSkill)
+                {
+                    if (value == 0.5f)
+                    {
+                        value = .1f;
+                    }
+                    else if(value == 1f)
+                    {
+                        value = .5f;
+                    }
+                }
+                return true;
+            }
+        }
+
+
         [HarmonyPatch(typeof(Player), "Update", null)]
         public class AbilityInput_Postfix
         {
             public static void Postfix(Player __instance, ref float ___m_maxAirAltitude)
             {
-                Player localPlayer = Player.m_localPlayer;
-                if (localPlayer != null && VL_Utility.TakeInput(localPlayer) && !localPlayer.InPlaceMode())
+                Player localPlayer = Player.m_localPlayer;                
+                if (localPlayer != null)
                 {
-                    if (chosenClass.Value.ToString() == "Mage")
-                    {                        
-                        Class_Mage.Process_Input(localPlayer, ___m_maxAirAltitude);                        
-                    }
-                    else if(chosenClass.Value.ToString() == "Druid")
+                    //if(vl_player == null || vl_player.vl_name != localPlayer.GetPlayerName())
+                    //{
+                    //    ZLog.Log("update initialize");
+                    //    SetVLPlayer(localPlayer);
+                    //}
+                    if (VL_Utility.TakeInput(localPlayer) && !localPlayer.InPlaceMode())
                     {
-                        Class_Druid.Process_Input(localPlayer, ___m_maxAirAltitude);
-                    }
-                    else if (chosenClass.Value.ToString() == "Shaman")
-                    {                        
-                        Class_Shaman.Process_Input(localPlayer);
-                    }
-                    else if (chosenClass.Value.ToString() == "Ranger")
-                    {                        
-                        Class_Ranger.Process_Input(localPlayer);
-                    }
-                    else if (chosenClass.Value.ToString() == "Berserker")
-                    {                        
-                        Class_Berserker.Process_Input(localPlayer, ref ___m_maxAirAltitude);
-                    }
-                    else if (chosenClass.Value.ToString() == "Valkyrie")
-                    {                        
-                        Class_Valkyrie.Process_Input(localPlayer);
+                        if (vl_player.vl_class == PlayerClass.Mage)
+                        {
+                            Class_Mage.Process_Input(localPlayer, ___m_maxAirAltitude);
+                        }
+                        else if (vl_player.vl_class == PlayerClass.Druid)
+                        {
+                            Class_Druid.Process_Input(localPlayer, ___m_maxAirAltitude);
+                        }
+                        else if (vl_player.vl_class == PlayerClass.Shaman)
+                        {
+                            Class_Shaman.Process_Input(localPlayer);
+                        }
+                        else if (vl_player.vl_class == PlayerClass.Ranger)
+                        {
+                            Class_Ranger.Process_Input(localPlayer);
+                        }
+                        else if (vl_player.vl_class == PlayerClass.Berserker)
+                        {
+                            Class_Berserker.Process_Input(localPlayer, ref ___m_maxAirAltitude);
+                        }
+                        else if (vl_player.vl_class == PlayerClass.Valkyrie)
+                        {
+                            Class_Valkyrie.Process_Input(localPlayer);
+                        }
                     }
                 }
 
@@ -755,6 +1032,11 @@ namespace ValheimLegends
                         isChargingDash = false;
                         Class_Berserker.Execute_Dash(localPlayer, ref ___m_maxAirAltitude);
                     }
+                }
+
+                if(animationCountdown > 0)
+                {
+                    animationCountdown--;
                 }
             }
         }
@@ -768,7 +1050,7 @@ namespace ValheimLegends
                 {
                     m_label = "Valheim Legends",
                     m_name = "Valheim_Legends",
-                    m_text = "The Allfather wishes you to know that he has granted you a spark of power as a reward for your past deeds - you need only sacrifice a minor token at a guardian's altar to activate your power.\nFjolner is watching over you.",
+                    m_text = "The Allfather wishes you to know that he has granted you a spark of power as a reward for your past deeds - you need only sacrifice a minor token at a guardian's altar to activate your power.\n\nGo to the nearest Guardian Altar and activate the tablet - I will explain more there!\nFjolner is watching over you.",
                     m_topic = "Become a Legend!"
                 };
                 if (!Tutorial.instance.m_texts.Contains(vl))
@@ -776,6 +1058,27 @@ namespace ValheimLegends
                     Tutorial.instance.m_texts.Add(vl);
                 }
                 Player.m_localPlayer.ShowTutorial("Valheim_Legends");
+
+                Tutorial.TutorialText vl2 = new Tutorial.TutorialText
+                {
+                    m_label = "Legends Offerings",
+                    m_name = "VL_Offerings",
+                    m_text = "You can inherit legendary powers by placing token on the altar:\nValkyrie - 1x Flint\nRanger - 1x Raw Meat\nBerserker - 1x Bone fragments\nMage - 1x Coal\nDruid - 1x Dandelion\nShaman - 1x Greydwarf Eye",
+                    m_topic = "Token Offering"
+                };
+                if (!Tutorial.instance.m_texts.Contains(vl2))
+                {
+                    Tutorial.instance.m_texts.Add(vl2);
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(RuneStone), "Interact")]
+        public static class ClassOfferingTutorial_Patch
+        {
+            public static void Postfix()
+            {
+                Player.m_localPlayer.ShowTutorial("VL_Offerings");
             }
         }
 
@@ -836,23 +1139,61 @@ namespace ValheimLegends
         private void Awake()
         {
             //configs
-
+            //ConfigManager.RegisterMod(ModName, this.Config);
+            //modEnabled = ConfigManager.RegisterModConfigVariable<bool>(ModName, "modEnabled", true, "General", "Enabled or Disable Valheim Legends Mod", true);
             modEnabled = this.Config.Bind<bool>("General", "Mod_Enabled", true, "Enable/Disable mod");
-            chosenClass = this.Config.Bind<string>("General", "chosenClass", "None");
-            showAbilityIcons = this.Config.Bind<bool>("General", "showAbilityIcons", true, "Displays Icons on Hud for each ability");
-            iconAlignment = this.Config.Bind<string>("General", "iconAlignment", "horizontal", "Aligns icons horizontally or vertically off the guardian power icon; options are horizontal or vertical");
+            //chosenClass = this.Config.Bind<string>("General", "chosenClass", "None");
+            //showAbilityIcons = ConfigManager.RegisterModConfigVariable<bool>(ModName, "showAbilityIcons", true, "Display", "Displays Icons on Hud for each ability", true);
+            showAbilityIcons = this.Config.Bind<bool>("Display", "showAbilityIcons", true, "Displays Icons on Hud for each ability");
+            //iconAlignment = ConfigManager.RegisterModConfigVariable<string>(ModName, "iconAlignment", "horizontal", "Display", "Aligns icons horizontally or vertically off the guardian power icon; options are horizontal or vertical", true);
+            iconAlignment = this.Config.Bind<string>("Display", "iconAlignment", "horizontal", "Aligns icons horizontally or vertically off the guardian power icon; options are horizontal or vertical");
+            //icon_X_Offset = ConfigManager.RegisterModConfigVariable<float>(ModName, "icon_X_Offset", 0f, "Display", "Offsets the icon bar horizontally. The icon bar is anchored to the Guardian power icon.", true);
+            icon_X_Offset = this.Config.Bind<float>("Display", "icon_X_Offset", 0, "Offsets the icon bar horizontally. The icon bar is anchored to the Guardian power icon.");
+            //icon_Y_Offset = ConfigManager.RegisterModConfigVariable<float>(ModName, "icon_Y_Offset", 0f, "Display", "Offsets the icon bar vertically. The icon bar is anchored to the Guardian power icon.", true);
+            icon_Y_Offset = this.Config.Bind<float>("Display", "icon_Y_Offset", 0, "Offsets the icon bar vertically. The icon bar is anchored to the Guardian power icon.");
+            //Ability1_Hotkey = ConfigManager.RegisterModConfigVariable<string>(ModName, "Ability1_Hotkey", "Z", "Keybinds", "Ability 1 Hotkey", true); //\nUse mouse # to bind an ability to a mouse button\nThe # represents the mouse button; mouse 0 is left click, mouse 1 right click, etc", true);
             Ability1_Hotkey = this.Config.Bind<string>("Keybinds", "Ability1_Hotkey", "Z", "Ability 1 Hotkey\nUse mouse # to bind an ability to a mouse button\nThe # represents the mouse button; mouse 0 is left click, mouse 1 right click, etc");
+            //Ability1_Hotkey_Combo = ConfigManager.RegisterModConfigVariable<string>(ModName, "Ability1_Hotkey_Combo", "", "Keybinds", "Ability 1 Combination Key - entering a value will trigger the ability only when both the Hotkey and Hotkey_Combo buttons are pressed", true); //\nAllows input from a combination of keys when a value is entered for the combo key\nIf only one key is used, leave the combo key blank\nExamples: space, Q, left shift, left ctrl, right alt, right cmd", true);
             Ability1_Hotkey_Combo = this.Config.Bind<string>("Keybinds", "Ability1_Hotkey_Combo", "", "Ability 1 Combination Key - entering a value will trigger the ability only when both the Hotkey and Hotkey_Combo buttons are pressed\nAllows input from a combination of keys when a value is entered for the combo key\nIf only one key is used, leave the combo key blank\nExamples: space, Q, left shift, left ctrl, right alt, right cmd");
+            //Ability2_Hotkey = ConfigManager.RegisterModConfigVariable<string>(ModName, "Ability2_Hotkey", "X", "Keybinds", "Ability 2 Combination Key", true);
             Ability2_Hotkey = this.Config.Bind<string>("Keybinds", "Ability2_Hotkey", "X", "Ability 2 Hotkey");
+            //Ability2_Hotkey_Combo = ConfigManager.RegisterModConfigVariable<string>(ModName, "Ability2_Hotkey_Combo", "", "Keybinds", "Ability 2 Combination Key", true);
             Ability2_Hotkey_Combo = this.Config.Bind<string>("Keybinds", "Ability2_Hotkey_Combo", "", "Ability 2 Combination Key");
+            //Ability3_Hotkey = ConfigManager.RegisterModConfigVariable<string>(ModName, "Ability3_Hotkey", "C", "Keybinds", "Ability 3 Hotkey", true);
             Ability3_Hotkey = this.Config.Bind<string>("Keybinds", "Ability3_Hotkey", "C", "Ability 3 Hotkey");
+            //Ability3_Hotkey_Combo = ConfigManager.RegisterModConfigVariable<string>(ModName, "Ability3_Hotkey_Combo", "", "Keybinds", "Ability 3 Combination Key", true);
             Ability3_Hotkey_Combo = this.Config.Bind<string>("Keybinds", "Ability3_Hotkey_Combo", "", "Ability 3 Combination Key");
+            //energyCostMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "energyCostMultiplier", 1f, "Modifiers", "This value multiplied on overall ability use energy cost", false);
             energyCostMultiplier = this.Config.Bind<float>("Modifiers", "energyCostMultiplier", 1f, "This value multiplied on overall ability use energy cost\nAbility modifiers are not fully implemented");
+            //cooldownMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "cooldownMultiplier", 1f, "Modifiers", "This value multiplied on overall cooldown time of abilities", false);
             cooldownMultiplier = this.Config.Bind<float>("Modifiers", "cooldownMultiplier", 1f, "This value multiplied on overall cooldown time of abilities");
+            //abilityDamageMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "abilityDamageMultiplier", 1f, "Modifiers", "This value multiplied on overall ability power", false);
             abilityDamageMultiplier = this.Config.Bind<float>("Modifiers", "abilityDamageMultiplier", 1f, "This value multiplied on overall ability power");
+            //skillGainMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "skillGainMultiplier", 1f, "Modifiers", "This value modifies the amount of skill experience gained after using an ability", false);
             skillGainMultiplier = this.Config.Bind<float>("Modifiers", "skillGainMultiplier", 1f, "This value modifies the amount of skill experience gained after using an ability");
+            m_cd = 1f; // cooldownMultiplier.Value;
+            m_dmg = 1f; // abilityDamageMultiplier.Value;
+            m_ec = 1f; //energyCostMultiplier.Value;
+            m_xp = 1f; // skillGainMultiplier.Value;
 
-            
+            //try
+            //{
+            //    ((Action)(() =>
+            //    {
+            //        VL_ConfigSync.MCE_Register();
+            //        onlineModeEnabled = true;
+            //        ZLog.Log("MCE found - enabling online mode");
+            //    }))();
+            //}
+            //catch
+            //{
+            //    ZLog.Log("MCE not found - using local configurations for Valheim Legends.");
+            //    onlineModeEnabled = false;
+            //    energyCostMultiplier = this.Config.Bind<float>("Modifiers", "energyCostMultiplier", 1f, "This value multiplied on overall ability use energy cost\nAbility modifiers are not fully implemented");
+            //    cooldownMultiplier = this.Config.Bind<float>("Modifiers", "cooldownMultiplier", 1f, "This value multiplied on overall cooldown time of abilities");
+            //    abilityDamageMultiplier = this.Config.Bind<float>("Modifiers", "abilityDamageMultiplier", 1f, "This value multiplied on overall ability power");
+            //    skillGainMultiplier = this.Config.Bind<float>("Modifiers", "skillGainMultiplier", 1f, "This value modifies the amount of skill experience gained after using an ability");
+            //}
 
             //assets
             VL_Utility.ModID = "valheim.torann.valheimlegends";
@@ -875,8 +1216,6 @@ namespace ValheimLegends
             Texture2D tex_protection = VL_Utility.LoadTextureFromAssets("protection_icon.png");
             Ability1_Sprite = Sprite.Create(tex_protection, new Rect(0f, 0f, (float)tex_protection.width, (float)tex_protection.height), new Vector2(0.5f, 0.5f));
 
-            NameCooldowns();
-
             //skills            
             AbjurationSkillDef = new Skills.SkillDef
             {
@@ -896,7 +1235,7 @@ namespace ValheimLegends
             {
                 m_skill = (Skills.SkillType)ConjurationSkillID,
                 m_icon = icon_conjuration,
-                m_description = "Skill in temporarily manifesting reality by molding objects and energy",
+                m_description = "Skill in temporarily manifesting reality by molding objects and energy",                
                 m_increseStep = 1f
             };
             DisciplineSkillDef = new Skills.SkillDef
@@ -919,52 +1258,85 @@ namespace ValheimLegends
             legendsSkills.Add(ConjurationSkillDef);
             legendsSkills.Add(EvocationSkillDef);
 
+            _Harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), (string)"valheim.torann.valheimlegends");
+            
+        }
 
-            if (modEnabled.Value)
+        private void OnDestroy()
+        {
+            if (_Harmony != null)
             {
-                Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), (string)"valheim.torann.valheimlegends");
+                _Harmony.UnpatchAll((string)"valheim.torann.valheimlegends");
+            }
+        }
+
+        public static void SetVLPlayer(Player p)
+        {
+            vl_player = new VL_Player();
+            foreach (VL_Player player in vl_playerList)
+            {
+                //ZLog.LogWarning("checking " + player.vl_name + " against player name " + p.GetPlayerName());
+                if (p.GetPlayerName() == player.vl_name)
+                {
+                    //ZLog.Log("setting " + player.vl_name + " to class num " + player.vl_class);
+                    vl_player.vl_name = player.vl_name;
+                    vl_player.vl_class = (PlayerClass)player.vl_class;
+                    NameCooldowns();
+                    //break;
+                }
+            }
+        }
+
+        public static void UpdateVLPlayer(Player p)
+        {
+            foreach(VL_Player player in vl_playerList)
+            {
+                if(p.GetPlayerName() == player.vl_name)
+                {
+                    player.vl_class = vl_player.vl_class;
+                }
             }
         }
 
         public static void NameCooldowns()
         {
     
-            if (chosenClass.Value.ToString() == "Mage")
+            if (vl_player.vl_class == PlayerClass.Mage)
             {
                 ZLog.Log("Valheim Legend: Mage");
                 Ability1_Name = "Fireball";
-                Ability2_Name = "Frost Nova";
+                Ability2_Name = "F. Nova";
                 Ability3_Name = "Meteor";
             }
-            else if (chosenClass.Value.ToString() == "Druid")
+            else if (vl_player.vl_class == PlayerClass.Druid)
             {
                 ZLog.Log("Valheim Legend: Druid");
-                Ability1_Name = "Regeneration";
-                Ability2_Name = "Root Defender";
-                Ability3_Name = "Wild Vines";
+                Ability1_Name = "Regen";
+                Ability2_Name = "Living Def.";
+                Ability3_Name = "Vines";
             }
-            else if (chosenClass.Value.ToString() == "Shaman")
+            else if (vl_player.vl_class == PlayerClass.Shaman)
             {
                 ZLog.Log("Valheim Legend: Shaman");
                 Ability1_Name = "Enrage";
                 Ability2_Name = "Shell";
-                Ability3_Name = "Spirit Shock";
+                Ability3_Name = "S. Shock";
             }
-            else if (chosenClass.Value.ToString() == "Ranger")
+            else if (vl_player.vl_class == PlayerClass.Ranger)
             {
                 ZLog.Log("Valheim Legend: Ranger");
-                Ability1_Name = "Shadow Stalk";
+                Ability1_Name = "Shadow";
                 Ability2_Name = "Wolf";
-                Ability3_Name = "Power Shot";
+                Ability3_Name = "P. Shot";
             }
-            else if (chosenClass.Value.ToString() == "Berserker")
+            else if (vl_player.vl_class == PlayerClass.Berserker)
             {
                 ZLog.Log("Valheim Legend: Berserker");
                 Ability1_Name = "Execute";
                 Ability2_Name = "Berserk";
                 Ability3_Name = "Dash";
             }
-            else if (chosenClass.Value.ToString() == "Valkyrie")
+            else if (vl_player.vl_class == PlayerClass.Valkyrie)
             {
                 ZLog.Log("Valheim Legend: Valkyrie");
                 Ability1_Name = "Bulwark";

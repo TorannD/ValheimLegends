@@ -96,6 +96,9 @@ namespace ValheimLegends
                         pVec = player.transform.position + player.transform.forward * 4f;
                         
                         GameObject prefab = ZNetScene.instance.GetPrefab("Wolf");
+                        prefab.AddComponent<CharacterTimedDestruction>();
+                        prefab.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 900f;
+                        prefab.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 900f;
                         GO_Wolf = UnityEngine.Object.Instantiate(prefab, pVec, Quaternion.identity);
                         Character ch = GO_Wolf.GetComponent<Character>();
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_Potion_stamina_medium"), ch.transform.position, Quaternion.identity);
@@ -108,6 +111,17 @@ namespace ValheimLegends
                             ch.SetMaxHealth(25 + (7 + sLevel));
                             ch.transform.localScale = (.5f + (.01f * sLevel)) * Vector3.one;
                             ch.m_swimSpeed *= 2f;
+
+                            CharacterTimedDestruction td = GO_Wolf.GetComponent<CharacterTimedDestruction>();
+                            if (td != null)
+                            {
+                                //ZLog.Log("td valid: " + td2.isActiveAndEnabled + " timeout min " + td2.m_timeoutMin + " timeout max " + td2.m_timeoutMax);
+                                td.m_triggerOnAwake = true;
+                                td.m_timeoutMin = 900f;
+                                td.m_timeoutMax = td.m_timeoutMin;
+                                td.Trigger();
+                            }
+
                             SE_Companion se_companion = (SE_Companion)ScriptableObject.CreateInstance(typeof(SE_Companion));
                             se_companion.m_ttl = SE_Companion.m_baseTTL;
                             se_companion.damageModifier = .05f + (.01f * sLevel);

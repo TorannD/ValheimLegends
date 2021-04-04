@@ -14,9 +14,9 @@ namespace ValheimLegends
     public class Class_Berserker
     {
         //private static int Script_Layermask = LayerMask.GetMask("static_solid", "piece_nonsolid", "terrain", "vehicle", "piece");
-        //private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock");
-        private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "character_trigger", "viewblock", "Water", "WaterVolume", "character", "item", "character_noenv");
-        private static int Player_Layermask = LayerMask.GetMask("character");
+        private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "vehicle", "viewblock", "piece"); //"terrain",
+        //private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "character_trigger", "viewblock", "Water", "WaterVolume", "character", "item", "character_noenv");
+        private static int Player_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle"); //"piece",
 
         private static GameObject GO_CastFX;
 
@@ -26,7 +26,7 @@ namespace ValheimLegends
             UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_stonegolem_attack_hit"), player.transform.position, Quaternion.identity);
 
             float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
-            float sDamageMultiplier = .8f + (sLevel * .005f);
+            float sDamageMultiplier = .8f + (sLevel * .005f) * ValheimLegends.m_dmg;
 
             //RaycastHit hitInfo = default(RaycastHit);
             Vector3 lookVec = player.GetLookDir();
@@ -53,7 +53,7 @@ namespace ValheimLegends
                         yVec.y = ZoneSystem.instance.GetGroundHeight(_v) + 1f;
                         _v.y = yVec.y;
                     }
-                    flag = Physics.SphereCast(_v, 0.05f, fwdVec, out hitInfo, float.PositiveInfinity, ~Script_Layermask);
+                    flag = Physics.SphereCast(_v, 0.05f, fwdVec, out hitInfo, float.PositiveInfinity, Script_Layermask);
                     if (flag && (bool)hitInfo.collider)
                     {
                         hitVec = hitInfo.point;
@@ -64,7 +64,7 @@ namespace ValheimLegends
                 moveVec.y = ((ZoneSystem.instance.GetSolidHeight(moveVec) - ZoneSystem.instance.GetGroundHeight(moveVec) <= 1f) ? ZoneSystem.instance.GetSolidHeight(moveVec) : ZoneSystem.instance.GetGroundHeight(moveVec));
                 //GameObject go_dasheffects = ZNetScene.instance.GetPrefab("vfx_stonegolem_attack_hit");
                 //go_dasheffects.transform.localScale = Vector3.one * .5f;
-                if (flag && Vector3.Distance(new Vector3(moveVec.x, yVec.y, moveVec.z), hitVec) <= 1.5f)// && !flag2)
+                if (flag && Vector3.Distance(new Vector3(moveVec.x, yVec.y, moveVec.z), hitVec) <= 1f)// && !flag2)
                 {
                     //ZLog.Log("breaking out due to <= 1.5f: " + Vector3.Distance(new Vector3(moveVec.x, yVec.y, moveVec.z), hitVec));
                     yVec = Vector3.MoveTowards(hitVec, yVec, 1f);
@@ -83,6 +83,7 @@ namespace ValheimLegends
                     hitData.ApplyModifier(UnityEngine.Random.Range(.8f, 1.2f) * sDamageMultiplier);
                     hitData.m_point = ch.GetCenterPoint();
                     hitData.m_dir = (ch.transform.position - moveVec);
+                    hitData.m_skill = ValheimLegends.DisciplineSkill;
                     float num = Vector3.Distance(ch.transform.position, moveVec);
                     if (!ch.IsPlayer() && num <= 3f && !list.Contains(ch.GetInstanceID()))
                     {
@@ -173,7 +174,7 @@ namespace ValheimLegends
                         SE_Berserk se_berserk = (SE_Berserk)ScriptableObject.CreateInstance(typeof(SE_Berserk));
                         se_berserk.m_ttl = SE_Berserk.m_baseTTL;
                         se_berserk.speedModifier = 1.2f + (.006f * sLevel);
-                        se_berserk.damageModifier = 1.2f + (.006f * sLevel);
+                        se_berserk.damageModifier = 1.2f + (.006f * sLevel) * ValheimLegends.m_dmg;
                         se_berserk.healthAbsorbPercent = .2f + (.002f * sLevel);
 
                         //Apply effects
@@ -217,7 +218,7 @@ namespace ValheimLegends
                         float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
                         SE_Execute se_execute = (SE_Execute)ScriptableObject.CreateInstance(typeof(SE_Execute));
                         se_execute.hitCount = Mathf.RoundToInt(3f + (.04f * sLevel));
-                        se_execute.damageBonus = 1.4f + (.005f * sLevel);
+                        se_execute.damageBonus = 1.4f + (.005f * sLevel) * ValheimLegends.m_dmg;
                         se_execute.staggerForce = 1.5f + (.005f * sLevel);
 
                         //Apply effects

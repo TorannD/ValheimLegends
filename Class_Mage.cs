@@ -128,11 +128,13 @@ namespace ValheimLegends
                     target.y += rnd.Next(-10, 10);
                     target.z += rnd.Next(-10, 10);
                     HitData hitData = new HitData();
-                    hitData.m_damage.m_fire = UnityEngine.Random.Range(30 + (.5f * sLevel), 50 + sLevel) * ValheimLegends.abilityDamageMultiplier.Value;
-                    hitData.m_damage.m_blunt = UnityEngine.Random.Range(15 + (.25f * sLevel), 30 + (.5f * sLevel)) * ValheimLegends.abilityDamageMultiplier.Value;
+                    hitData.m_damage.m_fire = UnityEngine.Random.Range(30 + (.5f * sLevel), 50 + sLevel) * ValheimLegends.m_dmg;
+                    hitData.m_damage.m_blunt = UnityEngine.Random.Range(15 + (.25f * sLevel), 30 + (.5f * sLevel)) * ValheimLegends.m_dmg;
                     hitData.m_pushForce = 10f;
+                    hitData.m_skill = ValheimLegends.EvocationSkill;
                     Vector3 a = Vector3.MoveTowards(GO_Meteor.transform.position, target, 1f);
                     P_Meteor.Setup(null, (a - GO_Meteor.transform.position) * UnityEngine.Random.Range(58f, 63f), -1f, hitData, null);
+                    Traverse.Create(root: P_Meteor).Field("m_skill").SetValue(ValheimLegends.EvocationSkill);
                     GO_CastFX = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_guardstone_permitted_removed"), player.transform.position + player.transform.right * UnityEngine.Random.Range(-1f, 1f) + player.transform.up * UnityEngine.Random.Range(0, 1.5f), Quaternion.identity);
                 }
 
@@ -189,10 +191,11 @@ namespace ValheimLegends
                             {
                                 Vector3 direction = (ch.transform.position - player.transform.position);
                                 HitData hitData = new HitData();
-                                hitData.m_damage.m_frost = UnityEngine.Random.Range(10 + (.5f * sLevel), 20 + sLevel) * ValheimLegends.abilityDamageMultiplier.Value;
+                                hitData.m_damage.m_frost = UnityEngine.Random.Range(10 + (.5f * sLevel), 20 + sLevel) * ValheimLegends.m_dmg;
                                 hitData.m_pushForce = 50f;
                                 hitData.m_point = ch.GetEyePoint();
                                 hitData.m_dir = (player.transform.position - ch.transform.position);
+                                hitData.m_skill = ValheimLegends.EvocationSkill;
                                 ch.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);
                                 SE_Slow se_frost = (SE_Slow)ScriptableObject.CreateInstance(typeof(SE_Slow));
                                 ch.GetSEMan().AddStatusEffect(se_frost.name, true);
@@ -218,11 +221,12 @@ namespace ValheimLegends
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability1_CD"))
                 {
                     //player.Message(MessageHud.MessageType.Center, "Fireball");
-                    if (player.GetStamina() >= VL_Utility.GetFireballCost)
+                    float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.EvocationSkillDef).m_level;
+                    if (player.GetStamina() >= (VL_Utility.GetFireballCost + (.5f * sLevel)))
                     {
                         ValheimLegends.shouldUseGuardianPower = false;
                         //Skill influence
-                        float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.EvocationSkillDef).m_level;
+                        
 
                         //Ability Cooldown
                         StatusEffect se_cd = (SE_Ability1_CD)ScriptableObject.CreateInstance(typeof(SE_Ability1_CD));
@@ -230,7 +234,7 @@ namespace ValheimLegends
                         player.GetSEMan().AddStatusEffect(se_cd);
 
                         //Ability Cost
-                        player.UseStamina(VL_Utility.GetFireballCost);
+                        player.UseStamina(VL_Utility.GetFireballCost + (.5f * sLevel));
 
                         //Effects, animations, and sounds
                         ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("gpower");
@@ -252,7 +256,7 @@ namespace ValheimLegends
                         P_Fireball.m_ttl = 60f;
                         P_Fireball.m_gravity = 2.5f;
                         P_Fireball.m_rayRadius = .1f;
-                        P_Fireball.m_aoe = 3f + (.001f * sLevel);
+                        P_Fireball.m_aoe = 3f + (.02f * sLevel);
                         P_Fireball.transform.localRotation = Quaternion.LookRotation(player.GetAimDir(vector));
                         GO_Fireball.transform.localScale = Vector3.zero;
 
@@ -260,11 +264,13 @@ namespace ValheimLegends
                         Vector3 position = player.transform.position;
                         Vector3 target = (!Physics.Raycast(vector, player.GetLookDir(), out hitInfo, float.PositiveInfinity, Script_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
                         HitData hitData = new HitData();
-                        hitData.m_damage.m_fire = UnityEngine.Random.Range(10f + sLevel, 40f + sLevel) * ValheimLegends.abilityDamageMultiplier.Value;
-                        hitData.m_damage.m_blunt = UnityEngine.Random.Range(5f + (.5f *sLevel), 20f + (.5f * sLevel)) * ValheimLegends.abilityDamageMultiplier.Value;
+                        hitData.m_damage.m_fire = UnityEngine.Random.Range(10f + (1.5f *sLevel), 40f + (1.5f * sLevel)) * ValheimLegends.m_dmg;
+                        hitData.m_damage.m_blunt = UnityEngine.Random.Range(5f + (.75f *sLevel), 20f + (.75f * sLevel)) * ValheimLegends.m_dmg;
                         hitData.m_pushForce = 2f;
+                        hitData.m_skill = ValheimLegends.EvocationSkill;
                         Vector3 a = Vector3.MoveTowards(GO_Fireball.transform.position, target, 1f);
                         P_Fireball.Setup(null, (a - GO_Fireball.transform.position) * 25f, -1f, hitData, null);
+                        Traverse.Create(root: P_Fireball).Field("m_skill").SetValue(ValheimLegends.EvocationSkill);
                         GO_Fireball = null;
 
                         //Skill gain

@@ -58,7 +58,7 @@ namespace ValheimLegends
 
                         //Apply effects
                         rootCount = 0;
-                        rootCountTrigger = 30 - Mathf.RoundToInt(.15f * sLevel);
+                        rootCountTrigger = 24 - Mathf.RoundToInt(.12f * sLevel);
                         Vector3 shiftVec = player.transform.right * 2.5f;
                         if (UnityEngine.Random.Range(0f, 1f) < .5f)
                         {
@@ -76,8 +76,8 @@ namespace ValheimLegends
                         P_Root.m_spawnOnHit = null;
                         P_Root.m_ttl = 35f;
                         P_Root.m_gravity = 0f;
-                        P_Root.m_rayRadius = .1f;
-
+                        P_Root.m_rayRadius = .1f;                        
+                        Traverse.Create(root: P_Root).Field("m_skill").SetValue(ValheimLegends.ConjurationSkill);
                         P_Root.transform.localRotation = Quaternion.LookRotation(player.GetLookDir());
                         GO_Root.transform.localScale = Vector3.one * 1.5f;
 
@@ -114,12 +114,13 @@ namespace ValheimLegends
                         Vector3 position = player.transform.position;
                         Vector3 target = (!Physics.Raycast(player.GetEyePoint(), player.GetLookDir(), out hitInfo, float.PositiveInfinity, Script_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
                         HitData hitData = new HitData();
-                        hitData.m_damage.m_pierce = UnityEngine.Random.Range(10f + (.5f * sLevel), 15 + sLevel) * ValheimLegends.abilityDamageMultiplier.Value;
+                        hitData.m_damage.m_pierce = UnityEngine.Random.Range(10f + (.6f * sLevel), 15 + (1.2f * sLevel)) * ValheimLegends.m_dmg;
                         hitData.m_pushForce = 2f;
                         Vector3 a = Vector3.MoveTowards(GO_Root.transform.position, target, 1f);
                         if (P_Root != null && P_Root.name == "Root")
                         {
-                            P_Root.Setup(player, (a - GO_Root.transform.position) * 60f, -1f, hitData, null);
+                            P_Root.Setup(player, (a - GO_Root.transform.position) * 75f, -1f, hitData, null);
+                            Traverse.Create(root: P_Root).Field("m_skill").SetValue(ValheimLegends.ConjurationSkill);
                         }
                     }
                     GO_Root = null;
@@ -142,6 +143,7 @@ namespace ValheimLegends
                     P_Root.m_ttl = rootCountTrigger + 1;
                     P_Root.m_gravity = 0f;
                     P_Root.m_rayRadius = .1f;
+                    Traverse.Create(root: P_Root).Field("m_skill").SetValue(ValheimLegends.ConjurationSkill);
                     P_Root.transform.localRotation = Quaternion.LookRotation(player.GetLookDir());
                     GO_Root.transform.localScale = Vector3.one * 1.5f;
                     //P_Root.Setup(player, Vector3.zero, -1f, null, null);
@@ -161,7 +163,8 @@ namespace ValheimLegends
                     hitData.m_damage.m_pierce = 10f;
                     hitData.m_pushForce = 10f;
                     Vector3 a = Vector3.MoveTowards(GO_Root.transform.position, target, 1f);
-                    P_Root.Setup(player, (a - GO_Root.transform.position) * 65f, -1f, hitData, null);                    
+                    P_Root.Setup(player, (a - GO_Root.transform.position) * 65f, -1f, hitData, null);
+                    Traverse.Create(root: P_Root).Field("m_skill").SetValue(ValheimLegends.ConjurationSkill);
                 }
                 //GO_Root.SetActive(false);
                 GO_Root = null;
@@ -174,6 +177,10 @@ namespace ValheimLegends
                     //player.Message(MessageHud.MessageType.Center, "Plant defenders");
                     if (player.GetStamina() >= VL_Utility.GetDefenderCost)
                     {
+                        Vector3 lookVec = player.GetLookDir();
+                        lookVec.y = 0f;
+                        player.transform.rotation = Quaternion.LookRotation(lookVec);
+
                         ValheimLegends.shouldUseGuardianPower = false;
                         //Ability Cooldown
                         StatusEffect se_cd = (SE_Ability2_CD)ScriptableObject.CreateInstance(typeof(SE_Ability2_CD));
@@ -194,22 +201,87 @@ namespace ValheimLegends
                         //Lingering effects
 
                         //Apply effects
-                        GameObject prefab = ZNetScene.instance.GetPrefab("TentaRoot");
-                        
-                        int rootDefenderCount = 3 + Mathf.RoundToInt(.125f * sLevel);
-                        for (int i = 0; i < rootDefenderCount; i++)
+                        GameObject prefab = ZNetScene.instance.GetPrefab("TentaRoot"); //ZNetScene.instance.GetPrefab("Deathsquito");  //
+                        CharacterTimedDestruction td = prefab.GetComponent<CharacterTimedDestruction>();
+                        if (td != null)
                         {
-                            rootVec = player.transform.position + (player.transform.right * (UnityEngine.Random.Range(-rootDefenderCount * 3f, rootDefenderCount * 3f)) + (player.GetLookDir() * 3f * UnityEngine.Random.Range(1,  2 * rootDefenderCount)));
-                            GO_RootDefender = UnityEngine.Object.Instantiate(prefab, new Vector3(rootVec.x, rootVec.y, rootVec.z), Quaternion.identity);
+                            //ZLog.Log("td valid: " + td.isActiveAndEnabled + " timeout min " + td.m_timeoutMin + " timeout max " + td.m_timeoutMax);
+                            td.m_timeoutMin = 30f + (.5f *sLevel);
+                            td.m_timeoutMax = td.m_timeoutMin;
+                        }
+                        List<Vector3> rootVecs = new List<Vector3>();
+                        rootVecs.Clear();
+                        rootVec = player.transform.position + (player.GetLookDir() * 5f) + (player.transform.right * 5f);
+                        rootVecs.Add(rootVec);
+                        rootVec = player.transform.position + (player.GetLookDir() * 5f) + (player.transform.right * 5f * -1f);
+                        rootVecs.Add(rootVec);
+                        rootVec = player.transform.position + (player.GetLookDir() * 5f * -1f);
+                        rootVecs.Add(rootVec);
+                        
+                        for(int i = 0; i < rootVecs.Count; i++)
+                        {
+                            GO_RootDefender = UnityEngine.Object.Instantiate(prefab, rootVecs[i], Quaternion.identity);
                             Character ch = GO_RootDefender.GetComponent<Character>();
+
                             if (ch != null)
                             {
-                                ch.SetMaxHealth(50 + Mathf.RoundToInt(UnityEngine.Random.Range(sLevel, 3f * sLevel)));
-                                ch.transform.localScale = (.75f + (.005f * sLevel)) * Vector3.one;                                
+                                SE_RootsBuff se_RootsBuff = (SE_RootsBuff)ScriptableObject.CreateInstance(typeof(SE_RootsBuff));
+                                se_RootsBuff.m_ttl = SE_RootsBuff.m_baseTTL;
+                                se_RootsBuff.damageModifier = .5f + (.015f * sLevel);
+                                se_RootsBuff.staminaRegen = .5f + (.05f * sLevel);
+                                se_RootsBuff.summoner = player;
+                                se_RootsBuff.centerPoint = player.transform.position;
+                                ch.GetSEMan().AddStatusEffect(se_RootsBuff);
+
+                                ch.SetMaxHealth(30f + (6f * sLevel));
+                                ch.transform.localScale = (.75f + (.005f * sLevel)) * Vector3.one;
                                 ch.m_faction = Character.Faction.Players;
                                 ch.SetTamed(true);
                             }
                             UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_Potion_stamina_medium"), ch.transform.position, Quaternion.identity);
+                        }
+
+                        //Deathsquito's actually
+                        GameObject prefab2 = ZNetScene.instance.GetPrefab("Deathsquito");  //
+                        prefab2.AddComponent<CharacterTimedDestruction>();
+                        prefab2.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 10f;
+                        prefab2.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 10f;
+                        int rootDefenderCount = 3 + Mathf.RoundToInt(.065f * sLevel);
+                        for (int i = 0; i < rootDefenderCount; i++)
+                        {
+                            rootVec = player.transform.position + player.transform.up * 4f + (player.GetLookDir() * UnityEngine.Random.Range(-(5f + .1f * sLevel), (5f + .1f * sLevel)) + player.transform.right * UnityEngine.Random.Range(-(5f + .1f * sLevel), (5f + .1f * sLevel)));
+                            GameObject go_deathsquit = UnityEngine.Object.Instantiate(prefab2, rootVec, Quaternion.identity);
+                            CharacterTimedDestruction td2 = go_deathsquit.GetComponent<CharacterTimedDestruction>();
+                            if (td2 != null)
+                            {
+                                //ZLog.Log("td valid: " + td2.isActiveAndEnabled + " timeout min " + td2.m_timeoutMin + " timeout max " + td2.m_timeoutMax);
+                                td2.m_triggerOnAwake = true;                               
+                                td2.m_timeoutMin = 30f + (.5f * sLevel);
+                                td2.m_timeoutMax = td.m_timeoutMin;
+                                td2.Trigger();
+                            }
+                            Character ch2 = go_deathsquit.GetComponent<Character>();
+                            if (ch2 != null)
+                            {
+                                SE_Companion se_companion = (SE_Companion)ScriptableObject.CreateInstance(typeof(SE_Companion));
+                                se_companion.m_ttl = 60f;
+                                se_companion.damageModifier = .1f + (.01f * sLevel);
+                                se_companion.summoner = player;
+                                ch2.GetSEMan().AddStatusEffect(se_companion);
+
+                                ch2.SetMaxHealth(10f + (2f * sLevel));
+                                ch2.transform.localScale = (.4f + (.005f * sLevel)) * Vector3.one;
+                                ch2.m_faction = Character.Faction.Players;
+                                ch2.SetTamed(true);
+                                MonsterAI ai = ch2.GetBaseAI() as MonsterAI;
+                                ai.SetFollowTarget(player.gameObject);
+                                CharacterDrop comp = ch2.GetComponent<CharacterDrop>();
+                                if (comp != null)
+                                {
+                                    comp.m_drops.Clear();
+                                }
+                            }
+                            UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_float_hitwater"), ch2.transform.position, Quaternion.identity);
                         }
 
                         //Skill gain
@@ -253,13 +325,13 @@ namespace ValheimLegends
                         SE_Regeneration se_regen = (SE_Regeneration)ScriptableObject.CreateInstance(typeof(SE_Regeneration));
                         se_regen.m_ttl = SE_Regeneration.m_baseTTL;
                         se_regen.m_icon = ZNetScene.instance.GetPrefab("TrophyGreydwarfShaman").GetComponent<ItemDrop>().m_itemData.GetIcon();
-                        se_regen.m_HealAmount = .5f + (.5f * sLevel);
+                        se_regen.m_HealAmount = .5f + (.3f * sLevel) * ValheimLegends.m_dmg;
                         se_regen.doOnce = false;
 
                         //Apply effects
                         List<Player> allPlayers = new List<Player>();
                         allPlayers.Clear();
-                        Player.GetPlayersInRange(player.GetCenterPoint(), 24f + (.2f * sLevel), allPlayers);
+                        Player.GetPlayersInRange(player.GetCenterPoint(), 30f + (.2f * sLevel), allPlayers);
                         foreach (Player p in allPlayers)
                         {
                             if(p == Player.m_localPlayer)

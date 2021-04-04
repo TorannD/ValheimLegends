@@ -13,8 +13,8 @@ namespace ValheimLegends
         public static GameObject GO_SEFX;
 
         [Header("SE_VL_Regeneration")]
-        public float m_damageInterval = 1f;
-        public static float m_baseTTL = 10f;
+        public float m_damageInterval = 2f;
+        public static float m_baseTTL = 20f;
         public float m_TTLPerDamagePlayer = 2f;
         public float m_TTLPerDamage = 2f;
         public float m_TTLPower = 0.5f;
@@ -40,7 +40,7 @@ namespace ValheimLegends
             {
                 doOnce = false;
                 //ZLog.Log("setting up regeneration, average skill is " +);
-                m_HealAmount = 2f + (.5f * (m_character.GetSkills().GetTotalSkill() / m_character.GetSkills().GetSkillList().Count));
+                m_HealAmount = 2f + (.2f * (m_character.GetSkills().GetTotalSkill() / m_character.GetSkills().GetSkillList().Count));
             }
             m_timer -= dt;
             if (m_timer <= 0f)

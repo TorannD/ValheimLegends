@@ -113,6 +113,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="VL_ConfigSync.cs" />
+    <Compile Include="SE_RootsBuff.cs" />
     <Compile Include="SE_Slow.cs" />
     <Compile Include="VL_SkillData.cs" />
     <Compile Include="SE_Ability3_CD.cs" />

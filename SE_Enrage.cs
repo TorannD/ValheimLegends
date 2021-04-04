@@ -13,8 +13,8 @@ namespace ValheimLegends
         public static GameObject GO_SEFX;
 
         [Header("SE_VL_Enrage")]
-        public static float m_baseTTL = 30f;
-        public float speedModifier = 1.4f;
+        public static float m_baseTTL = 20f;
+        public float speedModifier = 1.25f;
         private float m_timer = 0f;
         private float m_interval = 1f;
         public float staminaModifier = 10f;
@@ -42,9 +42,9 @@ namespace ValheimLegends
             {
                 doOnce = false;
                 float sLevel = m_character.GetSkills().GetTotalSkill() / (float)m_character.GetSkills().GetSkillList().Count;
-                m_ttl = 30f + (.3f * sLevel);
+                m_ttl = 20f + (.2f * sLevel);
                 staminaModifier = 5f + (.1f * sLevel);
-                speedModifier = 1.3f + (.025f * sLevel);  //1.4f
+                speedModifier = 1.25f + (.025f * sLevel);  //1.4f
             }
             m_timer -= dt;
             if (m_timer <= 0f)

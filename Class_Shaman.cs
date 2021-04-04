@@ -46,7 +46,7 @@ namespace ValheimLegends
                         //Lingering effects
                         SE_SpiritDrain se_spiritdrain = (SE_SpiritDrain)ScriptableObject.CreateInstance(typeof(SE_SpiritDrain));
                         se_spiritdrain.m_ttl = SE_SpiritDrain.m_baseTTL;
-                        se_spiritdrain.damageModifier = 1f + (.02f * sLevel);
+                        se_spiritdrain.damageModifier = 1f + (.1f * sLevel);
 
                         //Apply effects
                         List<Character> allCharacters = Character.GetAllCharacters();
@@ -56,10 +56,11 @@ namespace ValheimLegends
                             {
                                 Vector3 direction = (ch.transform.position - player.transform.position);
                                 HitData hitData = new HitData();
-                                hitData.m_damage.m_spirit = rnd.Next(12, 24) * (1f + .02f) * ValheimLegends.abilityDamageMultiplier.Value;
+                                hitData.m_damage.m_spirit = UnityEngine.Random.Range(12f + (.75f * sLevel), 24f + (1.25f * sLevel)) * ValheimLegends.m_dmg;
                                 hitData.m_pushForce = 25f + (.1f * sLevel);
                                 hitData.m_point = ch.GetEyePoint();
                                 hitData.m_dir = (player.transform.position - ch.transform.position);
+                                hitData.m_skill = ValheimLegends.EvocationSkill;
                                 ch.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);
                                 ch.GetSEMan().AddStatusEffect(se_spiritdrain);
                             }
@@ -106,14 +107,14 @@ namespace ValheimLegends
                         
                         List<Player> allPlayers = new List<Player>();
                         allPlayers.Clear();
-                        Player.GetPlayersInRange(player.transform.position, (20f + .05f * sLevel), allPlayers);
+                        Player.GetPlayersInRange(player.transform.position, (30f + .2f * sLevel), allPlayers);
                         GameObject effect = ZNetScene.instance.GetPrefab("fx_guardstone_permitted_add");
                         foreach (Player p in allPlayers)
                         {
                             SE_Shell se_shell = (SE_Shell)ScriptableObject.CreateInstance(typeof(SE_Shell));
-                            se_shell.m_ttl = SE_Shell.m_baseTTL + (.4f * sLevel);
-                            se_shell.spiritDamageOffset = 6f + (.06f * sLevel);
-                            se_shell.resistModifier = .8f - (.004f * sLevel);
+                            se_shell.m_ttl = SE_Shell.m_baseTTL + (.35f * sLevel);
+                            se_shell.spiritDamageOffset = 6f + (.3f * sLevel);
+                            se_shell.resistModifier = .6f - (.006f * sLevel);
                             se_shell.m_icon = ZNetScene.instance.GetPrefab("ShieldSerpentscale").GetComponent<ItemDrop>().m_itemData.GetIcon();
                             se_shell.doOnce = false;
                             if(p == Player.m_localPlayer)
@@ -179,9 +180,9 @@ namespace ValheimLegends
                         List<Player> allPlayers = new List<Player>();
                         Player.GetPlayersInRange(player.transform.position, 30f, allPlayers);
                         SE_Enrage se_enrage = (SE_Enrage)ScriptableObject.CreateInstance(typeof(SE_Enrage));
-                        se_enrage.m_ttl = 30f + (.3f * sLevel);
+                        se_enrage.m_ttl = 20f + (.2f * sLevel);
                         se_enrage.staminaModifier = 5f + (.1f * sLevel);
-                        se_enrage.speedModifier = 1.3f + (.025f * sLevel); 
+                        se_enrage.speedModifier = 1.25f + (.025f * sLevel); 
                         se_enrage.m_icon = ZNetScene.instance.GetPrefab("TrophyGoblinBrute").GetComponent<ItemDrop>().m_itemData.GetIcon();
                         se_enrage.doOnce = false;
                         

@@ -81,6 +81,10 @@ namespace ValheimLegends
                     {
                         (__result as SE_Companion).m_icon = SE_Companion.AbilityIcon;
                     }
+                    else if (name == "SE_RootsBuff")
+                    {
+                        (__result as SE_RootsBuff).m_icon = SE_RootsBuff.AbilityIcon;
+                    }
 
                     if (name == "SE_Ability1_CD")
                     {
@@ -113,6 +117,7 @@ namespace ValheimLegends
                 SE_PowerShot.AbilityIcon = ZNetScene.instance.GetPrefab("ArrowFire").GetComponent<ItemDrop>().m_itemData.GetIcon();
                 SE_ShadowStalk.AbilityIcon = ZNetScene.instance.GetPrefab("TrophyWraith").GetComponent<ItemDrop>().m_itemData.GetIcon();
                 SE_Companion.AbilityIcon = ZNetScene.instance.GetPrefab("TrophyWolf").GetComponent<ItemDrop>().m_itemData.GetIcon();
+                SE_RootsBuff.AbilityIcon = ZNetScene.instance.GetPrefab("TrophyWolf").GetComponent<ItemDrop>().m_itemData.GetIcon();
                 SE_Slow.AbilityIcon = ZNetScene.instance.GetPrefab("TrophyWolf").GetComponent<ItemDrop>().m_itemData.GetIcon();
 
                 SE_Ability1_CD.AbilityIcon = ZNetScene.instance.GetPrefab("ShieldWood").GetComponent<ItemDrop>().m_itemData.GetIcon();
@@ -178,6 +183,10 @@ namespace ValheimLegends
             if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_Companion"))
             {
                 odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_Companion>());
+            }
+            if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_RootsBuff"))
+            {
+                odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_RootsBuff>());
             }
             if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_Slow"))
             {

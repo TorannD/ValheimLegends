@@ -40,8 +40,8 @@ namespace ValheimLegends
                         player.UseStamina(VL_Utility.GetLeapCost);
 
                         //Effects, animations, and sounds
-                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("jump");
-
+                        //((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("jump");
+                        player.StartEmote("cheer");
                         //Apply effects
                         Vector3 velVec = player.GetVelocity();
                         Rigidbody playerBody = Traverse.Create(root: player).Field(name: "m_body").GetValue<Rigidbody>();
@@ -134,13 +134,14 @@ namespace ValheimLegends
 
                         //Effects, animations, and sounds
                         ValheimLegends.shouldUseGuardianPower = false;
-                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("gpower");
-                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetSpeed(1.8f);
+                        //((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("gpower");
+                        //((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetSpeed(5f);
+                        player.StartEmote("challenge");
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_guardstone_deactivate"), player.GetCenterPoint(), Quaternion.identity);
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("sfx_metal_blocked"), player.transform.position, Quaternion.identity);
 
                         //Lingering effects
-                        StatusEffect SE_bulwark = (SE_Bulwark)ScriptableObject.CreateInstance(typeof(SE_Bulwark));
+                        SE_Bulwark SE_bulwark = (SE_Bulwark)ScriptableObject.CreateInstance(typeof(SE_Bulwark));
                         SE_bulwark.m_ttl = SE_Bulwark.m_baseTTL + Mathf.RoundToInt(player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AbjurationSkillDef).m_level * .2f);
                         player.GetSEMan().AddStatusEffect(SE_bulwark);
 
@@ -166,6 +167,7 @@ namespace ValheimLegends
             List<Character> allCharacters = Character.GetAllCharacters();
             //player.Message(MessageHud.MessageType.Center, "valkyrie impact");
             inFlight = false;
+            ValheimLegends.shouldValkyrieImpact = false;
             foreach (Character ch in allCharacters)
             {
                 float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
@@ -173,10 +175,11 @@ namespace ValheimLegends
                 {
                     Vector3 direction = (ch.transform.position - player.transform.position);
                     HitData hitData = new HitData();
-                    hitData.m_damage.m_blunt = 5 + (3f * altitude) + 2f * UnityEngine.Random.Range(sLevel, 3f * sLevel) * ValheimLegends.abilityDamageMultiplier.Value;
-                    hitData.m_pushForce = 20f * ValheimLegends.abilityDamageMultiplier.Value;
+                    hitData.m_damage.m_blunt = 5 + (3f * altitude) + 2f * UnityEngine.Random.Range(sLevel, 3f * sLevel) * ValheimLegends.m_dmg;
+                    hitData.m_pushForce = 20f * ValheimLegends.m_dmg;
                     hitData.m_point = ch.GetEyePoint();
                     hitData.m_dir = (player.transform.position - ch.transform.position);
+                    hitData.m_skill = ValheimLegends.DisciplineSkill;
                     ch.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);                    
                     ch.Stagger(direction);
                 }
