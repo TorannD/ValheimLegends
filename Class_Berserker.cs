@@ -88,12 +88,6 @@ namespace ValheimLegends
                 {
                     HitData hitData = new HitData();                    
                     hitData.m_damage = player.GetCurrentWeapon().GetDamage();
-                    SE_Execute se_exec = (SE_Execute)player.GetSEMan().GetStatusEffect("SE_VL_Execute");
-                    if (se_exec != null)
-                    {
-                        sDamageMultiplier *= se_exec.damageBonus;
-                        se_exec.hitCount--;
-                    }
                     hitData.ApplyModifier(UnityEngine.Random.Range(.8f, 1.2f) * sDamageMultiplier);
                     hitData.m_point = ch.GetCenterPoint();
                     hitData.m_dir = (ch.transform.position - moveVec);
@@ -101,6 +95,16 @@ namespace ValheimLegends
                     float num = Vector3.Distance(ch.transform.position, moveVec);
                     if (!ch.IsPlayer() && num <= 3f && !list.Contains(ch.GetInstanceID()))
                     {
+                        SE_Execute se_exec = (SE_Execute)player.GetSEMan().GetStatusEffect("SE_VL_Execute");
+                        if (se_exec != null)
+                        {
+                            hitData.ApplyModifier(se_exec.damageBonus);
+                            se_exec.hitCount--;
+                            if(se_exec.hitCount <= 0)
+                            {
+                                player.GetSEMan().RemoveStatusEffect(se_exec);
+                            }
+                        }
                         ch.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_crit"), ch.GetCenterPoint(), Quaternion.identity);
                         list.Add(ch.GetInstanceID());

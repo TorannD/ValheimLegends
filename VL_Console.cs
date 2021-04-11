@@ -80,10 +80,11 @@ namespace ValheimLegends
                 ValheimLegends.vl_player.vl_class = ValheimLegends.PlayerClass.None;
                 flag = true;
             }
-
             if (flag)
             {
+
                 Console.instance.Print("Class changed to " + className);
+
                 ValheimLegends.UpdateVLPlayer(Player.m_localPlayer);
                 ValheimLegends.NameCooldowns();
                 if (ValheimLegends.abilitiesStatus != null)

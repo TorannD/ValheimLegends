@@ -20,7 +20,9 @@ namespace ValheimLegends
         public static Harmony _Harmony;
 
         public const string Version = "0.2.4";
+        public const float VersionF = 0.24f;
         public const string ModName = "Valheim Legends";
+        public static bool playerEnabled = true;
 
         //loaded info
         public static List<VL_Player> vl_playerList;
@@ -389,7 +391,7 @@ namespace ValheimLegends
         {
             public static void Postfix(Console __instance, InputField ___m_input)
             {
-                if ((bool)ZNet.instance && ZNet.instance.IsServer() && (bool)Player.m_localPlayer && __instance.IsCheatsEnabled())
+                if ((bool)ZNet.instance && ZNet.instance.IsServer() && (bool)Player.m_localPlayer && __instance.IsCheatsEnabled() && playerEnabled)
                 {
                     string text = ___m_input.text;
                     string[] array = text.Split(' ');
@@ -860,7 +862,7 @@ namespace ValheimLegends
         {
             public static void Postfix(Localization __instance, string language)
             {
-                if (language == "English")
+                if (true) //language == "English")
                 {
                     MethodInfo methodInfo = AccessTools.Method(typeof(Localization), "AddWord", (Type[])null, (Type[])null);
                     methodInfo.Invoke(__instance, new object[2]
@@ -1071,13 +1073,8 @@ namespace ValheimLegends
             public static void Postfix(Player __instance, ref float ___m_maxAirAltitude)
             {
                 Player localPlayer = Player.m_localPlayer;                
-                if (localPlayer != null)
+                if (localPlayer != null && playerEnabled)
                 {
-                    //if(vl_player == null || vl_player.vl_name != localPlayer.GetPlayerName())
-                    //{
-                    //    ZLog.Log("update initialize");
-                    //    SetVLPlayer(localPlayer);
-                    //}
                     if (VL_Utility.TakeInput(localPlayer) && !localPlayer.InPlaceMode())
                     {
                         if (vl_player.vl_class == PlayerClass.Mage)
@@ -1262,6 +1259,7 @@ namespace ValheimLegends
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_cooldownMultiplier", vl_svr_cooldownMultiplier.Value);
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_abilityDamageMultiplier",vl_svr_abilityDamageMultiplier.Value);
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_skillGainMultiplier", vl_svr_skillGainMultiplier.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_version", VersionF);
             
 
             //assets

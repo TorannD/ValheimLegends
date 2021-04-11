@@ -34,6 +34,7 @@ namespace ValheimLegends
                     cleanConfigData.Add(rawConfigData[i]);
                 }
 
+                cleanConfigData.Add("vl_svr_version = " + ValheimLegends.VersionF);
                 //Add number of clean lines to package
                 pkg.Write(cleanConfigData.Count);
 
@@ -65,7 +66,7 @@ namespace ValheimLegends
                     }
 
                     char[] trm = { ' ', '=' };
-
+                    bool syncOrVersionFailure = false;
                     for (int i = 0; i < numLines; i++)
                     {
                         string line = configPkg.ReadString();
@@ -73,7 +74,16 @@ namespace ValheimLegends
                         string key = line.Substring(0, line.IndexOf('=') + 1);  //line.Substring(0, line.IndexOf('=') + 1);    
                         key = key.Trim(trm);
                         //ZLog.Log("key string is " + key);
-                        if (VL_GlobalConfigs.ConfigStrings.ContainsKey(key))
+                        if(key == "vl_svr_version")
+                        {
+                            string val = line.Substring(line.IndexOf('=') + 1);
+                            val = val.Trim(trm);
+                            if(float.Parse(val) != VL_GlobalConfigs.ConfigStrings[key])
+                            {
+                                syncOrVersionFailure = true;
+                            }
+                        }
+                        else if (VL_GlobalConfigs.ConfigStrings.ContainsKey(key))
                         {
                             //ZLog.Log("found match: ");
                             string val = line.Substring(line.IndexOf('=') + 1);
@@ -83,8 +93,16 @@ namespace ValheimLegends
                             //ZLog.Log("config value is " + VL_GlobalConfigs.ConfigStrings[key]);
                         }          
                     }
-
-                    ZLog.Log("Valheim Legends configurations synced to server.");
+                    if (syncOrVersionFailure)
+                    {
+                        ZLog.LogWarning("Valheim Legends version mismatch; disabling.");
+                        ValheimLegends.playerEnabled = false;
+                        //ValheimLegends._Harmony.UnpatchSelf();
+                    }
+                    else
+                    {
+                        ZLog.Log("Valheim Legends configurations synced to server.");
+                    }
                 }
             }
         }
