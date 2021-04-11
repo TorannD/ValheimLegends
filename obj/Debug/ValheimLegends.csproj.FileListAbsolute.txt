@@ -5,10 +5,10 @@ C:\Users\Gladius\OneDrive\Modding\Valheim\ValheimLegends\ValheimLegends\bin\Debu
 C:\Users\Gladius\OneDrive\Modding\Valheim\ValheimLegends\ValheimLegends\obj\Debug\ValheimLegends.csproj.CoreCompileInputs.cache
 C:\Users\Gladius\OneDrive\Modding\Valheim\ValheimLegends\ValheimLegends\obj\Debug\ValheimLegends.dll
 C:\Users\Gladius\OneDrive\Modding\Valheim\ValheimLegends\ValheimLegends\obj\Debug\ValheimLegends.pdb
-E:\Programs\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimLegends.dll
-E:\Programs\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimLegends.pdb
 C:\Users\Gladius\OneDrive\Modding\Valheim\ValheimLegends\ValheimLegends\obj\Debug\ValheimLegends.csprojAssemblyReference.cache
-E:\Programs\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimLegends\ValheimLegends\obj\Debug\ValheimLegends.csprojAssemblyReference.cache
 E:\Programs\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimLegends\ValheimLegends\obj\Debug\ValheimLegends.csproj.CoreCompileInputs.cache
 E:\Programs\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimLegends\ValheimLegends\obj\Debug\ValheimLegends.dll
 E:\Programs\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimLegends\ValheimLegends\obj\Debug\ValheimLegends.pdb
+E:\Programs\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimLegends.dll
+E:\Programs\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimLegends.pdb
+E:\Programs\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimLegends\ValheimLegends\obj\Debug\ValheimLegends.csprojAssemblyReference.cache

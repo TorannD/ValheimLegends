@@ -44,7 +44,7 @@ namespace ValheimLegends
                 float sLevel = m_character.GetSkills().GetTotalSkill() / (float)m_character.GetSkills().GetSkillList().Count;
                 m_ttl = 20f + (.2f * sLevel);
                 staminaModifier = 5f + (.1f * sLevel);
-                speedModifier = 1.25f + (.025f * sLevel);  //1.4f
+                speedModifier = 1.25f + (.0025f * sLevel);  //1.4f
             }
             m_timer -= dt;
             if (m_timer <= 0f)

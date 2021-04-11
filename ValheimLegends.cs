@@ -14,13 +14,12 @@ using UnityEngine.UI;
 
 namespace ValheimLegends
 {
-    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.2.3")]
-    [BepInProcess("valheim.exe")]
+    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.2.4")]
     public class ValheimLegends : BaseUnityPlugin
     {
-        private static Harmony _Harmony;
+        public static Harmony _Harmony;
 
-        public const string Version = "0.2.3";
+        public const string Version = "0.2.4";
         public const string ModName = "Valheim Legends";
 
         //loaded info
@@ -55,10 +54,10 @@ namespace ValheimLegends
         public static ConfigEntry<string> Ability3_Hotkey;
         public static ConfigEntry<string> Ability3_Hotkey_Combo;
 
-        public static ConfigEntry<float> energyCostMultiplier;
-        public static ConfigEntry<float> cooldownMultiplier;
-        public static ConfigEntry<float> abilityDamageMultiplier;
-        public static ConfigEntry<float> skillGainMultiplier;
+        public static ConfigEntry<float> vl_svr_energyCostMultiplier;
+        public static ConfigEntry<float> vl_svr_cooldownMultiplier;
+        public static ConfigEntry<float> vl_svr_abilityDamageMultiplier;
+        public static ConfigEntry<float> vl_svr_skillGainMultiplier;
         
         public static ConfigEntry<float> icon_X_Offset;
         public static ConfigEntry<float> icon_Y_Offset;
@@ -66,15 +65,8 @@ namespace ValheimLegends
         public static ConfigEntry<bool> showAbilityIcons;
         public static ConfigEntry<string> iconAlignment;
 
-        //public static ConfigVariable<string> chosenClass;
+        public static ConfigEntry<string> chosenClass;
         public static readonly Color abilityCooldownColor = new Color(1f, .3f, .3f, .5f);
-
-        
-
-        public static float m_ec;
-        public static float m_cd;
-        public static float m_dmg;
-        public static float m_xp;
 
         //Save and load data
 
@@ -129,6 +121,44 @@ namespace ValheimLegends
                 }
             }
         }
+
+        [HarmonyPatch(typeof(ZNet), "Awake")]
+        [HarmonyPriority(int.MaxValue)]
+        public static class ZNet_VL_Register
+        {
+            public static void Postfix(ZNet __instance, ZRoutedRpc ___m_routedRpc)
+            {
+                ___m_routedRpc.Register<ZPackage>("VL_ConfigSync", VL_ConfigSync.RPC_VL_ConfigSync);
+            }
+        }
+
+        public static long ServerID;
+        [HarmonyPatch(typeof(ZNet), "RPC_PeerInfo")]
+        public static class ConfigServerSync
+        {
+            private static void Postfix(ref ZNet __instance, ZRpc rpc)
+            {
+                MethodBase GetServerPeerID = AccessTools.Method(typeof(ZRoutedRpc), "GetServerPeerID", null, null);
+                ServerID = (long)GetServerPeerID.Invoke(ZRoutedRpc.instance, new object[0]);
+                if (!__instance.IsServer())
+                {
+                    ZRoutedRpc.instance.InvokeRoutedRPC(ServerID, "VL_ConfigSync", new object[] { new ZPackage() });
+                }
+            }
+        }
+
+        //[HarmonyPatch(typeof(ZNet), "RPC_PeerInfo")]
+        //public static class ConfigServerSync
+        //{
+        //    private static void Postfix(ref ZNet __instance)
+        //    {
+        //        if (!__instance.IsServer())
+        //        {
+        //            ZLog.Log("-------------------- SENDING VL_CONFIGSYNC REQUEST");
+        //            ZRoutedRpc.instance.InvokeRoutedRPC("VL_ConfigSync", new object[] { new ZPackage() });
+        //        }
+        //    }
+        //}
 
         [HarmonyPatch(typeof(PlayerProfile), "SavePlayerToDisk", null)]
         public class SaveVLPlayer_Patch
@@ -335,6 +365,45 @@ namespace ValheimLegends
         //        return true;
         //    }
         //}
+
+        //
+        //console commands
+        //
+
+        [HarmonyPatch(typeof(Skills), "CheatRaiseSkill", null)]
+        public class CheatRaiseSkill_VL_Patch
+        {
+            public static bool Prefix(Skills __instance, string name, float value, Player ___m_player)
+            {
+                if(VL_Console.CheatRaiseSkill(__instance, name, value, ___m_player))
+                {
+                    Console.instance.Print("Skill " + name + " raised " + value);
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        [HarmonyPatch(typeof(Console), "InputText", null)]
+        public class Cheats_VL_Patch
+        {
+            public static void Postfix(Console __instance, InputField ___m_input)
+            {
+                if ((bool)ZNet.instance && ZNet.instance.IsServer() && (bool)Player.m_localPlayer && __instance.IsCheatsEnabled())
+                {
+                    string text = ___m_input.text;
+                    string[] array = text.Split(' ');
+                    if (array.Length > 1)
+                    {
+                        if (array[0] == "vl_changeclass")
+                        {
+                            string className = array[1];
+                            VL_Console.CheatChangeClass(className);
+                        }
+                    }
+                }
+            }
+        }
 
         //
         //mod patches
@@ -570,6 +639,19 @@ namespace ValheimLegends
             }
         }
 
+        [HarmonyPatch(typeof(Character), "Stagger", null)]
+        public class VL_StaggerPrevention_Patch
+        {
+            public static bool Prefix(Character __instance)
+            {
+                if(__instance.GetSEMan().HaveStatusEffect("SE_VL_Berserk"))
+                {
+                    return false;
+                }
+                return true;
+            }
+        }
+
         [HarmonyPatch(typeof(Character), "Damage", null)]
         public class VL_Damage_Patch
         {
@@ -607,6 +689,7 @@ namespace ValheimLegends
                     {
                         SE_Berserk se_berserk = attacker.GetSEMan().GetStatusEffect("SE_VL_Berserk") as SE_Berserk;
                         attacker.Heal(hit.GetTotalPhysicalDamage() * se_berserk.healthAbsorbPercent, true);
+                        attacker.AddStamina(hit.GetTotalElementalDamage() * se_berserk.healthAbsorbPercent);
                     }
                     if (attacker.GetSEMan().HaveStatusEffect("SE_VL_Execute"))
                     {
@@ -1044,7 +1127,7 @@ namespace ValheimLegends
         [HarmonyPatch(typeof(Player), "OnSpawned")]
         public static class PlayerMuninNotification_Patch
         {
-            public static void Postfix()
+            public static void Postfix(Player __instance)
             {
                 Tutorial.TutorialText vl = new Tutorial.TutorialText
                 {
@@ -1057,7 +1140,7 @@ namespace ValheimLegends
                 {
                     Tutorial.instance.m_texts.Add(vl);
                 }
-                Player.m_localPlayer.ShowTutorial("Valheim_Legends");
+                __instance.ShowTutorial("Valheim_Legends");
 
                 Tutorial.TutorialText vl2 = new Tutorial.TutorialText
                 {
@@ -1138,11 +1221,12 @@ namespace ValheimLegends
 
         private void Awake()
         {
+
             //configs
             //ConfigManager.RegisterMod(ModName, this.Config);
             //modEnabled = ConfigManager.RegisterModConfigVariable<bool>(ModName, "modEnabled", true, "General", "Enabled or Disable Valheim Legends Mod", true);
-            modEnabled = this.Config.Bind<bool>("General", "Mod_Enabled", true, "Enable/Disable mod");
-            //chosenClass = this.Config.Bind<string>("General", "chosenClass", "None");
+            modEnabled = this.Config.Bind<bool>("General", "modEnabled", true, "Enable/Disable mod");
+            chosenClass = this.Config.Bind<string>("General", "chosenClass", "None", "Assigns a class to the player if no class is assigned.\nThis will not overwrite an existing class selection.\nA value of None will not attempt to assign any class.");
             //showAbilityIcons = ConfigManager.RegisterModConfigVariable<bool>(ModName, "showAbilityIcons", true, "Display", "Displays Icons on Hud for each ability", true);
             showAbilityIcons = this.Config.Bind<bool>("Display", "showAbilityIcons", true, "Displays Icons on Hud for each ability");
             //iconAlignment = ConfigManager.RegisterModConfigVariable<string>(ModName, "iconAlignment", "horizontal", "Display", "Aligns icons horizontally or vertically off the guardian power icon; options are horizontal or vertical", true);
@@ -1164,36 +1248,21 @@ namespace ValheimLegends
             //Ability3_Hotkey_Combo = ConfigManager.RegisterModConfigVariable<string>(ModName, "Ability3_Hotkey_Combo", "", "Keybinds", "Ability 3 Combination Key", true);
             Ability3_Hotkey_Combo = this.Config.Bind<string>("Keybinds", "Ability3_Hotkey_Combo", "", "Ability 3 Combination Key");
             //energyCostMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "energyCostMultiplier", 1f, "Modifiers", "This value multiplied on overall ability use energy cost", false);
-            energyCostMultiplier = this.Config.Bind<float>("Modifiers", "energyCostMultiplier", 1f, "This value multiplied on overall ability use energy cost\nAbility modifiers are not fully implemented");
+            vl_svr_energyCostMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_energyCostMultiplier", 1f, "Ability modifiers are always enforced by the server host\nThis value multiplied on overall ability use energy cost");
             //cooldownMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "cooldownMultiplier", 1f, "Modifiers", "This value multiplied on overall cooldown time of abilities", false);
-            cooldownMultiplier = this.Config.Bind<float>("Modifiers", "cooldownMultiplier", 1f, "This value multiplied on overall cooldown time of abilities");
+            vl_svr_cooldownMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_cooldownMultiplier", 1f, "This value multiplied on overall cooldown time of abilities");
             //abilityDamageMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "abilityDamageMultiplier", 1f, "Modifiers", "This value multiplied on overall ability power", false);
-            abilityDamageMultiplier = this.Config.Bind<float>("Modifiers", "abilityDamageMultiplier", 1f, "This value multiplied on overall ability power");
+            vl_svr_abilityDamageMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_abilityDamageMultiplier", 1f, "This value multiplied on overall ability power");
             //skillGainMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "skillGainMultiplier", 1f, "Modifiers", "This value modifies the amount of skill experience gained after using an ability", false);
-            skillGainMultiplier = this.Config.Bind<float>("Modifiers", "skillGainMultiplier", 1f, "This value modifies the amount of skill experience gained after using an ability");
-            m_cd = 1f; // cooldownMultiplier.Value;
-            m_dmg = 1f; // abilityDamageMultiplier.Value;
-            m_ec = 1f; //energyCostMultiplier.Value;
-            m_xp = 1f; // skillGainMultiplier.Value;
+            vl_svr_skillGainMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_skillGainMultiplier", 1f, "This value modifies the amount of skill experience gained after using an ability");
 
-            //try
-            //{
-            //    ((Action)(() =>
-            //    {
-            //        VL_ConfigSync.MCE_Register();
-            //        onlineModeEnabled = true;
-            //        ZLog.Log("MCE found - enabling online mode");
-            //    }))();
-            //}
-            //catch
-            //{
-            //    ZLog.Log("MCE not found - using local configurations for Valheim Legends.");
-            //    onlineModeEnabled = false;
-            //    energyCostMultiplier = this.Config.Bind<float>("Modifiers", "energyCostMultiplier", 1f, "This value multiplied on overall ability use energy cost\nAbility modifiers are not fully implemented");
-            //    cooldownMultiplier = this.Config.Bind<float>("Modifiers", "cooldownMultiplier", 1f, "This value multiplied on overall cooldown time of abilities");
-            //    abilityDamageMultiplier = this.Config.Bind<float>("Modifiers", "abilityDamageMultiplier", 1f, "This value multiplied on overall ability power");
-            //    skillGainMultiplier = this.Config.Bind<float>("Modifiers", "skillGainMultiplier", 1f, "This value modifies the amount of skill experience gained after using an ability");
-            //}
+            VL_GlobalConfigs.ConfigStrings = new Dictionary<string, float>();
+            VL_GlobalConfigs.ConfigStrings.Clear();
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_energyCostMultiplier", vl_svr_energyCostMultiplier.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_cooldownMultiplier", vl_svr_cooldownMultiplier.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_abilityDamageMultiplier",vl_svr_abilityDamageMultiplier.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_skillGainMultiplier", vl_svr_skillGainMultiplier.Value);
+            
 
             //assets
             VL_Utility.ModID = "valheim.torann.valheimlegends";
@@ -1215,6 +1284,8 @@ namespace ValheimLegends
             Ability2_Sprite = Sprite.Create(tex_strength, new Rect(0f, 0f, (float)tex_strength.width, (float)tex_strength.height), new Vector2(0.5f, 0.5f));
             Texture2D tex_protection = VL_Utility.LoadTextureFromAssets("protection_icon.png");
             Ability1_Sprite = Sprite.Create(tex_protection, new Rect(0f, 0f, (float)tex_protection.width, (float)tex_protection.height), new Vector2(0.5f, 0.5f));
+
+            LoadModAssets_Awake();
 
             //skills            
             AbjurationSkillDef = new Skills.SkillDef
@@ -1266,7 +1337,7 @@ namespace ValheimLegends
         {
             if (_Harmony != null)
             {
-                _Harmony.UnpatchAll((string)"valheim.torann.valheimlegends");
+                _Harmony.UnpatchSelf();
             }
         }
 
@@ -1281,6 +1352,34 @@ namespace ValheimLegends
                     //ZLog.Log("setting " + player.vl_name + " to class num " + player.vl_class);
                     vl_player.vl_name = player.vl_name;
                     vl_player.vl_class = (PlayerClass)player.vl_class;
+                    if(vl_player.vl_class == PlayerClass.None && chosenClass.Value.ToLower() != "none")
+                    {
+                        string newClass = chosenClass.Value.ToLower();
+                        if(newClass == "berserker")
+                        {
+                            vl_player.vl_class = PlayerClass.Berserker;
+                        }
+                        else if(newClass == "druid")
+                        {
+                            vl_player.vl_class = PlayerClass.Druid;
+                        }
+                        else if(newClass == "mage")
+                        {
+                            vl_player.vl_class = PlayerClass.Mage;
+                        }
+                        else if(newClass == "ranger")
+                        {
+                            vl_player.vl_class = PlayerClass.Ranger;
+                        }
+                        else if(newClass == "shaman")
+                        {
+                            vl_player.vl_class = PlayerClass.Shaman;
+                        }
+                        else if(newClass == "valkyrie")
+                        {
+                            vl_player.vl_class = PlayerClass.Valkyrie;
+                        }
+                    }
                     NameCooldowns();
                     //break;
                 }
@@ -1347,7 +1446,87 @@ namespace ValheimLegends
             {
                 ZLog.Log("Valheim Legend: --None--");
             }
+        }
 
+        //Custom prefabs
+        private static GameObject VL_Deathsquit;
+        private static GameObject VL_RangerWolf;
+
+        private static void LoadModAssets_Awake()
+        {
+            var assetBundle = GetAssetBundleFromResources("vl_assetbundle");
+            VL_Deathsquit = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_Deathsquit.prefab");
+            VL_RangerWolf = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_RangerWolf.prefab");
+        }
+
+        public static AssetBundle GetAssetBundleFromResources(string fileName)
+        {
+            var execAssembly = Assembly.GetExecutingAssembly();
+            var resourceName = execAssembly.GetManifestResourceNames().Single(str => str.EndsWith(fileName));
+            var stream = execAssembly.GetManifestResourceStream(resourceName);
+
+            using (stream)
+            {
+                return AssetBundle.LoadFromStream(stream);
+            }
+        }
+
+        private static void Add_VL_Assets()
+        {
+            if (ObjectDB.instance == null || ObjectDB.instance.m_items.Count == 0)
+            {
+                return;
+            }
+
+            var itemDrop = VL_RangerWolf.GetComponent<ItemDrop>();
+            if (itemDrop != null)
+            {
+                if (ObjectDB.instance.GetItemPrefab(VL_RangerWolf.name.GetStableHashCode()) == null)
+                {
+                    ObjectDB.instance.m_items.Add(VL_RangerWolf);
+                    Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
+                    m_itemsByHash[VL_RangerWolf.name.GetStableHashCode()] = VL_RangerWolf;
+                }
+                if (ObjectDB.instance.GetItemPrefab(VL_Deathsquit.name.GetStableHashCode()) == null)
+                {
+                    ObjectDB.instance.m_items.Add(VL_Deathsquit);
+                    Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
+                    m_itemsByHash[VL_Deathsquit.name.GetStableHashCode()] = VL_Deathsquit;
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(ZNetScene), "Awake")]
+        public static class ZNetScene_Awake_Patch
+        {
+            public static void Prefix(ZNetScene __instance)
+            {
+                if (__instance == null)
+                {
+                    return;
+                }
+
+                __instance.m_prefabs.Add(VL_Deathsquit);
+                __instance.m_prefabs.Add(VL_RangerWolf);
+            }
+        }
+
+        [HarmonyPatch(typeof(ObjectDB), "CopyOtherDB")]
+        public static class ObjectDB_CopyOtherDB_Patch
+        {
+            public static void Postfix()
+            {
+                Add_VL_Assets();
+            }
+        }
+
+        [HarmonyPatch(typeof(ObjectDB), "Awake")]
+        public static class ObjectDB_Awake_Patch
+        {
+            public static void Postfix()
+            {
+                Add_VL_Assets();
+            }
         }
 
         public ValheimLegends()

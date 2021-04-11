@@ -13,7 +13,7 @@ namespace ValheimLegends
 {
     public class Class_Druid
     {
-        private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock");        
+        private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "character");        
 
         private static GameObject GO_CastFX;
 
@@ -58,7 +58,7 @@ namespace ValheimLegends
 
                         //Apply effects
                         rootCount = 0;
-                        rootCountTrigger = 24 - Mathf.RoundToInt(.12f * sLevel);
+                        rootCountTrigger = 26 - Mathf.RoundToInt(.1f * sLevel);
                         Vector3 shiftVec = player.transform.right * 2.5f;
                         if (UnityEngine.Random.Range(0f, 1f) < .5f)
                         {
@@ -114,7 +114,7 @@ namespace ValheimLegends
                         Vector3 position = player.transform.position;
                         Vector3 target = (!Physics.Raycast(player.GetEyePoint(), player.GetLookDir(), out hitInfo, float.PositiveInfinity, Script_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
                         HitData hitData = new HitData();
-                        hitData.m_damage.m_pierce = UnityEngine.Random.Range(10f + (.6f * sLevel), 15 + (1.2f * sLevel)) * ValheimLegends.m_dmg;
+                        hitData.m_damage.m_pierce = UnityEngine.Random.Range(10f + (.7f * sLevel), 15 + (1.25f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
                         hitData.m_pushForce = 2f;
                         Vector3 a = Vector3.MoveTowards(GO_Root.transform.position, target, 1f);
                         if (P_Root != null && P_Root.name == "Root")
@@ -206,7 +206,7 @@ namespace ValheimLegends
                         if (td != null)
                         {
                             //ZLog.Log("td valid: " + td.isActiveAndEnabled + " timeout min " + td.m_timeoutMin + " timeout max " + td.m_timeoutMax);
-                            td.m_timeoutMin = 30f + (.5f *sLevel);
+                            td.m_timeoutMin = 24f + (.3f *sLevel);
                             td.m_timeoutMax = td.m_timeoutMin;
                         }
                         List<Vector3> rootVecs = new List<Vector3>();
@@ -227,7 +227,7 @@ namespace ValheimLegends
                             {
                                 SE_RootsBuff se_RootsBuff = (SE_RootsBuff)ScriptableObject.CreateInstance(typeof(SE_RootsBuff));
                                 se_RootsBuff.m_ttl = SE_RootsBuff.m_baseTTL;
-                                se_RootsBuff.damageModifier = .5f + (.015f * sLevel);
+                                se_RootsBuff.damageModifier = .5f + (.015f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
                                 se_RootsBuff.staminaRegen = .5f + (.05f * sLevel);
                                 se_RootsBuff.summoner = player;
                                 se_RootsBuff.centerPoint = player.transform.position;
@@ -242,44 +242,44 @@ namespace ValheimLegends
                         }
 
                         //Deathsquito's actually
-                        GameObject prefab2 = ZNetScene.instance.GetPrefab("Deathsquito");  //
-                        prefab2.AddComponent<CharacterTimedDestruction>();
-                        prefab2.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 10f;
-                        prefab2.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 10f;
-                        int rootDefenderCount = 3 + Mathf.RoundToInt(.065f * sLevel);
+                        GameObject prefab2 = ZNetScene.instance.GetPrefab("VL_Deathsquit");  //
+                        //prefab2.AddComponent<CharacterTimedDestruction>();
+                        //prefab2.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 10f;
+                        //prefab2.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 10f;
+                        int rootDefenderCount = 2 + Mathf.RoundToInt(.05f * sLevel);
                         for (int i = 0; i < rootDefenderCount; i++)
                         {
                             rootVec = player.transform.position + player.transform.up * 4f + (player.GetLookDir() * UnityEngine.Random.Range(-(5f + .1f * sLevel), (5f + .1f * sLevel)) + player.transform.right * UnityEngine.Random.Range(-(5f + .1f * sLevel), (5f + .1f * sLevel)));
-                            GameObject go_deathsquit = UnityEngine.Object.Instantiate(prefab2, rootVec, Quaternion.identity);
+                            GameObject go_deathsquit = UnityEngine.Object.Instantiate(prefab2, rootVec, Quaternion.identity);                            
                             CharacterTimedDestruction td2 = go_deathsquit.GetComponent<CharacterTimedDestruction>();
                             if (td2 != null)
                             {
                                 //ZLog.Log("td valid: " + td2.isActiveAndEnabled + " timeout min " + td2.m_timeoutMin + " timeout max " + td2.m_timeoutMax);
                                 td2.m_triggerOnAwake = true;                               
-                                td2.m_timeoutMin = 30f + (.5f * sLevel);
-                                td2.m_timeoutMax = td.m_timeoutMin;
+                                td2.m_timeoutMin = 24f + (.3f * sLevel);
+                                td2.m_timeoutMax = td2.m_timeoutMin;
                                 td2.Trigger();
                             }
                             Character ch2 = go_deathsquit.GetComponent<Character>();
+                            ch2.m_name = "Drusquito";
                             if (ch2 != null)
                             {
                                 SE_Companion se_companion = (SE_Companion)ScriptableObject.CreateInstance(typeof(SE_Companion));
                                 se_companion.m_ttl = 60f;
-                                se_companion.damageModifier = .1f + (.01f * sLevel);
+                                se_companion.damageModifier = .05f + (.0075f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
                                 se_companion.summoner = player;
                                 ch2.GetSEMan().AddStatusEffect(se_companion);
 
-                                ch2.SetMaxHealth(10f + (2f * sLevel));
                                 ch2.transform.localScale = (.4f + (.005f * sLevel)) * Vector3.one;
                                 ch2.m_faction = Character.Faction.Players;
                                 ch2.SetTamed(true);
-                                MonsterAI ai = ch2.GetBaseAI() as MonsterAI;
-                                ai.SetFollowTarget(player.gameObject);
-                                CharacterDrop comp = ch2.GetComponent<CharacterDrop>();
-                                if (comp != null)
-                                {
-                                    comp.m_drops.Clear();
-                                }
+                                //MonsterAI ai = ch2.GetBaseAI() as MonsterAI;
+                                //ai.SetFollowTarget(player.gameObject);
+                                //CharacterDrop comp = ch2.GetComponent<CharacterDrop>();
+                                //if (comp != null)
+                                //{
+                                //    comp.m_drops.Clear();
+                                //}
                             }
                             UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_float_hitwater"), ch2.transform.position, Quaternion.identity);
                         }
@@ -325,7 +325,7 @@ namespace ValheimLegends
                         SE_Regeneration se_regen = (SE_Regeneration)ScriptableObject.CreateInstance(typeof(SE_Regeneration));
                         se_regen.m_ttl = SE_Regeneration.m_baseTTL;
                         se_regen.m_icon = ZNetScene.instance.GetPrefab("TrophyGreydwarfShaman").GetComponent<ItemDrop>().m_itemData.GetIcon();
-                        se_regen.m_HealAmount = .5f + (.3f * sLevel) * ValheimLegends.m_dmg;
+                        se_regen.m_HealAmount = .5f + (.4f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
                         se_regen.doOnce = false;
 
                         //Apply effects

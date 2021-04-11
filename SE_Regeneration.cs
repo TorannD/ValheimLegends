@@ -40,7 +40,7 @@ namespace ValheimLegends
             {
                 doOnce = false;
                 //ZLog.Log("setting up regeneration, average skill is " +);
-                m_HealAmount = 2f + (.2f * (m_character.GetSkills().GetTotalSkill() / m_character.GetSkills().GetSkillList().Count));
+                m_HealAmount = (2f + (.25f * (m_character.GetSkills().GetTotalSkill() / m_character.GetSkills().GetSkillList().Count))) * VL_GlobalConfigs.g_DamageModifer;
             }
             m_timer -= dt;
             if (m_timer <= 0f)

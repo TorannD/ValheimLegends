@@ -175,13 +175,13 @@ namespace ValheimLegends
                 {
                     Vector3 direction = (ch.transform.position - player.transform.position);
                     HitData hitData = new HitData();
-                    hitData.m_damage.m_blunt = 5 + (3f * altitude) + 2f * UnityEngine.Random.Range(sLevel, 3f * sLevel) * ValheimLegends.m_dmg;
-                    hitData.m_pushForce = 20f * ValheimLegends.m_dmg;
+                    hitData.m_damage.m_blunt = 5 + (3f * altitude) + UnityEngine.Random.Range(2f* sLevel, 3f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
+                    hitData.m_pushForce = 20f * VL_GlobalConfigs.g_DamageModifer;
                     hitData.m_point = ch.GetEyePoint();
                     hitData.m_dir = (player.transform.position - ch.transform.position);
                     hitData.m_skill = ValheimLegends.DisciplineSkill;
                     ch.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);                    
-                    ch.Stagger(direction);
+                    //ch.Stagger(direction);
                 }
             }
             ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).StopAllCoroutines();

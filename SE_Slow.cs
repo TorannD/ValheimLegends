@@ -15,7 +15,7 @@ namespace ValheimLegends
         [Header("SE_VL_Slow")]
         public static float m_baseTTL = 4f;
         public float speedDuration = 3f;
-        public float speedAmount = .5f;
+        public float speedAmount = .4f;
         private float m_timer = 1f;
 
         public SE_Slow()

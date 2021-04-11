@@ -15,7 +15,7 @@ namespace ValheimLegends
         [Header("SE_VL_Shell")]
         public static float m_baseTTL = 35f;
         public float resistModifier = .6f;
-        public float spiritDamageOffset = 10f;
+        public float spiritDamageOffset = 6f;
         public bool doOnce = true;
 
         public SE_Shell()
@@ -36,7 +36,7 @@ namespace ValheimLegends
                 //ZLog.Log("setting up shell, level is " + m_character.GetLevel());
                 float sLevel = m_character.GetSkills().GetTotalSkill() / (float)m_character.GetSkills().GetSkillList().Count;
                 m_ttl = m_baseTTL + (.35f * sLevel);
-                spiritDamageOffset = 10f + (1.5f * sLevel);
+                spiritDamageOffset = (6f + (.3f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
                 resistModifier = .6f - (.006f * sLevel);
             }
             base.UpdateStatusEffect(dt);

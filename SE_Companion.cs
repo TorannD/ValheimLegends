@@ -13,7 +13,7 @@ namespace ValheimLegends
         public static GameObject GO_SEFX;
 
         [Header("SE_VL_Companion")]
-        public static float m_baseTTL = 900f;
+        public static float m_baseTTL = 600f;
         public float speedModifier = 1.2f;
         public float healthRegen = 1f;
         public float damageModifier = 1f;

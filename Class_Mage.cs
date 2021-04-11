@@ -14,7 +14,8 @@ namespace ValheimLegends
 {
     public class Class_Mage
     {
-        private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock");        
+        private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock");
+        private static int ScriptChar_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "character");
 
         private static GameObject GO_CastFX;
 
@@ -57,7 +58,7 @@ namespace ValheimLegends
                         float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.EvocationSkillDef).m_level;
 
                         //Effects, animations, and sounds
-                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("gpower");                        
+                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("gpower");                        
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_GP_Stone"), player.GetEyePoint(), Quaternion.identity);
 
                         //Lingering effects
@@ -91,7 +92,7 @@ namespace ValheimLegends
                 {
                     meteorCount++;
                     meteorChargeAmount = 0;                    
-                    ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("gpower");
+                    ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("gpower");
                     //((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetSpeed(1.5f);                    
                     GO_CastFX = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_GP_Stone"), player.GetEyePoint(), Quaternion.identity);
                     //player.Message(MessageHud.MessageType.Center, "Meteor - charging " + meteorCount);
@@ -118,22 +119,23 @@ namespace ValheimLegends
                     P_Meteor.m_ttl = 60f;
                     P_Meteor.m_gravity = 0f;
                     P_Meteor.m_rayRadius = .1f;
-                    P_Meteor.m_aoe = 8f + (.04f * sLevel);                    
+                    P_Meteor.m_aoe = 8f + (.04f * sLevel);     
                     P_Meteor.transform.localRotation = Quaternion.LookRotation(player.GetAimDir(vector));
                     GO_Meteor.transform.localScale = Vector3.zero;
                     RaycastHit hitInfo = default(RaycastHit);
                     Vector3 position = player.transform.position;
-                    Vector3 target = (!Physics.Raycast(vector, player.GetLookDir(), out hitInfo, 1000f, Script_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
-                    target.x += rnd.Next(-10, 10);
-                    target.y += rnd.Next(-10, 10);
-                    target.z += rnd.Next(-10, 10);
+                    Vector3 target = (!Physics.Raycast(vector, player.GetLookDir(), out hitInfo, 1000f, ScriptChar_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
+                    target.x += rnd.Next(-8, 8);
+                    target.y += rnd.Next(-8, 8);
+                    target.z += rnd.Next(-8, 8);
                     HitData hitData = new HitData();
-                    hitData.m_damage.m_fire = UnityEngine.Random.Range(30 + (.5f * sLevel), 50 + sLevel) * ValheimLegends.m_dmg;
-                    hitData.m_damage.m_blunt = UnityEngine.Random.Range(15 + (.25f * sLevel), 30 + (.5f * sLevel)) * ValheimLegends.m_dmg;
+                    hitData.m_damage.m_fire = UnityEngine.Random.Range(30 + (.5f * sLevel), 50 + sLevel) * VL_GlobalConfigs.g_DamageModifer;
+                    hitData.m_damage.m_blunt = UnityEngine.Random.Range(15 + (.25f * sLevel), 30 + (.5f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
                     hitData.m_pushForce = 10f;
+                    
                     hitData.m_skill = ValheimLegends.EvocationSkill;
                     Vector3 a = Vector3.MoveTowards(GO_Meteor.transform.position, target, 1f);
-                    P_Meteor.Setup(null, (a - GO_Meteor.transform.position) * UnityEngine.Random.Range(58f, 63f), -1f, hitData, null);
+                    P_Meteor.Setup(player, (a - GO_Meteor.transform.position) * UnityEngine.Random.Range(78f, 86f), -1f, hitData, null);
                     Traverse.Create(root: P_Meteor).Field("m_skill").SetValue(ValheimLegends.EvocationSkill);
                     GO_CastFX = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_guardstone_permitted_removed"), player.transform.position + player.transform.right * UnityEngine.Random.Range(-1f, 1f) + player.transform.up * UnityEngine.Random.Range(0, 1.5f), Quaternion.identity);
                 }
@@ -173,7 +175,7 @@ namespace ValheimLegends
 
                         //Effects, animations, and sounds
                         //player.StartEmote("cheer");
-                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("swing_axe1");                        
+                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("swing_axe1");                        
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_guardstone_activate"), player.transform.position, Quaternion.identity);
 
                         //Lingering effects
@@ -191,7 +193,7 @@ namespace ValheimLegends
                             {
                                 Vector3 direction = (ch.transform.position - player.transform.position);
                                 HitData hitData = new HitData();
-                                hitData.m_damage.m_frost = UnityEngine.Random.Range(10 + (.5f * sLevel), 20 + sLevel) * ValheimLegends.m_dmg;
+                                hitData.m_damage.m_frost = UnityEngine.Random.Range(10 + (.5f * sLevel), 20 + sLevel) * VL_GlobalConfigs.g_DamageModifer;
                                 hitData.m_pushForce = 50f;
                                 hitData.m_point = ch.GetEyePoint();
                                 hitData.m_dir = (player.transform.position - ch.transform.position);
@@ -237,8 +239,8 @@ namespace ValheimLegends
                         player.UseStamina(VL_Utility.GetFireballCost + (.5f * sLevel));
 
                         //Effects, animations, and sounds
-                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("gpower");
-                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetSpeed(3f);
+                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("gpower");
+                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetSpeed(3f);
                         //player.StartEmote("point");
                         GO_CastFX = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_GP_Stone"), player.transform.position, Quaternion.identity);
 
@@ -264,12 +266,12 @@ namespace ValheimLegends
                         Vector3 position = player.transform.position;
                         Vector3 target = (!Physics.Raycast(vector, player.GetLookDir(), out hitInfo, float.PositiveInfinity, Script_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
                         HitData hitData = new HitData();
-                        hitData.m_damage.m_fire = UnityEngine.Random.Range(10f + (1.5f *sLevel), 40f + (1.5f * sLevel)) * ValheimLegends.m_dmg;
-                        hitData.m_damage.m_blunt = UnityEngine.Random.Range(5f + (.75f *sLevel), 20f + (.75f * sLevel)) * ValheimLegends.m_dmg;
+                        hitData.m_damage.m_fire = UnityEngine.Random.Range(10f + (2f *sLevel), 40f + (2f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                        hitData.m_damage.m_blunt = UnityEngine.Random.Range(5f + (1f *sLevel), 20f + (1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
                         hitData.m_pushForce = 2f;
                         hitData.m_skill = ValheimLegends.EvocationSkill;
                         Vector3 a = Vector3.MoveTowards(GO_Fireball.transform.position, target, 1f);
-                        P_Fireball.Setup(null, (a - GO_Fireball.transform.position) * 25f, -1f, hitData, null);
+                        P_Fireball.Setup(player, (a - GO_Fireball.transform.position) * 25f, -1f, hitData, null);
                         Traverse.Create(root: P_Fireball).Field("m_skill").SetValue(ValheimLegends.EvocationSkill);
                         GO_Fireball = null;
 
@@ -278,7 +280,7 @@ namespace ValheimLegends
                     }
                     else
                     {
-                        player.Message(MessageHud.MessageType.TopLeft, "Not enough stamina to for Fireball: (" + player.GetStamina().ToString("#.#") + "/" + VL_Utility.GetFireballCost + ")");
+                        player.Message(MessageHud.MessageType.TopLeft, "Not enough stamina to for Fireball: (" + player.GetStamina().ToString("#.#") + "/" + (VL_Utility.GetFireballCost + (.5f * sLevel)) +")");
                     }
                 }
                 else

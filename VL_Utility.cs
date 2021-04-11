@@ -97,70 +97,70 @@ namespace ValheimLegends
         {
             get
             {
-                return 50f * ValheimLegends.m_ec;
+                return 50f * VL_GlobalConfigs.g_EnergyCostModifer;
             }
         }
         public static float GetFireballCooldownTime
         {
             get
             {
-                return 5f * ValheimLegends.m_cd;
+                return 12f * VL_GlobalConfigs.g_CooldownModifer;
             }
         }
         public static float GetFireballSkillGain
         {
             get
             {
-                return .6f * ValheimLegends.m_xp;
+                return .9f * VL_GlobalConfigs.g_SkillGainModifer;
             }
         }
         public static float GetMeteorCost
         {
             get
             {
-                return 40f * ValheimLegends.m_ec;
+                return 40f * VL_GlobalConfigs.g_EnergyCostModifer;
             }
         }
         public static float GetMeteorCostPerUpdate
         {
             get
             {
-                return .5f * ValheimLegends.m_ec;
+                return .5f * VL_GlobalConfigs.g_EnergyCostModifer;
             }
         }
         public static float GetMeteorCooldownTime
         {
             get
             {
-                return 180f * ValheimLegends.m_cd;
+                return 180f * VL_GlobalConfigs.g_CooldownModifer;
             }
         }
         public static float GetMeteorSkillGain
         {
             get
             {
-                return 1.6f * ValheimLegends.m_xp;
+                return 1.6f * VL_GlobalConfigs.g_SkillGainModifer;
             }
         }
         public static float GetFrostNovaCost
         {
             get
             {
-                return 40f * ValheimLegends.m_ec;
+                return 40f * VL_GlobalConfigs.g_EnergyCostModifer;
             }
         }
         public static float GetFrostNovaCooldownTime
         {
             get
             {
-                return 30f * ValheimLegends.m_cd;
+                return 30f * VL_GlobalConfigs.g_CooldownModifer;
             }
         }
         public static float GetFrostNovaSkillGain
         {
             get
             {
-                return .75f * ValheimLegends.m_xp; 
+                return .75f * VL_GlobalConfigs.g_SkillGainModifer; 
             }
         }
 
@@ -172,63 +172,63 @@ namespace ValheimLegends
         {
             get
             {
-                return 60f * ValheimLegends.m_ec;
+                return 60f * VL_GlobalConfigs.g_EnergyCostModifer;
             }
         }
         public static float GetBulwarkCooldownTime
         {
             get
             {
-                return 90f * ValheimLegends.m_cd;
+                return 90f * VL_GlobalConfigs.g_CooldownModifer;
             }
         }
         public static float GetBulwarkSkillGain
         {
             get
             {
-                return 1.2f * ValheimLegends.m_xp;
+                return 1.2f * VL_GlobalConfigs.g_SkillGainModifer;
             }
         }
         public static float GetLeapCost
         {
             get
             {
-                return 30f * ValheimLegends.m_ec;
+                return 50f * VL_GlobalConfigs.g_EnergyCostModifer;
             }
         }
         public static float GetLeapCooldownTime
         {
             get
             {
-                return 15f * ValheimLegends.m_cd;
+                return 15f * VL_GlobalConfigs.g_CooldownModifer;
             }
         }
         public static float GetLeapSkillGain
         {
             get
             {
-                return .4f * ValheimLegends.m_xp;
+                return .4f * VL_GlobalConfigs.g_SkillGainModifer;
             }
         }
         public static float GetStaggerCost
         {
             get
             {
-                return 40f * ValheimLegends.m_ec;
+                return 40f * VL_GlobalConfigs.g_EnergyCostModifer;
             }
         }
         public static float GetStaggerCooldownTime
         {
             get
             {
-                return 20f * ValheimLegends.m_cd;
+                return 20f * VL_GlobalConfigs.g_CooldownModifer;
             }
         }
         public static float GetStaggerSkillGain
         {
             get
             {
-                return .6f * ValheimLegends.m_xp;
+                return .6f * VL_GlobalConfigs.g_SkillGainModifer;
             }
         }
 
@@ -240,70 +240,70 @@ namespace ValheimLegends
         {
             get
             {
-                return 60f * ValheimLegends.m_ec;
+                return 60f * VL_GlobalConfigs.g_EnergyCostModifer;
             }
         }
         public static float GetRegenerationCooldownTime
         {
             get
             {
-                return 120f * ValheimLegends.m_cd;
+                return 120f * VL_GlobalConfigs.g_CooldownModifer;
             }
         }
         public static float GetRegenerationSkillGain
         {
             get
             {
-                return 1.5f * ValheimLegends.m_xp;
+                return 1.5f * VL_GlobalConfigs.g_SkillGainModifer;
             }
         }
         public static float GetRootCost
         {
             get
             {
-                return 30f * ValheimLegends.m_ec;
+                return 30f * VL_GlobalConfigs.g_EnergyCostModifer;
             }
         }
         public static float GetRootCostPerUpdate
         {
             get
             {
-                return .25f * ValheimLegends.m_ec;
+                return .3f * VL_GlobalConfigs.g_EnergyCostModifer;
             }
         }
         public static float GetRootCooldownTime
         {
             get
             {
-                return 15f * ValheimLegends.m_cd;
+                return 20f * VL_GlobalConfigs.g_CooldownModifer;
             }
         }
         public static float GetRootSkillGain
         {
             get
             {
-                return .15f * ValheimLegends.m_xp;
+                return .15f * VL_GlobalConfigs.g_SkillGainModifer;
             }
         }
         public static float GetDefenderCost
         {
             get
             {
-                return 80f * ValheimLegends.m_ec;
+                return 80f * VL_GlobalConfigs.g_EnergyCostModifer;
             }
         }
         public static float GetDefenderCooldownTime
         {
             get
             {
-                return 120f * ValheimLegends.m_cd;
+                return 120f * VL_GlobalConfigs.g_CooldownModifer;
             }
         }
         public static float GetDefenderSkillGain
         {
             get
             {
-                return 1.9f * ValheimLegends.m_xp;
+                return 1.9f * VL_GlobalConfigs.g_SkillGainModifer;
             }
         }
 
@@ -313,47 +313,47 @@ namespace ValheimLegends
 
         public static float GetEnrageCost(Player p)
         {
-            float cost = 60f * ValheimLegends.m_ec;
+            float cost = 60f * VL_GlobalConfigs.g_EnergyCostModifer;
             return cost;
         }
         public static float GetEnrageCooldown(Player p)
         {
-            float time = 120 * ValheimLegends.m_cd;
+            float time = 120 * VL_GlobalConfigs.g_CooldownModifer;
             return time;
         }
         public static float GetEnrageSkillGain(Player p)
         {
-            float xp = 1.4f * ValheimLegends.m_xp;
+            float xp = 1.4f * VL_GlobalConfigs.g_SkillGainModifer;
             return xp;
         }
         public static float GetSpiritBombCost(Player p)
         {
-            float cost = 80f * ValheimLegends.m_ec;
+            float cost = 80f * VL_GlobalConfigs.g_EnergyCostModifer;
             return cost;
         }
         public static float GetSpiritBombCooldown(Player p)
         {
-            float time = 60 * ValheimLegends.m_cd;
+            float time = 30 * VL_GlobalConfigs.g_CooldownModifer;
             return time;
         }
         public static float GetSpiritBombSkillGain(Player p)
         {
-            float xp = .9f * ValheimLegends.m_xp;
+            float xp = .9f * VL_GlobalConfigs.g_SkillGainModifer;
             return xp;
         }
         public static float GetShellCost(Player p)
         {
-            float cost = 80f * ValheimLegends.m_ec;
+            float cost = 80f * VL_GlobalConfigs.g_EnergyCostModifer;
             return cost;
         }
         public static float GetShellCooldown(Player p)
         {
-            float time = 180 * ValheimLegends.m_cd;
+            float time = 180 * VL_GlobalConfigs.g_CooldownModifer;
             return time;
         }
         public static float GetShellSkillGain(Player p)
         {
-            float xp = 2.2f * ValheimLegends.m_xp;
+            float xp = 2.2f * VL_GlobalConfigs.g_SkillGainModifer;
             return xp;
         }
 
@@ -363,47 +363,47 @@ namespace ValheimLegends
 
         public static float GetDashCost(Player p)
         {
-            float cost = 70f * ValheimLegends.m_ec;
+            float cost = 70f * VL_GlobalConfigs.g_EnergyCostModifer;
             return cost;
         }
         public static float GetDashCooldown(Player p)
         {
-            float time = 10 * ValheimLegends.m_cd;
+            float time = 10 * VL_GlobalConfigs.g_CooldownModifer;
             return time;
         }
         public static float GetDashSkillGain (Player p)
         {
-            float xp = .45f * ValheimLegends.m_xp;
+            float xp = .45f * VL_GlobalConfigs.g_SkillGainModifer;
             return xp;
         }
         public static float GetBerserkCost(Player p)
         {
-            float cost = 50f * ValheimLegends.m_ec;
+            float cost = 50f * VL_GlobalConfigs.g_EnergyCostModifer;
             return cost;
         }
         public static float GetBerserkCooldown(Player p)
         {
-            float time = 180 * ValheimLegends.m_cd;
+            float time = 180 * VL_GlobalConfigs.g_CooldownModifer;
             return time;
         }
         public static float GetBerserkSkillGain(Player p)
         {
-            float xp = 1.8f * ValheimLegends.m_xp;
+            float xp = 1.8f * VL_GlobalConfigs.g_SkillGainModifer;
             return xp;
         }
         public static float GetExecuteCost(Player p)
         {
-            float cost = 50f * ValheimLegends.m_ec;
+            float cost = 50f * VL_GlobalConfigs.g_EnergyCostModifer;
             return cost;
         }
         public static float GetExecuteCooldown(Player p)
         {
-            float time = 120 * ValheimLegends.m_cd;
+            float time = 120 * VL_GlobalConfigs.g_CooldownModifer;
             return time;
         }
         public static float GetExecuteSkillGain(Player p)
         {
-            float xp = 1.2f * ValheimLegends.m_xp;
+            float xp = 1.2f * VL_GlobalConfigs.g_SkillGainModifer;
             return xp;
         }
 
@@ -413,47 +413,47 @@ namespace ValheimLegends
 
         public static float GetPowerShotCost(Player p)
         {
-            float cost = 60f * ValheimLegends.m_ec;
+            float cost = 60f * VL_GlobalConfigs.g_EnergyCostModifer;
             return cost;
         }
         public static float GetPowerShotCooldown(Player p)
         {
-            float time = 60 * ValheimLegends.m_cd;
+            float time = 60 * VL_GlobalConfigs.g_CooldownModifer;
             return time;
         }
         public static float GetPowerShotSkillGain(Player p)
         {
-            float xp = .9f * ValheimLegends.m_xp;
+            float xp = .9f * VL_GlobalConfigs.g_SkillGainModifer;
             return xp;
         }
         public static float GetShadowStalkCost(Player p)
         {
-            float cost = 40f * ValheimLegends.m_ec;
+            float cost = 40f * VL_GlobalConfigs.g_EnergyCostModifer;
             return cost;
         }
         public static float GetShadowStalkCooldown(Player p)
         {
-            float time = 120 * ValheimLegends.m_cd;
+            float time = 120 * VL_GlobalConfigs.g_CooldownModifer;
             return time;
         }
         public static float GetShadowStalkSkillGain(Player p)
         {
-            float xp = 1.4f * ValheimLegends.m_xp;
+            float xp = 1.4f * VL_GlobalConfigs.g_SkillGainModifer;
             return xp;
         }
         public static float GetSummonWolfCost(Player p)
         {
-            float cost = 75f * ValheimLegends.m_ec;
+            float cost = 75f * VL_GlobalConfigs.g_EnergyCostModifer;
             return cost;
         }
         public static float GetSummonWolfCooldown(Player p)
         {
-            float time = 900 * ValheimLegends.m_cd;
+            float time = 600 * VL_GlobalConfigs.g_CooldownModifer;
             return time;
         }
         public static float GetSummonWolfSkillGain(Player p)
         {
-            float xp = 3.5f * ValheimLegends.m_xp;
+            float xp = 3.5f * VL_GlobalConfigs.g_SkillGainModifer;
             return xp;
         }
 
@@ -568,6 +568,5 @@ namespace ValheimLegends
                 return false;
             }
         }
-
     }
 }

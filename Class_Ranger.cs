@@ -95,12 +95,13 @@ namespace ValheimLegends
                         //Apply effects
                         pVec = player.transform.position + player.transform.forward * 4f;
                         
-                        GameObject prefab = ZNetScene.instance.GetPrefab("Wolf");
-                        prefab.AddComponent<CharacterTimedDestruction>();
-                        prefab.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 900f;
-                        prefab.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 900f;
+                        GameObject prefab = ZNetScene.instance.GetPrefab("VL_RangerWolf");
+                        //prefab.AddComponent<CharacterTimedDestruction>();
+                        prefab.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 600f;
+                        prefab.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 600f;
                         GO_Wolf = UnityEngine.Object.Instantiate(prefab, pVec, Quaternion.identity);
                         Character ch = GO_Wolf.GetComponent<Character>();
+                        ch.m_name = "Shadow Wolf";
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_Potion_stamina_medium"), ch.transform.position, Quaternion.identity);
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_WishbonePing"), ch.transform.position, Quaternion.identity);
                         if (ch != null)
@@ -108,38 +109,38 @@ namespace ValheimLegends
                             ch.m_faction = Character.Faction.Players;
                             ch.SetTamed(true);
                             float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.ConjurationSkillDef).m_level;
-                            ch.SetMaxHealth(25 + (7 + sLevel));
-                            ch.transform.localScale = (.5f + (.01f * sLevel)) * Vector3.one;
+                            ch.SetMaxHealth(25 + (9 + sLevel));
+                            ch.transform.localScale = (.5f + (.01f * sLevel)) * Vector3.one;                            
                             ch.m_swimSpeed *= 2f;
 
-                            CharacterTimedDestruction td = GO_Wolf.GetComponent<CharacterTimedDestruction>();
-                            if (td != null)
-                            {
-                                //ZLog.Log("td valid: " + td2.isActiveAndEnabled + " timeout min " + td2.m_timeoutMin + " timeout max " + td2.m_timeoutMax);
-                                td.m_triggerOnAwake = true;
-                                td.m_timeoutMin = 900f;
-                                td.m_timeoutMax = td.m_timeoutMin;
-                                td.Trigger();
-                            }
+                            //CharacterTimedDestruction td = GO_Wolf.GetComponent<CharacterTimedDestruction>();
+                            //if (td != null)
+                            //{
+                            //    //ZLog.Log("td valid: " + td2.isActiveAndEnabled + " timeout min " + td2.m_timeoutMin + " timeout max " + td2.m_timeoutMax);
+                            //    td.m_triggerOnAwake = true;
+                            //    td.m_timeoutMin = 900f;
+                            //    td.m_timeoutMax = td.m_timeoutMin;
+                            //    td.Trigger();
+                            //}
 
                             SE_Companion se_companion = (SE_Companion)ScriptableObject.CreateInstance(typeof(SE_Companion));
                             se_companion.m_ttl = SE_Companion.m_baseTTL;
-                            se_companion.damageModifier = .05f + (.01f * sLevel);
-                            se_companion.healthRegen = .5f + (.05f * sLevel);
+                            se_companion.damageModifier = (.05f + (.01f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                            se_companion.healthRegen = 1f + (.1f * sLevel);
                             se_companion.speedModifier = 1.2f;
                             se_companion.summoner = player;
 
-                            CharacterDrop comp = ch.GetComponent<CharacterDrop>();
+                            //CharacterDrop comp = ch.GetComponent<CharacterDrop>();
                             MonsterAI ai = ch.GetBaseAI() as MonsterAI;
                             ai.SetFollowTarget(player.gameObject);
-                            if (comp != null)
-                            {
-                                comp.m_drops.Clear();
-                                //foreach (CharacterDrop.Drop d in comp.m_drops)
-                                //{
-                                //    d.m_chance = 0f;
-                                //}
-                            }
+                            //if (comp != null)
+                            //{
+                            //    comp.m_drops.Clear();
+                            //    //foreach (CharacterDrop.Drop d in comp.m_drops)
+                            //    //{
+                            //    //    d.m_chance = 0f;
+                            //    //}
+                            //}
                             ch.GetSEMan().AddStatusEffect(se_companion);
                             //apply wolf buff, buff prevents loot drops, makes wolf not suck
                         }
@@ -197,10 +198,17 @@ namespace ValheimLegends
                             if (ch.GetBaseAI() != null && ch.GetBaseAI() is MonsterAI && ch.GetBaseAI().IsEnemey(player))
                             {
                                 MonsterAI ai = ch.GetBaseAI() as MonsterAI;
-                                if(ai.GetTargetCreature() == player)
+                                try
                                 {
-                                    Traverse.Create(root: ai).Field("m_alerted").SetValue(false);
-                                    Traverse.Create(root: ai).Field("m_targetCreature").SetValue(null);
+                                    if (ai != null && ai.GetTargetCreature() == player && ValheimLegends.ServerID != 0L)
+                                    {
+                                        Traverse.Create(root: ai).Field("m_alerted").SetValue(false);
+                                        Traverse.Create(root: ai).Field("m_targetCreature").SetValue(null);
+                                    }
+                                }
+                                catch
+                                {
+
                                 }
                             }
                         }

@@ -26,7 +26,15 @@ namespace ValheimLegends
             UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_stonegolem_attack_hit"), player.transform.position, Quaternion.identity);
 
             float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
-            float sDamageMultiplier = .8f + (sLevel * .005f) * ValheimLegends.m_dmg;
+            float sDamageMultiplier = .8f + (sLevel * .005f) * VL_GlobalConfigs.g_DamageModifer;
+            if(player.GetSEMan().HaveStatusEffect("SE_VL_Berserk") || player.GetSEMan().HaveStatusEffect("SE_VL_Execute"))
+            {
+                SE_Berserk se_zerk = (SE_Berserk)player.GetSEMan().GetStatusEffect("SE_VL_Berserk");
+                if (se_zerk != null)
+                {
+                    sDamageMultiplier *= se_zerk.damageModifier;
+                }
+            }
 
             //RaycastHit hitInfo = default(RaycastHit);
             Vector3 lookVec = player.GetLookDir();
@@ -80,10 +88,16 @@ namespace ValheimLegends
                 {
                     HitData hitData = new HitData();                    
                     hitData.m_damage = player.GetCurrentWeapon().GetDamage();
+                    SE_Execute se_exec = (SE_Execute)player.GetSEMan().GetStatusEffect("SE_VL_Execute");
+                    if (se_exec != null)
+                    {
+                        sDamageMultiplier *= se_exec.damageBonus;
+                        se_exec.hitCount--;
+                    }
                     hitData.ApplyModifier(UnityEngine.Random.Range(.8f, 1.2f) * sDamageMultiplier);
                     hitData.m_point = ch.GetCenterPoint();
                     hitData.m_dir = (ch.transform.position - moveVec);
-                    hitData.m_skill = ValheimLegends.DisciplineSkill;
+                    hitData.m_skill = ValheimLegends.DisciplineSkill;                    
                     float num = Vector3.Distance(ch.transform.position, moveVec);
                     if (!ch.IsPlayer() && num <= 3f && !list.Contains(ch.GetInstanceID()))
                     {
@@ -124,7 +138,7 @@ namespace ValheimLegends
                         player.UseStamina(VL_Utility.GetDashCost(player));
 
                         //Effects, animations, and sounds
-                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("swing_longsword2");                        
+                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("swing_longsword2");                        
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_Potion_stamina_medium"), player.transform.position, Quaternion.identity);
 
                         //Lingering effects
@@ -165,8 +179,8 @@ namespace ValheimLegends
 
                         //Effects, animations, and sounds
                         ValheimLegends.shouldUseGuardianPower = false;
-                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("gpower");
-                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetSpeed(2f);
+                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("gpower");
+                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetSpeed(2f);
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_GP_Stone"), player.GetCenterPoint(), Quaternion.identity);
 
                         //Lingering effects
@@ -174,7 +188,7 @@ namespace ValheimLegends
                         SE_Berserk se_berserk = (SE_Berserk)ScriptableObject.CreateInstance(typeof(SE_Berserk));
                         se_berserk.m_ttl = SE_Berserk.m_baseTTL;
                         se_berserk.speedModifier = 1.2f + (.006f * sLevel);
-                        se_berserk.damageModifier = 1.2f + (.006f * sLevel) * ValheimLegends.m_dmg;
+                        se_berserk.damageModifier = 1.2f + (.006f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
                         se_berserk.healthAbsorbPercent = .2f + (.002f * sLevel);
 
                         //Apply effects
@@ -218,10 +232,15 @@ namespace ValheimLegends
                         float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
                         SE_Execute se_execute = (SE_Execute)ScriptableObject.CreateInstance(typeof(SE_Execute));
                         se_execute.hitCount = Mathf.RoundToInt(3f + (.04f * sLevel));
-                        se_execute.damageBonus = 1.4f + (.005f * sLevel) * ValheimLegends.m_dmg;
+                        se_execute.damageBonus = 1.4f + (.005f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
                         se_execute.staggerForce = 1.5f + (.005f * sLevel);
 
                         //Apply effects
+                        if (player.GetSEMan().HaveStatusEffect("SE_VL_Execute"))
+                        {
+                            StatusEffect se_pw_rem = player.GetSEMan().GetStatusEffect("SE_VL_Execute");
+                            player.GetSEMan().RemoveStatusEffect(se_pw_rem);
+                        }
                         player.GetSEMan().AddStatusEffect(se_execute);
 
                         //Skill gain

@@ -52,11 +52,11 @@ namespace ValheimLegends
                         List<Character> allCharacters = Character.GetAllCharacters();
                         foreach (Character ch in allCharacters)
                         {
-                            if ((BaseAI.IsEnemy(player, ch) && (ch.transform.position - player.transform.position).magnitude <= 10f + (.05f * sLevel)))
+                            if ((BaseAI.IsEnemy(player, ch) && (ch.transform.position - player.transform.position).magnitude <= 11f + (.05f * sLevel)))
                             {
                                 Vector3 direction = (ch.transform.position - player.transform.position);
                                 HitData hitData = new HitData();
-                                hitData.m_damage.m_spirit = UnityEngine.Random.Range(12f + (.75f * sLevel), 24f + (1.25f * sLevel)) * ValheimLegends.m_dmg;
+                                hitData.m_damage.m_spirit = UnityEngine.Random.Range(12f + (.75f * sLevel), 24f + (1.25f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
                                 hitData.m_pushForce = 25f + (.1f * sLevel);
                                 hitData.m_point = ch.GetEyePoint();
                                 hitData.m_dir = (player.transform.position - ch.transform.position);
@@ -113,7 +113,7 @@ namespace ValheimLegends
                         {
                             SE_Shell se_shell = (SE_Shell)ScriptableObject.CreateInstance(typeof(SE_Shell));
                             se_shell.m_ttl = SE_Shell.m_baseTTL + (.35f * sLevel);
-                            se_shell.spiritDamageOffset = 6f + (.3f * sLevel);
+                            se_shell.spiritDamageOffset = (6f + (.3f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
                             se_shell.resistModifier = .6f - (.006f * sLevel);
                             se_shell.m_icon = ZNetScene.instance.GetPrefab("ShieldSerpentscale").GetComponent<ItemDrop>().m_itemData.GetIcon();
                             se_shell.doOnce = false;
@@ -181,8 +181,8 @@ namespace ValheimLegends
                         Player.GetPlayersInRange(player.transform.position, 30f, allPlayers);
                         SE_Enrage se_enrage = (SE_Enrage)ScriptableObject.CreateInstance(typeof(SE_Enrage));
                         se_enrage.m_ttl = 20f + (.2f * sLevel);
-                        se_enrage.staminaModifier = 5f + (.1f * sLevel);
-                        se_enrage.speedModifier = 1.25f + (.025f * sLevel); 
+                        se_enrage.staminaModifier = (5f + (.1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                        se_enrage.speedModifier = 1.25f + (.0025f * sLevel); 
                         se_enrage.m_icon = ZNetScene.instance.GetPrefab("TrophyGoblinBrute").GetComponent<ItemDrop>().m_itemData.GetIcon();
                         se_enrage.doOnce = false;
                         
