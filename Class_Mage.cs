@@ -65,7 +65,7 @@ namespace ValheimLegends
                         meteorCharging = true;
                         meteorChargeAmount = 0;
                         meteorChargeAmountMax = Mathf.RoundToInt(60f * (1f - (sLevel/200f))); // modified by skill
-                        meteorCount = 0;
+                        meteorCount = 1;
 
                         //Apply effects
 
@@ -209,7 +209,7 @@ namespace ValheimLegends
                     }
                     else
                     {
-                        player.Message(MessageHud.MessageType.TopLeft, "Not enough stamina for Frost Nova: (" + player.GetStamina().ToString("#.#") + "/" + VL_Utility.GetDefenderCost + ")");
+                        player.Message(MessageHud.MessageType.TopLeft, "Not enough stamina for Frost Nova: (" + player.GetStamina().ToString("#.#") + "/" + VL_Utility.GetFrostNovaCost + ")");
                     }
                 }
                 else
@@ -258,7 +258,7 @@ namespace ValheimLegends
                         P_Fireball.m_ttl = 60f;
                         P_Fireball.m_gravity = 2.5f;
                         P_Fireball.m_rayRadius = .1f;
-                        P_Fireball.m_aoe = 3f + (.02f * sLevel);
+                        P_Fireball.m_aoe = 3f + (.03f * sLevel);
                         P_Fireball.transform.localRotation = Quaternion.LookRotation(player.GetAimDir(vector));
                         GO_Fireball.transform.localScale = Vector3.zero;
 

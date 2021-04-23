@@ -85,6 +85,22 @@ namespace ValheimLegends
                     {
                         (__result as SE_RootsBuff).m_icon = SE_RootsBuff.AbilityIcon;
                     }
+                    else if (name == "SE_Riposte")
+                    {
+                        (__result as SE_Riposte).m_icon = SE_Riposte.AbilityIcon;
+                    }
+                    else if (name == "SE_Rogue")
+                    {
+                        (__result as SE_Rogue).m_icon = SE_Rogue.AbilityIcon;
+                    }
+                    else if (name == "SE_Monk")
+                    {
+                        (__result as SE_Monk).m_icon = SE_Monk.AbilityIcon;
+                    }
+                    else if (name == "SE_Weaken")
+                    {
+                        (__result as SE_Weaken).m_icon = SE_Weaken.AbilityIcon;
+                    }
 
                     if (name == "SE_Ability1_CD")
                     {
@@ -94,10 +110,11 @@ namespace ValheimLegends
                     {
                         (__result as SE_Ability2_CD).m_icon = SE_Ability2_CD.AbilityIcon;
                     }
-                    if (name == "SE_Ability3_CD")
+                    else if (name == "SE_Ability3_CD")
                     {
                         (__result as SE_Ability3_CD).m_icon = SE_Ability3_CD.AbilityIcon;
                     }
+
                 }
             }
         }
@@ -119,6 +136,19 @@ namespace ValheimLegends
                 SE_Companion.AbilityIcon = ZNetScene.instance.GetPrefab("TrophyWolf").GetComponent<ItemDrop>().m_itemData.GetIcon();
                 SE_RootsBuff.AbilityIcon = ZNetScene.instance.GetPrefab("TrophyWolf").GetComponent<ItemDrop>().m_itemData.GetIcon();
                 SE_Slow.AbilityIcon = ZNetScene.instance.GetPrefab("TrophyWolf").GetComponent<ItemDrop>().m_itemData.GetIcon();
+                SE_Riposte.AbilityIcon = ValheimLegends.RiposteIcon;
+                SE_Rogue.AbilityIcon = ValheimLegends.RogueIcon;
+                SE_Monk.AbilityIcon = ValheimLegends.MonkIcon;
+                SE_Weaken.AbilityIcon = ValheimLegends.WeakenIcon;
+
+                SE_BiomeMeadows.AbilityIcon = ValheimLegends.BiomeMeadowsIcon;
+                SE_BiomeBlackForest.AbilityIcon = ValheimLegends.BiomeBlackForestIcon;
+                SE_BiomeSwamp.AbilityIcon = ValheimLegends.BiomeSwampIcon;
+                SE_BiomeMountain.AbilityIcon = ValheimLegends.BiomeMountainIcon;
+                SE_BiomePlains.AbilityIcon = ValheimLegends.BiomePlainsIcon;
+                SE_BiomeOcean.AbilityIcon = ValheimLegends.BiomeOceanIcon;
+                SE_BiomeMist.AbilityIcon = ValheimLegends.BiomeMistIcon;
+                SE_BiomeAsh.AbilityIcon = ValheimLegends.BiomeAshIcon;
 
                 SE_Ability1_CD.AbilityIcon = ZNetScene.instance.GetPrefab("ShieldWood").GetComponent<ItemDrop>().m_itemData.GetIcon();
                 SE_Ability2_CD.AbilityIcon = ZNetScene.instance.GetPrefab("ShieldBanded").GetComponent<ItemDrop>().m_itemData.GetIcon();
@@ -191,6 +221,54 @@ namespace ValheimLegends
             if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_Slow"))
             {
                 odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_Slow>());
+            }
+            if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_Riposte"))
+            {
+                odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_Riposte>());
+            }
+            if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_Rogue"))
+            {
+                odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_Rogue>());
+            }
+            if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_Monk"))
+            {
+                odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_Monk>());
+            }
+            if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_Weaken"))
+            {
+                odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_Weaken>());
+            }
+            if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_BiomeMeadows"))
+            {
+                odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_BiomeMeadows>());
+            }
+            if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_BiomeBlackForest"))
+            {
+                odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_BiomeBlackForest>());
+            }
+            if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_BiomeMountain"))
+            {
+                odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_BiomeMountain>());
+            }
+            if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_BiomeSwamp"))
+            {
+                odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_BiomeSwamp>());
+            }
+            if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_BiomePlains"))
+            {
+                odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_BiomePlains>());
+            }
+            if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_BiomeOcean"))
+            {
+                odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_BiomeOcean>());
+            }
+            if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_BiomeMist"))
+            {
+                odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_BiomeMist>());
+            }
+            if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_BiomeAsh"))
+            {
+                odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_BiomeAsh>());
             }
         }
     }

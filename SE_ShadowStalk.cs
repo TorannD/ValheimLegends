@@ -13,7 +13,7 @@ namespace ValheimLegends
         public static GameObject GO_SEFX;
 
         [Header("SE_VL_ShadowStalk")]
-        public static float m_baseTTL = 30f;
+        public static float m_baseTTL = 20f;
         public float speedDuration = 3f;
         public float speedAmount = 1.75f;
         private float m_timer = 1f;
@@ -35,7 +35,7 @@ namespace ValheimLegends
         {
             if(m_character.IsSneaking())
             {
-                speed *= 1.5f + (.01f * m_character.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AlterationSkillDef).m_level);
+                speed *= 1.5f + (.01f * m_character.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level);
             }
             else if(speedDuration > 0)
             {

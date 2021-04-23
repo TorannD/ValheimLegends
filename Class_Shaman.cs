@@ -17,10 +17,36 @@ namespace ValheimLegends
 
         private static GameObject GO_CastFX;
 
-        public static void Process_Input(Player player)
+        public static void Process_Input(Player player, ref Rigidbody playerBody, ref float altitude, ref float lastGroundTouch, float waterLevel)
         {
-            System.Random rnd = new System.Random();
-            Vector3 pVec = default(Vector3);
+            //if (ZInput.GetButton("Jump"))
+            //{
+            //    if (!player.IsDead() && !player.InAttack() && !player.IsEncumbered() && !player.InDodge() && !player.IsKnockedBack())
+            //    {
+            //        if (player.transform.position.y <= (waterLevel + .2f))
+            //        {
+            //            bool flag = true;
+            //            if (!player.HaveStamina(1f))
+            //            {
+            //                if (player.IsPlayer())
+            //                {
+            //                    Hud.instance.StaminaBarNoStaminaFlash();
+            //                }
+            //                flag = false;
+            //            }
+            //            if (flag)
+            //            {
+                            
+            //                player.UseStamina(.3f);
+            //                Vector3 newPos = new Vector3(player.transform.position.x, waterLevel + .25f, player.transform.position.z);
+            //                playerBody.position = newPos;
+            //                ZLog.Log("player position " + player.transform.position + " water level " + waterLevel + " new pos " + newPos);
+            //                UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_FlyingKick"), player.transform.position + player.transform.up * -.1f, Quaternion.LookRotation(player.transform.forward * -1f));
+            //            }
+            //        }
+            //    }
+            //}
+
             if (VL_Utility.Ability3_Input_Down)
             {
                 //player.Message(MessageHud.MessageType.Center, "Spirit Bomb"); //deals moderate spirit damage in PBAoE and applies spirit dot
@@ -56,7 +82,8 @@ namespace ValheimLegends
                             {
                                 Vector3 direction = (ch.transform.position - player.transform.position);
                                 HitData hitData = new HitData();
-                                hitData.m_damage.m_spirit = UnityEngine.Random.Range(12f + (.75f * sLevel), 24f + (1.25f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                                hitData.m_damage.m_spirit = UnityEngine.Random.Range(6f + (.4f * sLevel), 12f + (.6f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                                hitData.m_damage.m_lightning = UnityEngine.Random.Range(6f + (.4f * sLevel), 12f + (.6f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
                                 hitData.m_pushForce = 25f + (.1f * sLevel);
                                 hitData.m_point = ch.GetEyePoint();
                                 hitData.m_dir = (player.transform.position - ch.transform.position);
@@ -112,7 +139,7 @@ namespace ValheimLegends
                         foreach (Player p in allPlayers)
                         {
                             SE_Shell se_shell = (SE_Shell)ScriptableObject.CreateInstance(typeof(SE_Shell));
-                            se_shell.m_ttl = SE_Shell.m_baseTTL + (.35f * sLevel);
+                            se_shell.m_ttl = SE_Shell.m_baseTTL + (.3f * sLevel);
                             se_shell.spiritDamageOffset = (6f + (.3f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
                             se_shell.resistModifier = .6f - (.006f * sLevel);
                             se_shell.m_icon = ZNetScene.instance.GetPrefab("ShieldSerpentscale").GetComponent<ItemDrop>().m_itemData.GetIcon();
@@ -180,9 +207,9 @@ namespace ValheimLegends
                         List<Player> allPlayers = new List<Player>();
                         Player.GetPlayersInRange(player.transform.position, 30f, allPlayers);
                         SE_Enrage se_enrage = (SE_Enrage)ScriptableObject.CreateInstance(typeof(SE_Enrage));
-                        se_enrage.m_ttl = 20f + (.2f * sLevel);
+                        se_enrage.m_ttl = 16f + (.2f * sLevel);
                         se_enrage.staminaModifier = (5f + (.1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
-                        se_enrage.speedModifier = 1.25f + (.0025f * sLevel); 
+                        se_enrage.speedModifier = 1.2f + (.0025f * sLevel); 
                         se_enrage.m_icon = ZNetScene.instance.GetPrefab("TrophyGoblinBrute").GetComponent<ItemDrop>().m_itemData.GetIcon();
                         se_enrage.doOnce = false;
                         

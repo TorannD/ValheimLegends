@@ -14,7 +14,7 @@ namespace ValheimLegends
         public static GameObject GO_SEFX;
 
         [Header("SE_VL_Berserk")]
-        public static float m_baseTTL = 30f;
+        public static float m_baseTTL = 18f;
         public float speedModifier = 1.2f;
         public float damageModifier = 1.2f;
         public float healthAbsorbPercent = .2f;

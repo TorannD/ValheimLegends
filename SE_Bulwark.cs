@@ -13,7 +13,7 @@ namespace ValheimLegends
         public static GameObject GO_SEFX;
 
         [Header("SE_VL_Bulwark")]
-        public static float m_baseTTL = 15f;
+        public static float m_baseTTL = 12f;
         private float m_timer = 0f;
 
         public SE_Bulwark()
@@ -23,6 +23,13 @@ namespace ValheimLegends
             m_tooltip = "Bulwark";
             m_name = "Bulwark";
             m_ttl = m_baseTTL;
+        }
+
+        public override void OnDamaged(HitData hit, Character attacker)
+        {
+            float modifier = .75f - (m_character.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AbjurationSkillDef).m_level / 200f);
+            hit.m_damage.Modify(modifier);
+            base.OnDamaged(hit, attacker);
         }
 
         public override bool CanAdd(Character character)

@@ -72,7 +72,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.AnimationModule">
-      <HintPath>E:\Programs\Steam\steamapps\common\Valheim\valheim_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
+      <HintPath>..\..\..\..\unstripped_corlib\UnityEngine.AnimationModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.AssetBundleModule">
@@ -117,6 +117,27 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AnimationClipOverrides.cs" />
+    <Compile Include="Class_Duelist.cs" />
+    <Compile Include="Class_Enchanter.cs" />
+    <Compile Include="Class_Rogue.cs" />
+    <Compile Include="Class_Monk.cs" />
+    <Compile Include="Class_Necromancer.cs" />
+    <Compile Include="Class_Priest.cs" />
+    <Compile Include="Class_Metavoker.cs" />
+    <Compile Include="SE_Charm.cs" />
+    <Compile Include="SE_Monk.cs" />
+    <Compile Include="SE_Rogue.cs" />
+    <Compile Include="SE_Riposte.cs" />
+    <Compile Include="SE_BiomeMeadows.cs" />
+    <Compile Include="SE_BiomeBlackForest.cs" />
+    <Compile Include="SE_BiomeSwamp.cs" />
+    <Compile Include="SE_BiomeMountain.cs" />
+    <Compile Include="SE_BiomePlains.cs" />
+    <Compile Include="SE_BiomeOcean.cs" />
+    <Compile Include="SE_BiomeMist.cs" />
+    <Compile Include="SE_BiomeAsh.cs" />
+    <Compile Include="SE_Weaken.cs" />
     <Compile Include="VL_Console.cs" />
     <Compile Include="VL_GlobalConfigs.cs" />
     <Compile Include="VL_ConfigSync.cs" />

@@ -58,7 +58,7 @@ namespace ValheimLegends
 
                         //Apply effects
                         rootCount = 0;
-                        rootCountTrigger = 26 - Mathf.RoundToInt(.1f * sLevel);
+                        rootCountTrigger = 32 - Mathf.RoundToInt(.12f * sLevel);
                         Vector3 shiftVec = player.transform.right * 2.5f;
                         if (UnityEngine.Random.Range(0f, 1f) < .5f)
                         {
@@ -114,7 +114,7 @@ namespace ValheimLegends
                         Vector3 position = player.transform.position;
                         Vector3 target = (!Physics.Raycast(player.GetEyePoint(), player.GetLookDir(), out hitInfo, float.PositiveInfinity, Script_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
                         HitData hitData = new HitData();
-                        hitData.m_damage.m_pierce = UnityEngine.Random.Range(10f + (.7f * sLevel), 15 + (1.25f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                        hitData.m_damage.m_pierce = UnityEngine.Random.Range(10f + (.6f * sLevel), 15 + (1.2f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
                         hitData.m_pushForce = 2f;
                         Vector3 a = Vector3.MoveTowards(GO_Root.transform.position, target, 1f);
                         if (P_Root != null && P_Root.name == "Root")
@@ -243,23 +243,19 @@ namespace ValheimLegends
 
                         //Deathsquito's actually
                         GameObject prefab2 = ZNetScene.instance.GetPrefab("VL_Deathsquit");  //
-                        //prefab2.AddComponent<CharacterTimedDestruction>();
-                        //prefab2.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 10f;
-                        //prefab2.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 10f;
+                        CharacterTimedDestruction td2 = prefab2.GetComponent<CharacterTimedDestruction>();
+                        if (td2 != null)
+                        {
+                            //ZLog.Log("td valid: " + td2.isActiveAndEnabled + " timeout min " + td2.m_timeoutMin + " timeout max " + td2.m_timeoutMax);
+                            td2.m_timeoutMin = 24f + (.3f * sLevel);
+                            td2.m_timeoutMax = td2.m_timeoutMin;
+                        }
                         int rootDefenderCount = 2 + Mathf.RoundToInt(.05f * sLevel);
                         for (int i = 0; i < rootDefenderCount; i++)
                         {
                             rootVec = player.transform.position + player.transform.up * 4f + (player.GetLookDir() * UnityEngine.Random.Range(-(5f + .1f * sLevel), (5f + .1f * sLevel)) + player.transform.right * UnityEngine.Random.Range(-(5f + .1f * sLevel), (5f + .1f * sLevel)));
-                            GameObject go_deathsquit = UnityEngine.Object.Instantiate(prefab2, rootVec, Quaternion.identity);                            
-                            CharacterTimedDestruction td2 = go_deathsquit.GetComponent<CharacterTimedDestruction>();
-                            if (td2 != null)
-                            {
-                                //ZLog.Log("td valid: " + td2.isActiveAndEnabled + " timeout min " + td2.m_timeoutMin + " timeout max " + td2.m_timeoutMax);
-                                td2.m_triggerOnAwake = true;                               
-                                td2.m_timeoutMin = 24f + (.3f * sLevel);
-                                td2.m_timeoutMax = td2.m_timeoutMin;
-                                td2.Trigger();
-                            }
+                            GameObject go_deathsquit = UnityEngine.Object.Instantiate(prefab2, rootVec, Quaternion.identity);                           
+                            
                             Character ch2 = go_deathsquit.GetComponent<Character>();
                             ch2.m_name = "Drusquito";
                             if (ch2 != null)

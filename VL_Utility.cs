@@ -59,33 +59,475 @@ namespace ValheimLegends
         {
             if(ValheimLegends.ClassIsValid)
             {
-                float xStep = 80f;                
+                float xMod = (float)(Screen.width / 1920f);
+                float yMod = (float)(Screen.height / 1080f);
+                float xStep = 80f * xMod;                
                 float yStep = 0f;
-                float yOffset = 20f + ValheimLegends.icon_Y_Offset.Value;
-                float xOffset = 0f + ValheimLegends.icon_X_Offset.Value;
+                float yOffset = (106f * yMod) + ValheimLegends.icon_Y_Offset.Value;
+                float xOffset = (209f * xMod) + ValheimLegends.icon_X_Offset.Value;
                 if(ValheimLegends.iconAlignment.Value.ToLower() == "vertical")
                 {
-                    xStep = 0f;
-                    yStep = 100f;
+                    xStep = 0f; 
+                    yStep = 100f * yMod;
                 }
-
                 ValheimLegends.abilitiesStatus = new List<RectTransform>();
                 ValheimLegends.abilitiesStatus.Clear();
-                RectTransform rectTransform = UnityEngine.Object.Instantiate(hud.m_statusEffectTemplate, hud.m_gpRoot);
+                Vector3 pos = new Vector3(xOffset + xStep, yOffset + yStep, 0);
+                Quaternion rot = new Quaternion(0, 0, 0, 1);
+                Transform t = hud.m_statusEffectListRoot;
+                RectTransform rectTransform = UnityEngine.Object.Instantiate(hud.m_statusEffectTemplate, pos, rot, t);
                 rectTransform.gameObject.SetActive(value: true);
-                rectTransform.anchoredPosition = new Vector3(xOffset + xStep, yOffset + yStep, 0f);
                 rectTransform.GetComponentInChildren<Text>().text = Localization.instance.Localize((ValheimLegends.Ability1_Name).ToString());
                 ValheimLegends.abilitiesStatus.Add(rectTransform);
-                RectTransform rectTransform2 = UnityEngine.Object.Instantiate(hud.m_statusEffectTemplate, hud.m_gpRoot);
+                pos.x += xStep;
+                pos.y += yStep;
+                RectTransform rectTransform2 = UnityEngine.Object.Instantiate(hud.m_statusEffectTemplate, pos, rot, t);
                 rectTransform2.gameObject.SetActive(value: true);
-                rectTransform2.anchoredPosition = new Vector3(xOffset + (xStep * 2f), yOffset + (yStep *2f), 0f);
                 rectTransform2.GetComponentInChildren<Text>().text = Localization.instance.Localize((ValheimLegends.Ability2_Name).ToString());
                 ValheimLegends.abilitiesStatus.Add(rectTransform2);
-                RectTransform rectTransform3 = UnityEngine.Object.Instantiate(hud.m_statusEffectTemplate, hud.m_gpRoot);
+                pos.x += xStep;
+                pos.y += yStep;
+                RectTransform rectTransform3 = UnityEngine.Object.Instantiate(hud.m_statusEffectTemplate, pos, rot, t);
                 rectTransform3.gameObject.SetActive(value: true);
-                rectTransform3.anchoredPosition = new Vector3(xOffset + (xStep * 3), yOffset + (yStep * 3f), 0f);
                 rectTransform3.GetComponentInChildren<Text>().text = Localization.instance.Localize((ValheimLegends.Ability3_Name).ToString());
                 ValheimLegends.abilitiesStatus.Add(rectTransform3);
+            }
+        }
+
+        public static void RotatePlayerToTarget(Player p)
+        {
+            Vector3 lookVec = p.GetLookDir();
+            lookVec.y = 0f;
+            p.transform.rotation = Quaternion.LookRotation(lookVec);
+        }
+
+
+        /// 
+        //Enchanter
+        ///
+
+        public static float GetZoneChargeCost
+        {
+            get
+            {
+                return 40f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetZoneChargeCooldownTime
+        {
+            get
+            {
+                return 180f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetZoneChargeCostPerUpdate
+        {
+            get
+            {
+                return 1f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetZoneChargeSkillGain
+        {
+            get
+            {
+                return 2f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+        public static float GetWeakenCost
+        {
+            get
+            {
+                return 40f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetWeakenCooldownTime
+        {
+            get
+            {
+                return 30f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetWeakenSkillGain
+        {
+            get
+            {
+                return .5f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+        public static float GetCharmCost
+        {
+            get
+            {
+                return 50f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetCharmCooldownTime
+        {
+            get
+            {
+                return 60f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetCharmSkillGain
+        {
+            get
+            {
+                return .85f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+
+        /// 
+        //Monk
+        ///
+
+        public static float GetMeteorPunchCost
+        {
+            get
+            {
+                return 3f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetMeteorPunchCooldownTime
+        {
+            get
+            {
+                return 1f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetMeteorPunchSkillGain
+        {
+            get
+            {
+                return .15f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+        public static float GetPsiBoltCost
+        {
+            get
+            {
+                return 5f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetPsiBoltCooldownTime
+        {
+            get
+            {
+                return 1f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetPsiBoltSkillGain
+        {
+            get
+            {
+                return .15f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+        public static float GetFlyingKickCost
+        {
+            get
+            {
+                return 50f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetFlyingKickCooldownTime
+        {
+            get
+            {
+                return 6f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetFlyingKickSkillGain
+        {
+            get
+            {
+                return .3f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+
+        /// 
+        //Rogue
+        ///
+
+        public static float GetPoisonBombCost
+        {
+            get
+            {
+                return 50f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetPoisonBombCooldownTime
+        {
+            get
+            {
+                return 30f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetPoisonBombSkillGain
+        {
+            get
+            {
+                return .6f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+        public static float GetBackstabCost
+        {
+            get
+            {
+                return 60f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetBackstabCooldownTime
+        {
+            get
+            {
+                return 20f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetBackstabSkillGain
+        {
+            get
+            {
+                return .55f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+        public static float GetFadeCost
+        {
+            get
+            {
+                return 10f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetFadeCooldownTime
+        {
+            get
+            {
+                return 15f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetFadeSkillGain
+        {
+            get
+            {
+                return .2f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+
+        /// 
+        //Priest
+        ///
+
+        public static float GetSanctifyCost
+        {
+            get
+            {
+                return 70f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetSanctifyCooldownTime
+        {
+            get
+            {
+                return 45f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetSanctifySkillGain
+        {
+            get
+            {
+                return .8f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+        public static float GetHealCost
+        {
+            get
+            {
+                return 40f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetHealCostPerUpdate
+        {
+            get
+            {
+                return .75f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetHealCooldownTime
+        {
+            get
+            {
+                return 30f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetHealSkillGain
+        {
+            get
+            {
+                return .4f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+        public static float GetPurgeCost
+        {
+            get
+            {
+                return 50f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetPurgeCooldownTime
+        {
+            get
+            {
+                return 15f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetPurgeSkillGain
+        {
+            get
+            {
+                return .4f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+
+        /// 
+        //Duelist
+        ///
+
+        public static float GetQuickShotCost
+        {
+            get
+            {
+                return 25f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetQuickShotCooldownTime
+        {
+            get
+            {
+                return 10f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetQuickShotSkillGain
+        {
+            get
+            {
+                return .25f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+        public static float GetRiposteCost
+        {
+            get
+            {
+                return 30f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetRiposteCooldownTime
+        {
+            get
+            {
+                return 6f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetRiposteSkillGain
+        {
+            get
+            {
+                return .15f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+        public static float GetBlinkStrikeCost
+        {
+            get
+            {
+                return 60f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetBlinkStrikeCooldownTime
+        {
+            get
+            {
+                return 30f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetBlinkStrikeSkillGain
+        {
+            get
+            {
+                return .6f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+
+        /// 
+        //Metavoker
+        ///
+
+        public static float GetLightCost
+        {
+            get
+            {
+                return 50f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetLightCooldownTime
+        {
+            get
+            {
+                return 20f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetLightSkillGain
+        {
+            get
+            {
+                return .75f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+        public static float GetWarpCost
+        {
+            get
+            {
+                return 40f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetWarpCostPerUpdate
+        {
+            get
+            {
+                return 1f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetWarpCooldownTime
+        {
+            get
+            {
+                return 6f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetWarpSkillGain
+        {
+            get
+            {
+                return .5f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+        public static float GetReplicaCost
+        {
+            get
+            {
+                return 70f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetReplicaCooldownTime
+        {
+            get
+            {
+                return 30f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetReplicaSkillGain
+        {
+            get
+            {
+                return .75f * VL_GlobalConfigs.g_SkillGainModifer;
             }
         }
 
@@ -118,7 +560,7 @@ namespace ValheimLegends
         {
             get
             {
-                return 40f * VL_GlobalConfigs.g_EnergyCostModifer;
+                return 60f * VL_GlobalConfigs.g_EnergyCostModifer;
             }
         }
         public static float GetMeteorCostPerUpdate
@@ -153,7 +595,7 @@ namespace ValheimLegends
         {
             get
             {
-                return 30f * VL_GlobalConfigs.g_CooldownModifer;
+                return 20f * VL_GlobalConfigs.g_CooldownModifer;
             }
         }
         public static float GetFrostNovaSkillGain
@@ -179,7 +621,7 @@ namespace ValheimLegends
         {
             get
             {
-                return 90f * VL_GlobalConfigs.g_CooldownModifer;
+                return 60f * VL_GlobalConfigs.g_CooldownModifer;
             }
         }
         public static float GetBulwarkSkillGain
@@ -247,14 +689,14 @@ namespace ValheimLegends
         {
             get
             {
-                return 120f * VL_GlobalConfigs.g_CooldownModifer;
+                return 60f * VL_GlobalConfigs.g_CooldownModifer;
             }
         }
         public static float GetRegenerationSkillGain
         {
             get
             {
-                return 1.5f * VL_GlobalConfigs.g_SkillGainModifer;
+                return 1f * VL_GlobalConfigs.g_SkillGainModifer;
             }
         }
         public static float GetRootCost
@@ -318,12 +760,12 @@ namespace ValheimLegends
         }
         public static float GetEnrageCooldown(Player p)
         {
-            float time = 120 * VL_GlobalConfigs.g_CooldownModifer;
+            float time = 60 * VL_GlobalConfigs.g_CooldownModifer;
             return time;
         }
         public static float GetEnrageSkillGain(Player p)
         {
-            float xp = 1.4f * VL_GlobalConfigs.g_SkillGainModifer;
+            float xp = 1.2f * VL_GlobalConfigs.g_SkillGainModifer;
             return xp;
         }
         public static float GetSpiritBombCost(Player p)
@@ -348,12 +790,12 @@ namespace ValheimLegends
         }
         public static float GetShellCooldown(Player p)
         {
-            float time = 180 * VL_GlobalConfigs.g_CooldownModifer;
+            float time = 120 * VL_GlobalConfigs.g_CooldownModifer;
             return time;
         }
         public static float GetShellSkillGain(Player p)
         {
-            float xp = 2.2f * VL_GlobalConfigs.g_SkillGainModifer;
+            float xp = 1.6f * VL_GlobalConfigs.g_SkillGainModifer;
             return xp;
         }
 
@@ -383,22 +825,22 @@ namespace ValheimLegends
         }
         public static float GetBerserkCooldown(Player p)
         {
-            float time = 180 * VL_GlobalConfigs.g_CooldownModifer;
+            float time = 60 * VL_GlobalConfigs.g_CooldownModifer;
             return time;
         }
         public static float GetBerserkSkillGain(Player p)
         {
-            float xp = 1.8f * VL_GlobalConfigs.g_SkillGainModifer;
+            float xp = 1.2f * VL_GlobalConfigs.g_SkillGainModifer;
             return xp;
         }
         public static float GetExecuteCost(Player p)
         {
-            float cost = 50f * VL_GlobalConfigs.g_EnergyCostModifer;
+            float cost = 60f * VL_GlobalConfigs.g_EnergyCostModifer;
             return cost;
         }
         public static float GetExecuteCooldown(Player p)
         {
-            float time = 120 * VL_GlobalConfigs.g_CooldownModifer;
+            float time = 60 * VL_GlobalConfigs.g_CooldownModifer;
             return time;
         }
         public static float GetExecuteSkillGain(Player p)
@@ -433,7 +875,7 @@ namespace ValheimLegends
         }
         public static float GetShadowStalkCooldown(Player p)
         {
-            float time = 120 * VL_GlobalConfigs.g_CooldownModifer;
+            float time = 45 * VL_GlobalConfigs.g_CooldownModifer;
             return time;
         }
         public static float GetShadowStalkSkillGain(Player p)

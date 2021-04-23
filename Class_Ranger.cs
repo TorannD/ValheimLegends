@@ -36,7 +36,7 @@ namespace ValheimLegends
                         se_cd.m_ttl = VL_Utility.GetPowerShotCooldown(player);
                         player.GetSEMan().AddStatusEffect(se_cd);
 
-                        //Ability Cost
+                        //Ability Costffffffffffffxd
                         player.UseStamina(VL_Utility.GetPowerShotCost(player));
 
                         //Effects, animations, and sounds
@@ -45,8 +45,8 @@ namespace ValheimLegends
 
                         //Lingering effects
                         SE_PowerShot se_powershot = (SE_PowerShot)ScriptableObject.CreateInstance(typeof(SE_PowerShot));
-                        se_powershot.m_ttl = SE_PowerShot.m_baseTTL + Mathf.RoundToInt(.05f * player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AlterationSkillDef).m_level);
-                        se_powershot.hitCount = Mathf.RoundToInt(3f + .05f * player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AlterationSkillDef).m_level);
+                        se_powershot.m_ttl = SE_PowerShot.m_baseTTL + Mathf.RoundToInt(.05f * player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level);
+                        se_powershot.hitCount = Mathf.RoundToInt(3f + .05f * player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level);
 
                         //Apply effects
                         if (player.GetSEMan().HaveStatusEffect("SE_VL_PowerShot"))
@@ -82,6 +82,9 @@ namespace ValheimLegends
                         se_cd.m_ttl = VL_Utility.GetSummonWolfCooldown(player);
                         player.GetSEMan().AddStatusEffect(se_cd);
 
+                        //Skill influence
+                        float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.ConjurationSkillDef).m_level;
+
                         //Ability Cost
                         player.UseStamina(VL_Utility.GetSummonWolfCost(player));
 
@@ -95,10 +98,12 @@ namespace ValheimLegends
                         //Apply effects
                         pVec = player.transform.position + player.transform.forward * 4f;
                         
-                        GameObject prefab = ZNetScene.instance.GetPrefab("VL_RangerWolf");
+                        GameObject prefab = ZNetScene.instance.GetPrefab("VL_ShadowWolf"); //ZNetScene.instance.GetPrefab("VL_RangerWolf");
                         //prefab.AddComponent<CharacterTimedDestruction>();
                         prefab.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 600f;
                         prefab.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 600f;
+                        //prefab.GetComponent<Character>().SetMaxHealth();
+                        //prefab.GetComponent<Character>().m_swimSpeed = 2f;
                         GO_Wolf = UnityEngine.Object.Instantiate(prefab, pVec, Quaternion.identity);
                         Character ch = GO_Wolf.GetComponent<Character>();
                         ch.m_name = "Shadow Wolf";
@@ -108,11 +113,9 @@ namespace ValheimLegends
                         {
                             ch.m_faction = Character.Faction.Players;
                             ch.SetTamed(true);
-                            float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.ConjurationSkillDef).m_level;
-                            ch.SetMaxHealth(25 + (9 + sLevel));
-                            ch.transform.localScale = (.5f + (.01f * sLevel)) * Vector3.one;                            
+                            ch.SetMaxHealth(25 + (9 * sLevel));
+                            ch.transform.localScale = (0.5f + (.02f * sLevel)) * Vector3.one;                            
                             ch.m_swimSpeed *= 2f;
-
                             //CharacterTimedDestruction td = GO_Wolf.GetComponent<CharacterTimedDestruction>();
                             //if (td != null)
                             //{
@@ -167,7 +170,7 @@ namespace ValheimLegends
                     if (player.GetStamina() >= VL_Utility.GetShadowStalkCost(player))
                     {
                         //Skill Influence
-                        float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AlterationSkillDef).m_level;
+                        float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
                         //Ability Cooldown
                         StatusEffect se_cd = (SE_Ability1_CD)ScriptableObject.CreateInstance(typeof(SE_Ability1_CD));
                         se_cd.m_ttl = VL_Utility.GetShadowStalkCooldown(player);
@@ -183,7 +186,7 @@ namespace ValheimLegends
 
                         //Lingering effects
                         SE_ShadowStalk se_shadowstalk = (SE_ShadowStalk)ScriptableObject.CreateInstance(typeof(SE_ShadowStalk));
-                        se_shadowstalk.m_ttl = 30f * (1f + (.03f * sLevel));
+                        se_shadowstalk.m_ttl = SE_ShadowStalk.m_baseTTL * (1f + (.02f * sLevel));
                         se_shadowstalk.speedAmount = 1.5f + (.01f * sLevel);
                         se_shadowstalk.speedDuration = 3f + (.03f * sLevel);
 
@@ -198,24 +201,17 @@ namespace ValheimLegends
                             if (ch.GetBaseAI() != null && ch.GetBaseAI() is MonsterAI && ch.GetBaseAI().IsEnemey(player))
                             {
                                 MonsterAI ai = ch.GetBaseAI() as MonsterAI;
-                                try
-                                {
-                                    if (ai != null && ai.GetTargetCreature() == player && ValheimLegends.ServerID != 0L)
-                                    {
-                                        Traverse.Create(root: ai).Field("m_alerted").SetValue(false);
-                                        Traverse.Create(root: ai).Field("m_targetCreature").SetValue(null);
-                                    }
-                                }
-                                catch
-                                {
-
+                                if (ai != null && ai.GetTargetCreature() == player)
+                                {                                    
+                                    Traverse.Create(root: ai).Field("m_alerted").SetValue(false);
+                                    Traverse.Create(root: ai).Field("m_targetCreature").SetValue(null);
                                 }
                             }
                         }
 
 
                         //Skill gain
-                        player.RaiseSkill(ValheimLegends.AlterationSkill, VL_Utility.GetShadowStalkSkillGain(player));
+                        player.RaiseSkill(ValheimLegends.DisciplineSkill, VL_Utility.GetShadowStalkSkillGain(player));
                     }
                     else
                     {
