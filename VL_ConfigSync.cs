@@ -14,6 +14,7 @@ namespace ValheimLegends
     {
         public static string ConfigPath = Path.GetDirectoryName(Paths.BepInExConfigPath) + Path.DirectorySeparatorChar + "ValheimLegends.cfg";
 
+
         public static void RPC_VL_ConfigSync(long sender, ZPackage configPkg)
         {
             if (ZNet.instance.IsServer()) //Server
@@ -77,12 +78,12 @@ namespace ValheimLegends
                         string key = line.Substring(0, line.IndexOf('=') + 1);  //line.Substring(0, line.IndexOf('=') + 1);    
                         key = key.Trim(trm);
                         //ZLog.Log("key string is " + key);
-                        if(key == "vl_svr_version")
+                        if (key == "vl_svr_version")
                         {
                             string val = line.Substring(line.IndexOf('=') + 1);
                             val = val.Trim(trm);
                             //ZLog.Log("val is " + val + " server evrsion is " + ValheimLegends.Version);
-                            if(val != ValheimLegends.Version)
+                            if (val != ValheimLegends.Version)
                             {
                                 char[] trm_e = { '.', ',', '0' };
                                 string val2 = val.Trim(trm_e);
@@ -103,14 +104,40 @@ namespace ValheimLegends
                             //ZLog.Log("VL CLIENT -------------- found config match for: " + key + " ----- changing running modifiers ");
                             string val = line.Substring(line.IndexOf('=') + 1);
                             val = val.Trim(trm);
-                            if(key == "vl_svr_enforceConfigClass")
+                            if (key == "vl_svr_enforceConfigClass")
                             {
                                 val = val.ToString() == "true" ? "1" : "0";
                             }
                             //ZLog.Log("value is: " + val + " parsed to " + float.Parse(val));
-                            VL_GlobalConfigs.ConfigStrings[key] = float.Parse(val);
+                            float val2 = 1f;
+                            try
+                            {
+                                val2 = float.Parse(val);
+                            }
+                            catch
+                            {
+                                val = val.Replace(",", ".");
+                            }
+                            try
+                            {
+                                val2 = float.Parse(val);
+                            }
+                            catch
+                            {
+                                val = val.Replace(".", ",");
+                            }
+                            try
+                            {
+                                val2 = float.Parse(val);
+                            }
+                            catch
+                            {
+                                ZLog.Log("Valheim Legends: unable to sync modifiers - setting to default");
+                                val2 = 1f;
+                            }
+                            VL_GlobalConfigs.ConfigStrings[key] = val2;
                             //ZLog.Log("config value is " + VL_GlobalConfigs.ConfigStrings[key]);
-                        }          
+                        }
                     }
                     if (syncOrVersionFailure)
                     {

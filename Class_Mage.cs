@@ -85,6 +85,7 @@ namespace ValheimLegends
             }
             else if (VL_Utility.Ability3_Input_Pressed && meteorCharging && player.GetStamina() > 1 && Mathf.Max(0f, altitude - player.transform.position.y) <= 1f)
             {
+                VL_Utility.SetTimer();
                 meteorChargeAmount++;                
                 player.UseStamina(VL_Utility.GetMeteorCostPerUpdate);
                 ValheimLegends.isChanneling = true;
@@ -198,7 +199,7 @@ namespace ValheimLegends
                                 hitData.m_point = ch.GetEyePoint();
                                 hitData.m_dir = (player.transform.position - ch.transform.position);
                                 hitData.m_skill = ValheimLegends.EvocationSkill;
-                                ch.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);
+                                ch.Damage(hitData);
                                 SE_Slow se_frost = (SE_Slow)ScriptableObject.CreateInstance(typeof(SE_Slow));
                                 ch.GetSEMan().AddStatusEffect(se_frost.name, true);
                             }

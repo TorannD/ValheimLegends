@@ -125,6 +125,7 @@ namespace ValheimLegends
                 healChargeAmount++;                
                 player.UseStamina(VL_Utility.GetHealCostPerUpdate);
                 ValheimLegends.isChanneling = true;
+                VL_Utility.SetTimer();
                 if (healChargeAmount >= healChargeAmountMax)
                 {
                     healCount++;
@@ -188,7 +189,7 @@ namespace ValheimLegends
                                 hitData.m_point = ch.GetEyePoint();
                                 hitData.m_dir = (player.transform.position - ch.transform.position);
                                 hitData.m_skill = ValheimLegends.EvocationSkill;
-                                ch.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);
+                                ch.Damage(hitData);
                             }
                         }
                         //Skill gain

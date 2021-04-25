@@ -14,13 +14,13 @@ using UnityEngine.UI;
 
 namespace ValheimLegends
 {
-    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.3.0")]
+    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.3.1")]
     public class ValheimLegends : BaseUnityPlugin
     {
         public static Harmony _Harmony;
 
-        public const string Version = "0.3.0";
-        public const float VersionF = 0.30f;
+        public const string Version = "0.3.1";
+        public const float VersionF = 0.31f;
         public const string ModName = "Valheim Legends";
         public static bool playerEnabled = true;
 
@@ -44,7 +44,7 @@ namespace ValheimLegends
         //configs
         //public static ConfigVariable<bool> modEnabled;
         //public static ConfigVariable<string> chosenClass;
-        //public static ConfigVariable<bool> vl_svr_enforceConfigurationClass;
+        //public static ConfigVariable<bool> vl_mce_enforceConfigurationClass;
         //public static ConfigVariable<string> Ability1_Hotkey;
         //public static ConfigVariable<string> Ability1_Hotkey_Combo;
         //public static ConfigVariable<string> Ability2_Hotkey;
@@ -52,16 +52,16 @@ namespace ValheimLegends
         //public static ConfigVariable<string> Ability3_Hotkey;
         //public static ConfigVariable<string> Ability3_Hotkey_Combo;
 
-        //public static ConfigVariable<float> vl_svr_energyCostMultiplier;
-        //public static ConfigVariable<float> vl_svr_cooldownMultiplier;
-        //public static ConfigVariable<float> vl_svr_abilityDamageMultiplier;
-        //public static ConfigVariable<float> vl_svr_skillGainMultiplier;
+        //public static ConfigVariable<float> vl_mce_energyCostMultiplier;
+        //public static ConfigVariable<float> vl_mce_cooldownMultiplier;
+        //public static ConfigVariable<float> vl_mce_abilityDamageMultiplier;
+        //public static ConfigVariable<float> vl_mce_skillGainMultiplier;
 
         //public static ConfigVariable<float> icon_X_Offset;
         //public static ConfigVariable<float> icon_Y_Offset;
-
-        //public static ConfigVariable<bool> showAbilityIcons;
         //public static ConfigVariable<string> iconAlignment;
+        //public static ConfigVariable<bool> showAbilityIcons;
+
 
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<string> Ability1_Hotkey;
@@ -71,10 +71,10 @@ namespace ValheimLegends
         public static ConfigEntry<string> Ability3_Hotkey;
         public static ConfigEntry<string> Ability3_Hotkey_Combo;
 
-        public static ConfigEntry<string> vl_svr_energyCostMultiplier;
-        public static ConfigEntry<string> vl_svr_cooldownMultiplier;
-        public static ConfigEntry<string> vl_svr_abilityDamageMultiplier;
-        public static ConfigEntry<string> vl_svr_skillGainMultiplier;
+        public static ConfigEntry<float> vl_svr_energyCostMultiplier;
+        public static ConfigEntry<float> vl_svr_cooldownMultiplier;
+        public static ConfigEntry<float> vl_svr_abilityDamageMultiplier;
+        public static ConfigEntry<float> vl_svr_skillGainMultiplier;
 
         public static ConfigEntry<float> icon_X_Offset;
         public static ConfigEntry<float> icon_Y_Offset;
@@ -966,7 +966,7 @@ namespace ValheimLegends
                     if (attacker.GetSEMan().HaveStatusEffect("SE_VL_Monk"))
                     {
                         SE_Monk se_m = (SE_Monk)attacker.GetSEMan().GetStatusEffect("SE_VL_Monk");
-                        if (Class_Monk.PlayerUsingUnarmed)
+                        if (Class_Monk.PlayerIsUnarmed)
                         {
                             hit.m_damage.Modify(1.25f);
                             se_m.hitCount++;
@@ -1369,7 +1369,7 @@ namespace ValheimLegends
         {
             public static bool Prefix(HitData __instance, float damage)
             {
-                if (vl_player != null && vl_player.vl_class == PlayerClass.Monk && Class_Monk.PlayerUsingUnarmed)
+                if (vl_player != null && vl_player.vl_class == PlayerClass.Monk && Class_Monk.PlayerIsUnarmed)
                 {
                     if (__instance.GetTotalBlockableDamage() >= damage)
                     {
@@ -1592,117 +1592,121 @@ namespace ValheimLegends
         {
             public static void Postfix(Player __instance, ref float ___m_maxAirAltitude, ref Rigidbody ___m_body, ref Animator ___m_animator, ref float ___m_lastGroundTouch, float ___m_waterLevel)
             {
-                Player localPlayer = Player.m_localPlayer;                
-                if (localPlayer != null && playerEnabled)
-                {
-                    //for log checking only
-                    //logCheck++;
-                    //if (logCheck > 120)
-                    //{
-                    //    logCheck = 0;
-                    //    ZLog.Log("player position " + localPlayer.transform.position);
-                    //}
-                    //end logging
-
-                    if (VL_Utility.TakeInput(localPlayer) && !localPlayer.InPlaceMode())
+                if (VL_Utility.ReadyTime)
+                {                    
+                    Player localPlayer = Player.m_localPlayer;
+                    if (localPlayer != null && playerEnabled)
                     {
-                        if (vl_player.vl_class == PlayerClass.Mage)
-                        {
-                            Class_Mage.Process_Input(localPlayer, ___m_maxAirAltitude);
-                        }
-                        else if (vl_player.vl_class == PlayerClass.Druid)
-                        {
-                            Class_Druid.Process_Input(localPlayer, ___m_maxAirAltitude);
-                        }
-                        else if (vl_player.vl_class == PlayerClass.Shaman)
-                        {
-                            Class_Shaman.Process_Input(localPlayer, ref ___m_body, ref ___m_maxAirAltitude, ref ___m_lastGroundTouch, ___m_waterLevel);
-                        }
-                        else if (vl_player.vl_class == PlayerClass.Ranger)
-                        {
-                            Class_Ranger.Process_Input(localPlayer);
-                        }
-                        else if (vl_player.vl_class == PlayerClass.Berserker)
-                        {
-                            Class_Berserker.Process_Input(localPlayer, ref ___m_maxAirAltitude);
-                        }
-                        else if (vl_player.vl_class == PlayerClass.Valkyrie)
-                        {
-                            Class_Valkyrie.Process_Input(localPlayer);
-                        }
-                        else if (vl_player.vl_class == PlayerClass.Metavoker)
-                        {
-                            Class_Metavoker.Process_Input(localPlayer, ref ___m_maxAirAltitude, ref ___m_body);
-                        }
-                        else if (vl_player.vl_class == PlayerClass.Priest)
-                        {
-                            Class_Priest.Process_Input(localPlayer, ref ___m_maxAirAltitude);
-                        }
-                        //else if (vl_player.vl_class == PlayerClass.Necromancer)
+                        //for log checking only
+                        //logCheck++;
+                        //if (logCheck > 120)
                         //{
-                        //    Class_Necromancer.Process_Input(localPlayer);
+                        //    logCheck = 0;
+                        //    ZLog.Log("player position " + localPlayer.transform.position);
                         //}
-                        else if (vl_player.vl_class == PlayerClass.Monk)
-                        {
-                            Class_Monk.Process_Input(localPlayer, ref ___m_body, ref ___m_maxAirAltitude, ref ___m_animator);
+                        //end logging
 
-                            if ((!localPlayer.GetSEMan().HaveStatusEffect("SE_VL_Monk")))
+                        if (VL_Utility.TakeInput(localPlayer) && !localPlayer.InPlaceMode())
+                        {
+                            if (vl_player.vl_class == PlayerClass.Mage)
                             {
-                                SE_Monk se_m = (SE_Monk)ScriptableObject.CreateInstance(typeof(SE_Monk));
-                                se_m.m_ttl = SE_Monk.m_baseTTL;
-                                localPlayer.GetSEMan().AddStatusEffect(se_m, true);
+                                Class_Mage.Process_Input(localPlayer, ___m_maxAirAltitude);
+                            }
+                            else if (vl_player.vl_class == PlayerClass.Druid)
+                            {
+                                Class_Druid.Process_Input(localPlayer, ___m_maxAirAltitude);
+                            }
+                            else if (vl_player.vl_class == PlayerClass.Shaman)
+                            {
+                                Class_Shaman.Process_Input(localPlayer, ref ___m_body, ref ___m_maxAirAltitude, ref ___m_lastGroundTouch, ___m_waterLevel);
+                            }
+                            else if (vl_player.vl_class == PlayerClass.Ranger)
+                            {
+                                Class_Ranger.Process_Input(localPlayer);
+                            }
+                            else if (vl_player.vl_class == PlayerClass.Berserker)
+                            {
+                                Class_Berserker.Process_Input(localPlayer, ref ___m_maxAirAltitude);
+                            }
+                            else if (vl_player.vl_class == PlayerClass.Valkyrie)
+                            {
+                                Class_Valkyrie.Process_Input(localPlayer);
+                            }
+                            else if (vl_player.vl_class == PlayerClass.Metavoker)
+                            {
+                                Class_Metavoker.Process_Input(localPlayer, ref ___m_maxAirAltitude, ref ___m_body);
+                            }
+                            else if (vl_player.vl_class == PlayerClass.Priest)
+                            {
+                                Class_Priest.Process_Input(localPlayer, ref ___m_maxAirAltitude);
+                            }
+                            //else if (vl_player.vl_class == PlayerClass.Necromancer)
+                            //{
+                            //    Class_Necromancer.Process_Input(localPlayer);
+                            //}
+                            else if (vl_player.vl_class == PlayerClass.Monk)
+                            {
+                                Class_Monk.Process_Input(localPlayer, ref ___m_body, ref ___m_maxAirAltitude, ref ___m_animator);
+
+                                if ((!localPlayer.GetSEMan().HaveStatusEffect("SE_VL_Monk")))
+                                {
+                                    SE_Monk se_m = (SE_Monk)ScriptableObject.CreateInstance(typeof(SE_Monk));
+                                    se_m.m_ttl = SE_Monk.m_baseTTL;
+                                    localPlayer.GetSEMan().AddStatusEffect(se_m, true);
+                                }
+                            }
+                            else if (vl_player.vl_class == PlayerClass.Duelist)
+                            {
+                                Class_Duelist.Process_Input(localPlayer);
+                            }
+                            else if (vl_player.vl_class == PlayerClass.Enchanter)
+                            {
+                                Class_Enchanter.Process_Input(localPlayer, ref ___m_maxAirAltitude);
+                            }
+                            else if (vl_player.vl_class == PlayerClass.Rogue)
+                            {
+                                Class_Rogue.Process_Input(localPlayer, ref ___m_body, ref ___m_maxAirAltitude);
+
+                                if ((!localPlayer.GetSEMan().HaveStatusEffect("SE_VL_Rogue")))
+                                {
+                                    SE_Rogue se_r = (SE_Rogue)ScriptableObject.CreateInstance(typeof(SE_Rogue));
+                                    se_r.m_ttl = SE_Rogue.m_baseTTL;
+                                    localPlayer.GetSEMan().AddStatusEffect(se_r, true);
+                                }
                             }
                         }
-                        else if (vl_player.vl_class == PlayerClass.Duelist)
-                        {
-                            Class_Duelist.Process_Input(localPlayer);
-                        }
-                        else if (vl_player.vl_class == PlayerClass.Enchanter)
-                        {
-                            Class_Enchanter.Process_Input(localPlayer, ref ___m_maxAirAltitude);
-                        }
-                        else if (vl_player.vl_class == PlayerClass.Rogue)
-                        {
-                            Class_Rogue.Process_Input(localPlayer, ref ___m_body, ref ___m_maxAirAltitude);
-                            
-                            if ((!localPlayer.GetSEMan().HaveStatusEffect("SE_VL_Rogue")))
-                            {
-                                SE_Rogue se_r = (SE_Rogue)ScriptableObject.CreateInstance(typeof(SE_Rogue));
-                                se_r.m_ttl = SE_Rogue.m_baseTTL;
-                                localPlayer.GetSEMan().AddStatusEffect(se_r,true);
-                            }
-                        }
                     }
-                }
 
-                if (isChargingDash)
-                {
-                    dashCounter++;
-                    if(dashCounter >= 10 && vl_player.vl_class == PlayerClass.Berserker)
+                    if (isChargingDash)
                     {
-                        isChargingDash = false;
-                        Class_Berserker.Execute_Dash(localPlayer, ref ___m_maxAirAltitude);
-                    }
-                    if (dashCounter >= 10 && vl_player.vl_class == PlayerClass.Duelist)
-                    {
-                        isChargingDash = false;
-                        ValheimLegends.isChanneling = false;
-                        Class_Duelist.Execute_Slash(localPlayer);
-                    }
-                    if (dashCounter >= 16 && vl_player.vl_class == PlayerClass.Rogue)
-                    {
-                        isChargingDash = false;
-                        Class_Rogue.Execute_Throw(localPlayer);
-                    }
-                    if(vl_player.vl_class == PlayerClass.Monk && dashCounter >= (int)Class_Monk.QueuedAttack)
-                    {
-                        isChargingDash = false;
-                        Class_Monk.Execute_Attack(localPlayer, ref ___m_body, ref ___m_maxAirAltitude);
-                    }
-                    if(vl_player.vl_class == PlayerClass.Enchanter && dashCounter >= (int)Class_Enchanter.QueuedAttack)
-                    {
-                        isChargingDash = false;
-                        Class_Enchanter.Execute_Attack(localPlayer, ref ___m_body, ref ___m_maxAirAltitude);
+                        VL_Utility.SetTimer();
+                        dashCounter++;
+                        if (dashCounter >= 10 && vl_player.vl_class == PlayerClass.Berserker)
+                        {
+                            isChargingDash = false;
+                            Class_Berserker.Execute_Dash(localPlayer, ref ___m_maxAirAltitude);
+                        }
+                        if (dashCounter >= 10 && vl_player.vl_class == PlayerClass.Duelist)
+                        {
+                            isChargingDash = false;
+                            ValheimLegends.isChanneling = false;
+                            Class_Duelist.Execute_Slash(localPlayer);
+                        }
+                        if (dashCounter >= 16 && vl_player.vl_class == PlayerClass.Rogue)
+                        {
+                            isChargingDash = false;
+                            Class_Rogue.Execute_Throw(localPlayer);
+                        }
+                        if (vl_player.vl_class == PlayerClass.Monk && dashCounter >= (int)Class_Monk.QueuedAttack)
+                        {
+                            isChargingDash = false;
+                            Class_Monk.Execute_Attack(localPlayer, ref ___m_body, ref ___m_maxAirAltitude);
+                        }
+                        if (vl_player.vl_class == PlayerClass.Enchanter && dashCounter >= (int)Class_Enchanter.QueuedAttack)
+                        {
+                            isChargingDash = false;
+                            Class_Enchanter.Execute_Attack(localPlayer, ref ___m_body, ref ___m_maxAirAltitude);
+                        }
                     }
                 }
 
@@ -1753,7 +1757,7 @@ namespace ValheimLegends
                     "Skills: Evocation\n" +
                     "Sacrifice: coal\n\n" +
                     "Fireball: creates a ball of fire above the caster that arcs towards the casters target.\nDamage:\n Fire - 10->40 + 2*Evocation\n Blunt - 1/2 Fire\n AoE - 3m + 1%*Evocation\nCooldown: 12s\nEnergy: 50 + 0.5*Evocation\n*Afflicts targets with burning\n\n"
-                    + "Frost Nova: point blank area of effect frost damage that slows victims for a short period.\nDamage:\n Ice - 10 + 0.5*Evocation -> 20 + Evocation\n AoE - 10m + 1%*Evocation\nCooldown: 30s\nEnergy: 40\n*Slows movement of affected targets by 60% for 4s\n**Removes burning effect from caster\n\n"
+                    + "Frost Nova: point blank area of effect frost damage that slows victims for a short period.\nDamage:\n Ice - 10 + 0.5*Evocation -> 20 + Evocation\n AoE - 10m + 1%*Evocation\nCooldown: 20s\nEnergy: 40\n*Slows movement of affected targets by 60% for 4s\n**Removes burning effect from caster\n\n"
                     + "Meteor: channels energy to call down a meteor storm on the targeted area.\nDamage (per meteor):\n Fire - 30 + 0.5*Evocation -> 50 + Evocation\n Blunt - 1/2 Fire\n AoE - 8m + 0.5%*Evocation\nCooldown: 180s\nEnergy: 60 initial + 30 per second channeled\n*Afflicts targets with burning\n**Press and hold the ability button to channel the spell to create multiple meteors\n***Jump or dodge to cancel ability\n\n",
                     m_topic = "Legend Mage"
                 };
@@ -1769,8 +1773,8 @@ namespace ValheimLegends
                     m_text = "Berserkers harness their rage into physical carnage and will sacrifice their own health to fuel their rage.\n\n" +
                     "Skills: Discipline and Alteration\n" +
                     "Sacrifice: bone fragment\n\n" +
-                    "Execute: empower the next several physical attacks to deal extra damage.\nDamage:\n Physical bonus (blunt/slash/pierce) - + 40% + 0.5% * Discipline\n Stagger - 50% + 0.5% * Discipline\nCharges: 3 + 0.04*Discipline\nCooldown: 120s\nEnergy: 50\n\n"
-                    + "Berserk: sacrifices health to increase movement speed, attack power, remove stamina regeneration delay and gain renewed energy through combat.\nDamage:\n Bonus +20% + 0.5%*Alteration\nMovement Speed - +20% + 0.5%*Alteration\nCooldown: 120s\nEnergy: 50\n*Absorbs 20%+0.2%*Alteration of inflicted physical damage as health\n**Absorbs 20%+0.2%*Alteration of inflicted elemental damage as stamina\n\n"
+                    "Execute: empower the next several physical attacks to deal extra damage.\nDamage:\n Physical bonus (blunt/slash/pierce) - + 40% + 0.5% * Discipline\n Stagger - 50% + 0.5% * Discipline\nCharges: 3 + 0.04*Discipline\nCooldown: 60s\nEnergy: 60\n\n"
+                    + "Berserk: sacrifices health to increase movement speed, attack power, remove stamina regeneration delay and gain renewed energy through combat.\nDamage:\n Bonus +20% + 0.5%*Alteration\nMovement Speed - +20% + 0.5%*Alteration\nCooldown: 60s\nEnergy: 50\n*Absorbs 20%+0.2%*Alteration of inflicted physical damage as health\n**Absorbs 20%+0.2%*Alteration of inflicted elemental damage as stamina\n\n"
                     + "Dash: dash forward in the blink of an eye, cutting through enemies in your way.\nDamage:\n 80% + 0.5%*Discipline of equipped weapon damage\nCooldown: 10s\nEnergy: 70\n*10m dash distance\n\n",
                     m_topic = "Legend Berserker"
                 };
@@ -1785,7 +1789,7 @@ namespace ValheimLegends
                     m_text = "Druid's are the embodiment of nature's resilience, cunning, and fury and act as a conduit of its will.\n\n" +
                     "Skills: Conjuration and Alteration\n" +
                     "Sacrifice: dandelion\n\n" +
-                    "Regeneration: applies a heal over time to the caster and all nearby allies.\nHealing:\n Self - 0.5 + 0.4*Alteration\n Other - 2 + 0.25*Average Skill Level\nDuration: Heals every 2s for 20s\nCooldown: 120s\nEnergy: 60\n\n"
+                    "Regeneration: applies a heal over time to the caster and all nearby allies.\nHealing:\n Self - 0.5 + 0.4*Alteration\n Other - 2 + 0.25*Average Skill Level\nDuration: Heals every 2s for 20s\nCooldown: 60s\nEnergy: 60\n\n"
                     + "Nature's Defense: calls upon nature to defend an area.\nSummon:\n Duration - 24s + 0.3s*Conjuration\n 3x Root defenders\n 2x + 0.05*Conjuration Drusquitos\nCooldown: 120s\nEnergy: 80\n*Defender's health and attack power increase with Conjuration\n**Each Root defender restores stamina to the caster as long as the caster remains near the point Nature's Defense was activated\n\n"
                     + "Vines: create vines that grow at an alarming speed.\nDamage:\n Piercing - 10 + 0.6*Conjuration -> 15 + 1.2*Conjuration per vine\nCooldown: 20s\nEnergy: 30 initial + 9 every .5s\n*Vines are a channeled ability, press and hold the ability button to continuously project vines\n\n",
                     m_topic = "Legend Druid"
@@ -1907,8 +1911,8 @@ namespace ValheimLegends
                     m_text = "Shaman's are known and respected for their ability to inspire their allies to greatness.\n\n" +
                     "Skills: Abjuration, Alteration and Evocation\n" +
                     "Sacrifice: greydwarf eye\n\n" +
-                    "Enrage: incite allies into a frenzied rage that increases movement and endurance.\nAugment:\n Speed - 125% + 0.25%*Alteration\n Stamina Regeneration - 5 + 0.1*Alteration per second\nAoE: 30m\nDuration: 20s + 0.2s*Alteration\nCooldown: 120s\nEnergy: 60\n*Skill bonus is calculated as the average of all skills for allies, and Alteration skill for the caster\n\n"
-                    + "Shell: surround allies in a protection shell that resists elemental attacks and augments attacks with spirit damage.\nDamage:\n Spirit - 6 + 0.3 * Abjuration added to each attack\nBuff: reduces all elemental damage by 40% + 0.6%*Abjuration\nAoE: 30m\nDuration: 35s + 0.35*Abjuration\nCooldown: 180s\nEnergy: 80\n\n"
+                    "Enrage: incite allies into a frenzied rage that increases movement and endurance.\nAugment:\n Speed - 120% + 0.2%*Alteration\n Stamina Regeneration - 5 + 0.1*Alteration per second\nAoE: 30m\nDuration: 16s + 0.2s*Alteration\nCooldown: 60s\nEnergy: 60\n*Skill bonus is calculated as the average of all skills for allies, and Alteration skill for the caster\n\n"
+                    + "Shell: surround allies in a protection shell that resists elemental attacks and augments attacks with spirit damage.\nDamage:\n Spirit - 6 + 0.3 * Abjuration added to each attack\nBuff: reduces all elemental damage by 40% + 0.6%*Abjuration\nAoE: 30m\nDuration: 25s + 0.3*Abjuration\nCooldown: 60s\nEnergy: 80\n\n"
                     + "Spirit Shock: generate a powerful blast that shocks all nearby enemies\nDamage:\n Lightning - 6 + 0.4*Evocation -> 12 + 0.6*Evocation\n Spirit - 6 + 0.4*Evocation -> 12 + 0.6*Evocation\nAoE: 11m + 0.05m*Evocation\nCooldown: 30s\nEnergy: 80\n\n",
                     m_topic = "Legend Shaman"
                 };
@@ -1923,7 +1927,7 @@ namespace ValheimLegends
                     m_text = "Valkyrie's are a versatile class focused on defense and movement.\n" +
                     "Sacrifice: flint\n\n" +
                     "Skills: Discipline and Abjuration\n\n" +
-                    "Bulwark: manifest a powerful shield that reduces all damage to the valkyrie.\nAugment: damage reduced by 25% + 0.5%*Abjuration\nDuration: 15s + 0.2s*Alteration\nCooldown: 90s\nEnergy: 60\n\n"
+                    "Bulwark: manifest a powerful shield that reduces all damage to the valkyrie.\nAugment: damage reduced by 25% + 0.5%*Abjuration\nDuration: 12s + 0.2s*Alteration\nCooldown: 60s\nEnergy: 60\n\n"
                     + "Stagger: send forth a shock wave that staggers all nearby enemies.\nAoE: 6m\nCooldown: 20s\nEnergy: 40\n\n"
                     + "Leap: jump high into the air to come crashing down on your enemies.\nDamage:\n Blunt - 2*Discipline -> 3*Discipline + velocity bonus\nAoE: 8m + 0.05m*Discipline\nCooldown: 15s\nEnergy: 50\n*Velocity bonus is calculated based on the max height reached above ground\n**Leap multiplies existing velocity; triggering leap while running and jumping will produce the longest jumps\n\n",
                     m_topic = "Legend Valkyrie"
@@ -1939,7 +1943,7 @@ namespace ValheimLegends
                     m_text = "The Ranger fearless warriors with peerless survival techniques\n\n" +
                     "Skills: Discipline and Conjuration\n" +
                     "Sacrifice: raw meat\n\n" +
-                    "Shadow Stalk: fade into the shadows gaining a burst of speed and augmenting stealth.\nAugment:\n All movement speed increased by 50% + 1%*Discipline for 3s + 0.03s*Discipline\n Stealth movement speed increased by 50% + 1%*Discipline\nDuration: 30s + 0.9s*Discipline\nCooldown: 120s\nEnergy: 40\n*Shadow stalk causes enemies to lose track of the ranger\n\n"
+                    "Shadow Stalk: fade into the shadows gaining a burst of speed and augmenting stealth.\nAugment:\n All movement speed increased by 50% + 1%*Discipline for 3s + 0.03s*Discipline\n Stealth movement speed increased by 50% + 1%*Discipline\nDuration: 20s + 0.9s*Discipline\nCooldown: 45s\nEnergy: 40\n*Shadow stalk causes enemies to lose track of the ranger\n\n"
                     + "Shadow Wolf: call a trained shadow wolf to fight by your side.\nDamage:\n Slash - 70 * (0.05 + 0.01*Conjuration)\nHealth: 25 + 9*Conjuration\nHealth Regeneration: 1 + 0.1*Conjuration every 5s\nCooldown: 10m\nEnergy: 75\n*Shadow wolves will vanish when the player logs out or after the duration expires\n**Feeding the shadow wolf will restore its health by 250hp\n\n"
                     + "Power Shot: charge the next few projectiles with great velocity and damage.\nDamage:\n Bonus - 40% + 1.5%*Discipline\nVelocity doubled\nCharge Count: 3 + 0.05*Discipline\nCooldown: 60s\nEnergy: 60\n*Bonus damage applies to all projectiles created by the player (not just arrows)\n**Using Power Shot while the buff is still active will refresh the number of charges\n\n",
                     m_topic = "Legend Ranger"
@@ -2027,11 +2031,13 @@ namespace ValheimLegends
         {
 
             //configs
-            //ConfigManager.RegisterMod(ModName, this.Config);
+            //ConfigManager.RegisterMod(ModName, this.Config);            
             //modEnabled = ConfigManager.RegisterModConfigVariable<bool>(ModName, "modEnabled", true, "General", "Enabled or Disable Valheim Legends Mod", true);
-            modEnabled = this.Config.Bind<bool>("General", "modEnabled", true, "Enable/Disable mod");
+            //modEnabled = this.Config.Bind<bool>("General", "modEnabled", true, "Enable/Disable mod");
             chosenClass = this.Config.Bind<string>("General", "chosenClass", "None", "Assigns a class to the player if no class is assigned.\nThis will not overwrite an existing class selection.\nA value of None will not attempt to assign any class.");
+            //chosenClass = ConfigManager.RegisterModConfigVariable<string>(ModName, "chosenClass", "None", "General", "Assigns a class to the player if no class is assigned.\nThis will not overwrite an existing class selection.\nA value of None will not attempt to assign any class.", true);
             vl_svr_enforceConfigClass = this.Config.Bind<bool>("General", "vl_svr_enforceConfigClass", false, "True - always sets the player class to this value when the player logs in. False - uses player profile to determine class\nDoes not apply if the chosen class is None.");
+            //vl_mce_enforceConfigurationClass = ConfigManager.RegisterModConfigVariable<bool>(ModName, "vl_mce_enforceConfigurationClass", false, "General", "True - always sets the player class to this value when the player logs in. False - uses player profile to determine class\nDoes not apply if the chosen class is None.", false);
             //showAbilityIcons = ConfigManager.RegisterModConfigVariable<bool>(ModName, "showAbilityIcons", true, "Display", "Displays Icons on Hud for each ability", true);
             showAbilityIcons = this.Config.Bind<bool>("Display", "showAbilityIcons", true, "Displays Icons on Hud for each ability");
             //iconAlignment = ConfigManager.RegisterModConfigVariable<string>(ModName, "iconAlignment", "horizontal", "Display", "Aligns icons horizontally or vertically off the guardian power icon; options are horizontal or vertical", true);
@@ -2052,23 +2058,24 @@ namespace ValheimLegends
             Ability3_Hotkey = this.Config.Bind<string>("Keybinds", "Ability3_Hotkey", "C", "Ability 3 Hotkey");
             //Ability3_Hotkey_Combo = ConfigManager.RegisterModConfigVariable<string>(ModName, "Ability3_Hotkey_Combo", "", "Keybinds", "Ability 3 Combination Key", true);
             Ability3_Hotkey_Combo = this.Config.Bind<string>("Keybinds", "Ability3_Hotkey_Combo", "", "Ability 3 Combination Key");
-            //energyCostMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "energyCostMultiplier", 1f, "Modifiers", "This value multiplied on overall ability use energy cost", false);
-            vl_svr_energyCostMultiplier = this.Config.Bind<string>("Modifiers", "vl_svr_energyCostMultiplier", "1.0", "Ability modifiers are always enforced by the server host\nThis value multiplied on overall ability use energy cost");
-            //cooldownMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "cooldownMultiplier", 1f, "Modifiers", "This value multiplied on overall cooldown time of abilities", false);
-            vl_svr_cooldownMultiplier = this.Config.Bind<string>("Modifiers", "vl_svr_cooldownMultiplier", "1.0", "This value multiplied on overall cooldown time of abilities");
-            //abilityDamageMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "abilityDamageMultiplier", 1f, "Modifiers", "This value multiplied on overall ability power", false);
-            vl_svr_abilityDamageMultiplier = this.Config.Bind<string>("Modifiers", "vl_svr_abilityDamageMultiplier", "1.0", "This value multiplied on overall ability power");
-            //skillGainMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "skillGainMultiplier", 1f, "Modifiers", "This value modifies the amount of skill experience gained after using an ability", false);
-            vl_svr_skillGainMultiplier = this.Config.Bind<string>("Modifiers", "vl_svr_skillGainMultiplier", "1.0", "This value modifies the amount of skill experience gained after using an ability");
+            //vl_mce_energyCostMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "vl_mce_energyCostMultiplier", 1f, "Modifiers", "This value multiplied on overall ability use energy cost", false);
+            vl_svr_energyCostMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_energyCostMultiplier", 1f, "Ability modifiers are always enforced by the server host\nThis value multiplied on overall ability use energy cost");
+            //vl_mce_cooldownMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "vl_mce_cooldownMultiplier", 1f, "Modifiers", "This value multiplied on overall cooldown time of abilities", false);
+            vl_svr_cooldownMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_cooldownMultiplier", 1f, "This value multiplied on overall cooldown time of abilities");
+            //vl_mce_abilityDamageMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "vl_mce_abilityDamageMultiplier", 1f, "Modifiers", "This value multiplied on overall ability power", false);
+            vl_svr_abilityDamageMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_abilityDamageMultiplier", 1f, "This value multiplied on overall ability power");
+            //vl_mce_skillGainMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "vl_mce_skillGainMultiplier", 1f, "Modifiers", "This value modifies the amount of skill experience gained after using an ability", false);
+            vl_svr_skillGainMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_skillGainMultiplier", 1f, "This value modifies the amount of skill experience gained after using an ability");
+            //vl_mce_cooldownMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "vl_mce_cooldownMultiplier", 1f, "Modifiers", "This value multiplied on overall cooldown time of abilities", false);
 
             VL_GlobalConfigs.ConfigStrings = new Dictionary<string, float>();
             VL_GlobalConfigs.ConfigStrings.Clear();
-            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_energyCostMultiplier", float.Parse(vl_svr_energyCostMultiplier.Value));
-            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_cooldownMultiplier", float.Parse(vl_svr_cooldownMultiplier.Value));
-            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_abilityDamageMultiplier",float.Parse(vl_svr_abilityDamageMultiplier.Value));
-            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_skillGainMultiplier", float.Parse(vl_svr_skillGainMultiplier.Value));
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_energyCostMultiplier", vl_svr_energyCostMultiplier.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_cooldownMultiplier", vl_svr_cooldownMultiplier.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_abilityDamageMultiplier", vl_svr_abilityDamageMultiplier.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_skillGainMultiplier", vl_svr_skillGainMultiplier.Value);
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_enforceConfigClass", vl_svr_enforceConfigClass.Value ? 1f : 0f);
-            //VL_GlobalConfigs.ConfigStrings.Add("vl_svr_version", Version);            
+            //VL_GlobalConfigs.ConfigStrings.Add("vl_svr_version", Version);
 
             //assets
             VL_Utility.ModID = "valheim.torann.valheimlegends";
@@ -2119,8 +2126,8 @@ namespace ValheimLegends
             Texture2D tex_biome_ash = VL_Utility.LoadTextureFromAssets("biome_ash_icon.png");
             BiomeAshIcon = Sprite.Create(tex_biome_ash, new Rect(0f, 0f, (float)tex_biome_ash.width, (float)tex_biome_ash.height), new Vector2(0.5f, 0.5f));
 
-
             LoadModAssets_Awake();
+            VL_Utility.SetTimer();
 
             //skills            
             AbjurationSkillDef = new Skills.SkillDef
@@ -2193,7 +2200,7 @@ namespace ValheimLegends
                 {
                     vl_player.vl_name = player.vl_name;
                     vl_player.vl_class = (PlayerClass)player.vl_class;
-                    if((vl_player.vl_class == PlayerClass.None && chosenClass.Value.ToLower() != "none") || (chosenClass.Value.ToLower() != "none" && VL_GlobalConfigs.ConfigStrings["vl_svr_enforceConfigClass"] != 0))
+                    if((vl_player.vl_class == PlayerClass.None && chosenClass.Value.ToLower() != "none") || (chosenClass.Value.ToLower() != "none" && VL_GlobalConfigs.ConfigStrings["vl_svr_enforceConfigClass"] != 0)) //vl_mce_enforceConfigurationClass.Value
                     {
                         string newClass = chosenClass.Value.ToLower();
                         if(newClass == "berserker")
@@ -2402,8 +2409,9 @@ namespace ValheimLegends
         private static GameObject fx_VL_ParticleFieldBurst;
         private static GameObject fx_VL_ChiPulse;
         private static GameObject fx_VL_HeavyCrit;
-
         private static GameObject fx_VL_HealPulse;
+        private static GameObject fx_VL_Replica;
+        private static GameObject fx_VL_ReplicaCreate;
 
         public static AnimationClip anim_player_float;
 
@@ -2441,6 +2449,8 @@ namespace ValheimLegends
             fx_VL_ParticleFieldBurst = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_ParticleFieldBurst.prefab");
             fx_VL_HeavyCrit = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_HeavyCrit.prefab");
             fx_VL_ChiPulse = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_ChiPulse.prefab");
+            fx_VL_Replica = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_Replica.prefab");
+            fx_VL_ReplicaCreate = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_ReplicaCreate.prefab");
 
             anim_player_float = assetBundle.LoadAsset<AnimationClip>("Assets/CustomAssets/anim_float.anim");
         }
@@ -2649,6 +2659,18 @@ namespace ValheimLegends
                     Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
                     m_itemsByHash[fx_VL_ChiPulse.name.GetStableHashCode()] = fx_VL_ChiPulse;
                 }
+                if (ObjectDB.instance.GetItemPrefab(fx_VL_Replica.name.GetStableHashCode()) == null)
+                {
+                    ObjectDB.instance.m_items.Add(fx_VL_Replica);
+                    Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
+                    m_itemsByHash[fx_VL_Replica.name.GetStableHashCode()] = fx_VL_Replica;
+                }
+                if (ObjectDB.instance.GetItemPrefab(fx_VL_ReplicaCreate.name.GetStableHashCode()) == null)
+                {
+                    ObjectDB.instance.m_items.Add(fx_VL_ReplicaCreate);
+                    Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
+                    m_itemsByHash[fx_VL_ReplicaCreate.name.GetStableHashCode()] = fx_VL_ReplicaCreate;
+                }
             }
         }
 
@@ -2692,6 +2714,8 @@ namespace ValheimLegends
                 __instance.m_prefabs.Add(fx_VL_ParticleFieldBurst);
                 __instance.m_prefabs.Add(fx_VL_HeavyCrit);
                 __instance.m_prefabs.Add(fx_VL_ChiPulse);
+                __instance.m_prefabs.Add(fx_VL_Replica);
+                __instance.m_prefabs.Add(fx_VL_ReplicaCreate);
             }
         }
 

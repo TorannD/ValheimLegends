@@ -88,7 +88,7 @@ namespace ValheimLegends
                                 hitData.m_point = ch.GetEyePoint();
                                 hitData.m_dir = (player.transform.position - ch.transform.position);
                                 hitData.m_skill = ValheimLegends.EvocationSkill;
-                                ch.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);
+                                ch.Damage(hitData);
                                 ch.GetSEMan().AddStatusEffect(se_spiritdrain);
                             }
                         }

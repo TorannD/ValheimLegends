@@ -33,17 +33,17 @@ namespace ValheimLegends
         private static Vector3 kickDir;
         private static List<int> kicklist;
 
-        public static bool PlayerUsingUnarmed
+        public static bool PlayerIsUnarmed
         {
             get
             {
                 Player p = Player.m_localPlayer;
                 if (p.GetCurrentWeapon() != null)
                 {
+                    
                     ItemDrop.ItemData shield = Traverse.Create(root: p).Field(name: "m_leftItem").GetValue<ItemDrop.ItemData>();
                     ItemDrop.ItemData.SharedData sid = p.GetCurrentWeapon().m_shared;
-                    
-                    if (sid != null && (sid.m_name.ToLower() == "unarmed") && shield == null)
+                    if (sid != null && ((sid.m_name.ToLower() == "unarmed") || sid.m_attachOverride == ItemDrop.ItemData.ItemType.Hands) && shield == null)
                     {
                         //ZLog.Log("unarmed attack");
                         return true;
@@ -69,7 +69,7 @@ namespace ValheimLegends
                     hitData.m_point = ch.GetEyePoint();
                     hitData.m_dir = (player.transform.position - ch.transform.position);
                     hitData.m_skill = ValheimLegends.DisciplineSkill;
-                    ch.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);
+                    ch.Damage(hitData);
                     //ch.Stagger(direction);
                 }
             }
@@ -235,7 +235,7 @@ namespace ValheimLegends
                         float num = Vector3.Distance(ch.transform.position, player.transform.position);
                         if (!ch.IsPlayer() && num <= 2.5f && !kicklist.Contains(ch.GetInstanceID()))
                         {
-                            ch.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);
+                            ch.Damage(hitData);
                             UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_HeavyCrit"), ch.GetCenterPoint(), Quaternion.identity);
                             kicklist.Add(ch.GetInstanceID());
                         }
@@ -313,9 +313,10 @@ namespace ValheimLegends
         public static void Process_Input(Player player, ref Rigidbody playerBody, ref float altitude, ref Animator anim)
         {
             SE_Monk se_monk = (SE_Monk)player.GetSEMan().GetStatusEffect("SE_VL_Monk");
-            if (PlayerUsingUnarmed)
+
+            if (VL_Utility.Ability3_Input_Down)
             {
-                if (VL_Utility.Ability3_Input_Down)
+                if (PlayerIsUnarmed)
                 {
                     if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability3_CD"))
                     {
@@ -358,7 +359,14 @@ namespace ValheimLegends
                         player.Message(MessageHud.MessageType.TopLeft, "Ability not ready");
                     }
                 }
-                else if (VL_Utility.Ability2_Input_Down)
+                else
+                {
+                    player.Message(MessageHud.MessageType.TopLeft, "Must be unarmed to use this ability");
+                }
+            }
+            else if (VL_Utility.Ability2_Input_Down)
+            {
+                if (PlayerIsUnarmed)
                 {
                     if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability2_CD"))
                     {
@@ -404,9 +412,15 @@ namespace ValheimLegends
                     {
                         player.Message(MessageHud.MessageType.TopLeft, "Ability not ready");
                     }
-
+                }            
+                else
+                {
+                    player.Message(MessageHud.MessageType.TopLeft, "Must be unarmed to use this ability");
                 }
-                else if (VL_Utility.Ability1_Input_Down)
+            }
+            else if (VL_Utility.Ability1_Input_Down)
+            {
+                if (PlayerIsUnarmed)
                 {
                     if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability1_CD"))
                     {
@@ -467,13 +481,13 @@ namespace ValheimLegends
                 }
                 else
                 {
-                    ValheimLegends.isChanneling = false;
+                    player.Message(MessageHud.MessageType.TopLeft, "Must be unarmed to use this ability");
                 }
             }
             else
             {
-                player.Message(MessageHud.MessageType.TopLeft, "Must be unarmed to use this ability");
-            }
+                ValheimLegends.isChanneling = false;
+            }            
         }
     }
 }

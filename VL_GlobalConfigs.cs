@@ -20,7 +20,7 @@ namespace ValheimLegends
                 {
                     return 1f;
                 }
-                
+
             }
         }
 
@@ -28,7 +28,7 @@ namespace ValheimLegends
         {
             get
             {
-                
+
                 try
                 {
                     return ConfigStrings["vl_svr_abilityDamageMultiplier"];
@@ -60,7 +60,7 @@ namespace ValheimLegends
             get
             {
                 try
-                { 
+                {
                     return ConfigStrings["vl_svr_skillGainMultiplier"];
                 }
                 catch

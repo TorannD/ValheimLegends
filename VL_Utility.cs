@@ -899,6 +899,20 @@ namespace ValheimLegends
             return xp;
         }
 
+        private static float vl_timer;
+        public static void SetTimer()
+        {
+            vl_timer = Time.time;            
+        }
+
+        public static bool ReadyTime
+        {
+            get
+            {
+                return Time.time > (.01f + vl_timer);
+            }
+        }
+
         //Button press validation
         public static bool Ability1_Input_Down
         {

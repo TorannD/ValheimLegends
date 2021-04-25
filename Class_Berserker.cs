@@ -105,7 +105,7 @@ namespace ValheimLegends
                                 player.GetSEMan().RemoveStatusEffect(se_exec);
                             }
                         }
-                        ch.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);
+                        ch.Damage(hitData);
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_crit"), ch.GetCenterPoint(), Quaternion.identity);
                         list.Add(ch.GetInstanceID());
                     }
@@ -183,8 +183,9 @@ namespace ValheimLegends
 
                         //Effects, animations, and sounds
                         ValheimLegends.shouldUseGuardianPower = false;
-                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("gpower");
-                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetSpeed(2f);
+                        //((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("gpower");
+                        //((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetSpeed(2f);
+                        player.StartEmote("challenge");
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_GP_Stone"), player.GetCenterPoint(), Quaternion.identity);
 
                         //Lingering effects

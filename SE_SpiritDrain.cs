@@ -37,7 +37,7 @@ namespace ValheimLegends
                 HitData hitData = new HitData();
                 hitData.m_damage.m_spirit = UnityEngine.Random.Range(2, 4) * damageModifier * VL_GlobalConfigs.g_DamageModifer;
                 hitData.m_point = m_character.GetEyePoint();
-                m_character.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);
+                m_character.Damage(hitData);
                 UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_wraith_hit"), m_character.GetCenterPoint(), Quaternion.identity);
             }            
         }

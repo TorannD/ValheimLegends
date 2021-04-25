@@ -52,7 +52,7 @@ namespace ValheimLegends
             {
                 HitData hit = new HitData();
                 hit.m_damage.m_spirit = 99999f;
-                base.m_character.ApplyDamage(hit, false, false, HitData.DamageModifier.Normal);
+                base.m_character.Damage(hit);
             }
             return base.IsDone();
         }

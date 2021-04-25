@@ -44,7 +44,7 @@ namespace ValheimLegends
         {
             if(attacker.IsPlayer())
             {
-                attacker.AddStamina(hit.GetTotalDamage() * staminaDrain);
+                attacker.AddStamina(5f + hit.GetTotalDamage() * staminaDrain);
             }
             base.OnDamaged(hit, attacker);
         }

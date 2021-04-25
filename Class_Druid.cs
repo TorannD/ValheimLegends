@@ -97,6 +97,7 @@ namespace ValheimLegends
             else if (VL_Utility.Ability3_Input_Pressed && player.GetStamina() > VL_Utility.GetRootCostPerUpdate && ValheimLegends.isChanneling && Mathf.Max(0f, altitude - player.transform.position.y) <= 2f)
             {
                 rootCount++;
+                VL_Utility.SetTimer();
                 player.UseStamina(VL_Utility.GetRootCostPerUpdate);
                 //player.transform.rotation = Quaternion.LookRotation(player.GetLookDir());
                 ValheimLegends.isChanneling = true;

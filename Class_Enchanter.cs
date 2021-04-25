@@ -95,12 +95,12 @@ namespace ValheimLegends
                         {
                             Vector3 direction = (ch.transform.position - player.transform.position);
                             HitData hitData = new HitData();
-                            hitData.m_damage.m_lightning = se_shock.m_ttl * UnityEngine.Random.Range(.03f, .06f) * (1f + .1f * sLevel);
+                            hitData.m_damage.m_lightning = (15 + sLevel) + se_shock.m_ttl * UnityEngine.Random.Range(.03f, .06f) * (1f + .1f * sLevel);
                             hitData.m_pushForce = 0f;
                             hitData.m_point = ch.GetEyePoint();
                             hitData.m_dir = (player.transform.position - ch.transform.position);
                             hitData.m_skill = ValheimLegends.AlterationSkill;
-                            ch.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);
+                            ch.Damage(hitData);
                             ch.Stagger(hitData.m_dir);
                         }
                     }
@@ -179,6 +179,7 @@ namespace ValheimLegends
             }
             else if ((VL_Utility.Ability3_Input_Pressed && player.GetStamina() > 1 && player.GetStamina() > VL_Utility.GetZoneChargeCostPerUpdate) && Mathf.Max(0f, altitude - player.transform.position.y) <= 1f && (zonechargeCharging && ValheimLegends.isChanneling))
             {
+                VL_Utility.SetTimer();
                 ValheimLegends.isChanneling = true;
                 zonechargeChargeAmount++;
                 player.UseStamina(VL_Utility.GetZoneChargeCostPerUpdate);
@@ -299,7 +300,7 @@ namespace ValheimLegends
                     {
                         SE_BiomePlains SE_BiomePlains = (SE_BiomePlains)ScriptableObject.CreateInstance(typeof(SE_BiomePlains));
                         SE_BiomePlains.m_ttl = SE_BiomePlains.m_baseTTL + bonusModifiers;
-                        //SE_BiomePlains.regenBonus = (1f + (.1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                        //SE_BiomePlains.regenBonus = (1f + (.1f * sLevel)) * ValheimLegends.vl_mce_abilityDamageMultiplier.Value;
                         SE_BiomePlains.doOnce = false;
                         if (p == Player.m_localPlayer)
                         {
@@ -319,7 +320,7 @@ namespace ValheimLegends
                     {
                         SE_BiomeOcean SE_BiomeOcean = (SE_BiomeOcean)ScriptableObject.CreateInstance(typeof(SE_BiomeOcean));
                         SE_BiomeOcean.m_ttl = SE_BiomeOcean.m_baseTTL + bonusModifiers;
-                        //SE_BiomeOcean.regenBonus = (1f + (.1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                        //SE_BiomeOcean.regenBonus = (1f + (.1f * sLevel)) * ValheimLegends.vl_mce_abilityDamageMultiplier.Value;
                         SE_BiomeOcean.doOnce = false;
                         if (p == Player.m_localPlayer)
                         {
@@ -339,7 +340,7 @@ namespace ValheimLegends
                     {
                         SE_BiomeMist SE_BiomeMist = (SE_BiomeMist)ScriptableObject.CreateInstance(typeof(SE_BiomeMist));
                         SE_BiomeMist.m_ttl = SE_BiomeMist.m_baseTTL + bonusModifiers;
-                        //SE_BiomeMist.regenBonus = (1f + (.1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                        //SE_BiomeMist.regenBonus = (1f + (.1f * sLevel)) * ValheimLegends.vl_mce_abilityDamageMultiplier.Value;
                         SE_BiomeMist.doOnce = false;
                         if (p == Player.m_localPlayer)
                         {
@@ -359,7 +360,7 @@ namespace ValheimLegends
                     {
                         SE_BiomeAsh SE_BiomeAsh = (SE_BiomeAsh)ScriptableObject.CreateInstance(typeof(SE_BiomeAsh));
                         SE_BiomeAsh.m_ttl = SE_BiomeAsh.m_baseTTL + bonusModifiers;
-                        //SE_BiomeAsh.regenBonus = (1f + (.1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                        //SE_BiomeAsh.regenBonus = (1f + (.1f * sLevel)) * ValheimLegends.vl_mce_abilityDamageMultiplier.Value;
                         SE_BiomeAsh.doOnce = false;
                         if (p == Player.m_localPlayer)
                         {

@@ -44,6 +44,7 @@ namespace ValheimLegends
             {
                 m_timer = m_interval;
                 m_character.Heal(regenBonus, true);
+                m_character.AddStamina(regenBonus *2);
             }
             base.UpdateStatusEffect(dt);
         }

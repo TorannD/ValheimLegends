@@ -38,7 +38,6 @@ namespace ValheimLegends
 
             if(ZInput.GetButton("Jump"))
             {
-                
                 if (!player.IsOnGround() && !player.IsDead() && !player.InAttack() && !player.IsEncumbered() && !player.InDodge() && !player.IsKnockedBack())
                 {
                     //Rigidbody playerBody = Traverse.Create(root: player).Field(name: "m_body").GetValue<Rigidbody>();
@@ -138,6 +137,7 @@ namespace ValheimLegends
             }
             else if (VL_Utility.Ability3_Input_Pressed && player.GetStamina() > VL_Utility.GetWarpCostPerUpdate && ValheimLegends.isChanneling && Mathf.Max(0f, altitude - player.transform.position.y) <= 2f)
             {
+                VL_Utility.SetTimer();
                 warpCount++;
                 player.UseStamina(VL_Utility.GetWarpCostPerUpdate);
                 //player.transform.rotation = Quaternion.LookRotation(player.GetLookDir());
@@ -147,7 +147,7 @@ namespace ValheimLegends
                     warpCount = 0;
                     //Skill gain
                     UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_ParticleLightSuction"), player.transform.position, Quaternion.identity);                    
-                    player.RaiseSkill(ValheimLegends.EvocationSkill, .04f);
+                    player.RaiseSkill(ValheimLegends.EvocationSkill, .06f);
                     warpDistance += 5f; 
                 }
             }
@@ -155,7 +155,7 @@ namespace ValheimLegends
             {
                 //player.Message(MessageHud.MessageType.Center, "root - deactivate");
                 float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.EvocationSkillDef).m_level;
-                warpDistance = warpDistance * (1f + (.02f * sLevel));
+                warpDistance = warpDistance * (1f + (.01f * sLevel));
                 //ZLog.Log("triggering warp with  distance of " + warpDistance);
                 ValheimLegends.isChanneling = false;
                 RaycastHit hitInfo = default(RaycastHit);
@@ -174,7 +174,7 @@ namespace ValheimLegends
                     flagDamage = warpMagnitude - distanceMagnitude;
                     warpMagnitude = distanceMagnitude;
                 }
-                bool flagFarWarp = warpMagnitude >= 200 ? true : false;
+                bool flagLoadWarp = warpMagnitude >= 140 ? true : false;
 
                 Vector3 moveVec = Vector3.MoveTowards(player.transform.position, target, (float)warpMagnitude);
                 //moveVec.y = ((ZoneSystem.instance.GetSolidHeight(moveVec) - ZoneSystem.instance.GetGroundHeight(moveVec) <= 1f) ? ZoneSystem.instance.GetSolidHeight(moveVec) : ZoneSystem.instance.GetGroundHeight(moveVec));
@@ -187,30 +187,43 @@ namespace ValheimLegends
                     
                     UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_eikthyr_forwardshockwave"), effectVec, Quaternion.LookRotation(player.GetLookDir()));
                     //Apply effects
-                    List<Character> allCharacters = Character.GetAllCharacters();
+                    List<Character> allCharacters = new List<Character>();
+                    allCharacters.Clear();
+                    Character.GetCharactersInRange(moveVec, 8f + (.02f * sLevel), allCharacters);
+                    bool anyHitFlag = false;
                     foreach (Character ch in allCharacters)
                     {
-                        if ((BaseAI.IsEnemy(player, ch) && (ch.transform.position - moveVec).magnitude <= 8f + (.02f * sLevel)))
+                        if (BaseAI.IsEnemy(player, ch))
                         {
                             Vector3 direction = (ch.transform.position - player.transform.position);
                             HitData hitData = new HitData();
-                            hitData.m_damage.m_lightning = UnityEngine.Random.Range(flagDamage * (sLevel/30f), flagDamage * (sLevel/20f)) * VL_GlobalConfigs.g_DamageModifer;
+                            hitData.m_damage.m_lightning = UnityEngine.Random.Range(flagDamage * (sLevel/15f), flagDamage * (sLevel/10f)) * VL_GlobalConfigs.g_DamageModifer;
                             hitData.m_pushForce = flagDamage + (.1f * sLevel);
                             hitData.m_point = ch.GetEyePoint();
                             hitData.m_dir = (player.transform.position - ch.transform.position);
                             hitData.m_skill = ValheimLegends.EvocationSkill;
-                            ch.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);
+                            ch.Damage(hitData);
+                            anyHitFlag = true;
                         }
                     }
+                    if(!anyHitFlag && !flagLoadWarp)
+                    {
+                        float stamReturnAmount = flagDamage * 1.5f;
+                        player.AddStamina(stamReturnAmount);
+                    }
                 }
-                else
+
+                if (flagLoadWarp)
                 {
-                    UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_eikthyr_forwardshockwave"), effectVec, player.transform.rotation);
-                    
-                }
-                if (flagFarWarp)
-                {
-                    player.TeleportTo(moveVec, player.transform.rotation, false);
+                    bool flagFarWarp = warpMagnitude >= 200 ? true : false;
+                    if (flagFarWarp)
+                    {
+                        player.TeleportTo(moveVec, player.transform.rotation, true);
+                    }
+                    else
+                    {
+                        player.TeleportTo(moveVec, player.transform.rotation, false);
+                    }
                 }
                 else
                 {
@@ -249,7 +262,7 @@ namespace ValheimLegends
                         //Effects, animations, and sounds
                         ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("gpower");
                         //((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetSpeed(.7f);
-                        UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_WishbonePing"), player.transform.position, Quaternion.identity);
+                        UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_Replica"), player.transform.position + player.transform.up *.6f, Quaternion.identity);
 
                         //Lingering effects
 
@@ -264,7 +277,7 @@ namespace ValheimLegends
                         for(int i = 0; i < allCharacters.Count; i++)
                         {
                             Character ch = allCharacters[i];
-                            if ((BaseAI.IsEnemy(player, ch) && (ch.transform.position - player.transform.position).magnitude <= 30f + (.3f * sLevel)))
+                            if ((BaseAI.IsEnemy(player, ch) && (ch.transform.position - player.transform.position).magnitude <= 18f + (.05f * sLevel)))
                             {
                                 string name = ch.name.Substring(0, ch.name.IndexOf('('));
                                 GameObject original = ZNetScene.instance.GetPrefab(name);
@@ -285,6 +298,7 @@ namespace ValheimLegends
                                     }
                                     Character repCh = replica.GetComponent<Character>();
                                     repCh.SetMaxHealth(1f + sLevel);
+                                    repCh.transform.localScale = (0.8f) * Vector3.one;
                                     SE_Companion se_companion = (SE_Companion)ScriptableObject.CreateInstance(typeof(SE_Companion));
                                     se_companion.m_ttl = 8f + (.2f * sLevel);
                                     se_companion.damageModifier = .05f + (.0075f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
@@ -298,6 +312,7 @@ namespace ValheimLegends
                                     }
                                     repCh.name = "VL_" + repCh.name;
                                     repCh.m_name = "(" + repCh.m_name + ")";
+                                    UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_ReplicaCreate"), repCh.transform.position + repCh.transform.up * .2f, Quaternion.identity);
                                 }
                                 else
                                 {
@@ -308,7 +323,7 @@ namespace ValheimLegends
                         }
 
                         //Skill gain
-                        player.RaiseSkill(ValheimLegends.IllusionSkill, VL_Utility.GetReplicaCost);
+                        player.RaiseSkill(ValheimLegends.IllusionSkill, VL_Utility.GetReplicaSkillGain);
                     }
                     else
                     {
@@ -321,7 +336,7 @@ namespace ValheimLegends
                 }
             }
             else if (VL_Utility.Ability1_Input_Down)
-            {
+            {                
                 if(P_Light != null && (P_Light.transform.position - player.GetEyePoint()).magnitude < 2f)
                 {
                     float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.IllusionSkillDef).m_level;
@@ -343,9 +358,10 @@ namespace ValheimLegends
                     Projectile P_LL = GO_LL.GetComponent<Projectile>();
                     P_LL.m_respawnItemOnHit = false;
                     P_LL.m_spawnOnHit = null;
-                    P_LL.m_ttl = 4f;
-                    P_LL.m_gravity = .1f;
+                    P_LL.m_ttl = 5f;
+                    P_LL.m_gravity = .25f;
                     P_LL.m_rayRadius = .1f;
+                    P_LL.m_aoe = 4f + (.04f * sLevel);
                     P_LL.transform.localRotation = Quaternion.LookRotation(player.GetAimDir(vector));
                     //P_Light.m_respawnItemOnHit = false;
                     //P_Light.m_spawnOnHit = null;
@@ -358,9 +374,9 @@ namespace ValheimLegends
                     RaycastHit hitInfo = default(RaycastHit);
                     Vector3 position = player.transform.position;
                     Vector3 target = (!Physics.Raycast(player.GetEyePoint(), player.GetLookDir(), out hitInfo, float.PositiveInfinity, Light_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
-                    hitData.m_damage.m_lightning = UnityEngine.Random.Range(2f + (.25f * sLevel), 5f + (.5f*sLevel)) * VL_GlobalConfigs.g_DamageModifer;
-                    hitData.m_damage.m_pierce = UnityEngine.Random.Range(2f + (.25f * sLevel), 5f + (.5f*sLevel)) * VL_GlobalConfigs.g_DamageModifer;
-                    hitData.m_pushForce = 100f + sLevel;                    
+                    hitData.m_damage.m_lightning = UnityEngine.Random.Range(5f + (.3f * sLevel), 10f + (.6f*sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                    hitData.m_damage.m_pierce = UnityEngine.Random.Range(5f + (.3f * sLevel), 10f + (.6f*sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                    hitData.m_pushForce = 100f + 2*sLevel;                    
                     Vector3 a = Vector3.MoveTowards(GO_LL.transform.position, target, 1f);
                     P_LL.Setup(player, (a - GO_LL.transform.position) * 80f, -1f, hitData, null);
                     Traverse.Create(root: P_LL).Field("m_skill").SetValue(ValheimLegends.IllusionSkill);
@@ -391,9 +407,8 @@ namespace ValheimLegends
                         player.StartEmote("cheer");
                         //GO_CastFX = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_guardstone_permitted_add"), player.GetCenterPoint(), Quaternion.identity);
 
-
                         //Lingering effects
-
+                        VL_Utility.SetTimer();
 
                         //Apply effects
 
