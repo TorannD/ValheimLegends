@@ -33,6 +33,75 @@ namespace ValheimLegends
 
         private static float meteorSkillGain = 0f;
 
+        public enum MageAttackType
+        {
+            IceDagger = 20,
+            FlameNova = 60
+        }
+
+        public static MageAttackType QueuedAttack;
+
+        public static void Execute_Attack(Player player)
+        {
+            if (QueuedAttack == MageAttackType.FlameNova)
+            {
+                //Skill influence
+                float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.EvocationSkillDef).m_level;
+
+                UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_FlameBurst"), player.transform.position, Quaternion.identity);
+
+
+                List<Character> allCharacters = Character.GetAllCharacters();
+                foreach (Character ch in allCharacters)
+                {
+                    if (BaseAI.IsEnemy(player, ch) && ((ch.transform.position - player.transform.position).magnitude <= (8f + (.1f * sLevel))))
+                    {
+                        Vector3 direction = (ch.transform.position - player.transform.position);
+                        HitData hitData = new HitData();
+                        hitData.m_damage.m_fire = UnityEngine.Random.Range(5 + (2.75f * sLevel), 10 + (3.5f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                        hitData.m_pushForce = 0f;
+                        hitData.m_point = ch.GetEyePoint();
+                        hitData.m_dir = direction;
+                        hitData.m_skill = ValheimLegends.EvocationSkill;
+                        ch.Damage(hitData);
+                    }
+                }
+
+                GameCamera.instance.AddShake(player.transform.position, 15f, 2f, false);
+                //Skill gain
+                player.RaiseSkill(ValheimLegends.EvocationSkill, VL_Utility.GetFrostNovaSkillGain * 1.5f);
+
+            }
+            else if(QueuedAttack == MageAttackType.IceDagger)
+            {
+                //Skill influence
+                float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.EvocationSkillDef).m_level;
+
+                Vector3 vector = player.GetEyePoint() + player.GetLookDir() * .2f + player.transform.up * .1f + player.transform.right * .28f;
+                GameObject prefab = ZNetScene.instance.GetPrefab("VL_FrostDagger");
+                GameObject GO_IceDagger = UnityEngine.Object.Instantiate(prefab, vector, Quaternion.identity);
+                Projectile P_IceDagger = GO_IceDagger.GetComponent<Projectile>();
+                P_IceDagger.name = "IceDagger";
+                P_IceDagger.m_respawnItemOnHit = false;
+                P_IceDagger.m_spawnOnHit = null;
+                P_IceDagger.m_ttl = .6f;
+                P_IceDagger.transform.localRotation = Quaternion.LookRotation(player.GetAimDir(vector));
+                GO_IceDagger.transform.localScale = Vector3.one * .8f;
+                RaycastHit hitInfo = default(RaycastHit);
+                Vector3 position = player.transform.position;
+                Vector3 target = (!Physics.Raycast(vector, player.GetLookDir(), out hitInfo, float.PositiveInfinity, ScriptChar_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
+                HitData hitData = new HitData();
+                hitData.m_damage.m_pierce = UnityEngine.Random.Range(2f + (.25f *sLevel), 5f + (.75f * sLevel));
+                hitData.m_damage.m_frost = UnityEngine.Random.Range((.5f * sLevel), 2f + (1f * sLevel));
+                hitData.m_skill = ValheimLegends.EvocationSkill;
+                Vector3 a = Vector3.MoveTowards(GO_IceDagger.transform.position, target, 1f);
+                P_IceDagger.Setup(player, (a - GO_IceDagger.transform.position) * 55f, -1f, hitData, null);
+                Traverse.Create(root: P_IceDagger).Field("m_skill").SetValue(ValheimLegends.EvocationSkill);
+                GO_IceDagger = null;
+            }
+
+        }
+
         public static void Process_Input(Player player, float altitude)
         {
             System.Random rnd = new System.Random();
@@ -59,7 +128,7 @@ namespace ValheimLegends
 
                         //Effects, animations, and sounds
                         ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("gpower");                        
-                        UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_GP_Stone"), player.GetEyePoint(), Quaternion.identity);
+                        UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_Flames"), player.transform.position, Quaternion.identity);
 
                         //Lingering effects
                         meteorCharging = true;
@@ -95,7 +164,7 @@ namespace ValheimLegends
                     meteorChargeAmount = 0;                    
                     ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("gpower");
                     //((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetSpeed(1.5f);                    
-                    GO_CastFX = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_GP_Stone"), player.GetEyePoint(), Quaternion.identity);
+                    GO_CastFX = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_Flames"), player.transform.position, Quaternion.identity);
                     //player.Message(MessageHud.MessageType.Center, "Meteor - charging " + meteorCount);
 
                     //Skill gain
@@ -161,7 +230,29 @@ namespace ValheimLegends
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability2_CD"))
                 {
                     //player.Message(MessageHud.MessageType.Center, "Frost Nova");
-                    if (player.GetStamina() >= VL_Utility.GetFrostNovaCost)
+                    if (player.IsBlocking())
+                    {
+                        if(player.GetStamina() >= VL_Utility.GetFrostNovaCost * 2f)
+                        {
+                            StatusEffect se_cd = (SE_Ability2_CD)ScriptableObject.CreateInstance(typeof(SE_Ability2_CD));
+                            se_cd.m_ttl = VL_Utility.GetFrostNovaCooldownTime;
+                            player.GetSEMan().AddStatusEffect(se_cd);
+
+                            //Ability Cost
+                            player.UseStamina(VL_Utility.GetFrostNovaCost * 2f);
+
+                            //Effects, animations, and sounds
+                            ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("swing_sledge");
+                            ValheimLegends.isChargingDash = true;
+                            ValheimLegends.dashCounter = 0;
+                            QueuedAttack = MageAttackType.FlameNova;
+                        }
+                        else
+                        {
+                            player.Message(MessageHud.MessageType.TopLeft, "Not enough stamina for Inferno: (" + player.GetStamina().ToString("#.#") + "/" + VL_Utility.GetFrostNovaCost *2f + ")");
+                        }
+                    }
+                    else if (player.GetStamina() >= VL_Utility.GetFrostNovaCost)
                     {
                         //Ability Cooldown
                         StatusEffect se_cd = (SE_Ability2_CD)ScriptableObject.CreateInstance(typeof(SE_Ability2_CD));
@@ -195,9 +286,9 @@ namespace ValheimLegends
                                 Vector3 direction = (ch.transform.position - player.transform.position);
                                 HitData hitData = new HitData();
                                 hitData.m_damage.m_frost = UnityEngine.Random.Range(10 + (.5f * sLevel), 20 + sLevel) * VL_GlobalConfigs.g_DamageModifer;
-                                hitData.m_pushForce = 50f;
+                                hitData.m_pushForce = 20f;
                                 hitData.m_point = ch.GetEyePoint();
-                                hitData.m_dir = (player.transform.position - ch.transform.position);
+                                hitData.m_dir = direction;
                                 hitData.m_skill = ValheimLegends.EvocationSkill;
                                 ch.Damage(hitData);
                                 SE_Slow se_frost = (SE_Slow)ScriptableObject.CreateInstance(typeof(SE_Slow));
@@ -220,13 +311,38 @@ namespace ValheimLegends
 
             }
             else if (VL_Utility.Ability1_Input_Down)
-            {
+            {                
                 if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability1_CD"))
                 {
-                    //player.Message(MessageHud.MessageType.Center, "Fireball");
                     float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.EvocationSkillDef).m_level;
-                    if (player.GetStamina() >= (VL_Utility.GetFireballCost + (.5f * sLevel)))
+                    if (player.IsBlocking())
                     {
+                        if (player.GetStamina() >= VL_Utility.GetFireballCost * .5f)
+                        {
+                            //Ability Cooldown
+                            StatusEffect se_cd = (SE_Ability1_CD)ScriptableObject.CreateInstance(typeof(SE_Ability1_CD));
+                            se_cd.m_ttl = .5f;
+                            player.GetSEMan().AddStatusEffect(se_cd);
+
+                            //Ability Cost
+                            player.UseStamina(VL_Utility.GetFireballCost * .5f);
+
+                            //Effects, animations, and sounds
+                            ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("swing_axe2");
+                            ValheimLegends.isChargingDash = true;
+                            ValheimLegends.dashCounter = 0;
+                            QueuedAttack = MageAttackType.IceDagger;
+
+                            //Skill gain
+                            player.RaiseSkill(ValheimLegends.EvocationSkill, VL_Utility.GetFireballSkillGain * .5f);
+                        }
+                        else
+                        {
+                            player.Message(MessageHud.MessageType.TopLeft, "Not enough stamina for Ice Dagger: (" + player.GetStamina().ToString("#.#") + "/" + VL_Utility.GetFireballCost * .5f + ")");
+                        }
+                    }
+                    else if(player.GetStamina() >= (VL_Utility.GetFireballCost + (.5f * sLevel)))
+                    { 
                         ValheimLegends.shouldUseGuardianPower = false;
                         //Skill influence
                         
@@ -243,7 +359,7 @@ namespace ValheimLegends
                         ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("gpower");
                         ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetSpeed(3f);
                         //player.StartEmote("point");
-                        GO_CastFX = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_GP_Stone"), player.transform.position, Quaternion.identity);
+                        GO_CastFX = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_Flames"), player.transform.position, Quaternion.identity);
 
                         //Lingering effects
 
@@ -267,8 +383,8 @@ namespace ValheimLegends
                         Vector3 position = player.transform.position;
                         Vector3 target = (!Physics.Raycast(vector, player.GetLookDir(), out hitInfo, float.PositiveInfinity, Script_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
                         HitData hitData = new HitData();
-                        hitData.m_damage.m_fire = UnityEngine.Random.Range(10f + (2f *sLevel), 40f + (2f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
-                        hitData.m_damage.m_blunt = UnityEngine.Random.Range(5f + (1f *sLevel), 20f + (1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                        hitData.m_damage.m_fire = UnityEngine.Random.Range(5f + (1.6f *sLevel), 10f + (1.8f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                        hitData.m_damage.m_blunt = UnityEngine.Random.Range(5f + (.9f *sLevel), 10f + (1.1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
                         hitData.m_pushForce = 2f;
                         hitData.m_skill = ValheimLegends.EvocationSkill;
                         Vector3 a = Vector3.MoveTowards(GO_Fireball.transform.position, target, 1f);

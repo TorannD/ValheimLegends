@@ -13,21 +13,214 @@ namespace ValheimLegends
 {
     public class Class_Valkyrie
     {
-        private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock");        
+        private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock");
+        private static int ScriptChar_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "piece", "terrain", "vehicle", "viewblock", "character", "character_noenv", "character_trigger", "Water");
+
 
         private static GameObject GO_CastFX;
 
         public static bool inFlight = false;
         public static bool isBlocking = false;
 
+        public enum ValkyrieAttackType
+        {
+            ShieldRelease = 12,
+            HarpoonPull = 20
+        }
+
+        public static ValkyrieAttackType QueuedAttack;
+
+
+        public static void Execute_Attack(Player player, ref Rigidbody playerBody, ref float altitude)
+        {
+            SE_Valkyrie se_v = (SE_Valkyrie)player.GetSEMan().GetStatusEffect("SE_VL_Valkyrie");
+            if (QueuedAttack == ValkyrieAttackType.ShieldRelease)
+            {
+                Vector3 effects = player.GetEyePoint() + player.GetLookDir() * .2f + player.transform.up * -.4f + player.transform.right * -.4f;
+                for(int i = 0; i < se_v.hitCount; i++)
+                {
+                    UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_ShieldRelease"), effects, Quaternion.LookRotation(player.transform.forward));
+                }
+                //UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_ShieldRelease"), effects, Quaternion.LookRotation(player.transform.forward));
+                //UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_ReverseLightburst"), effects, Quaternion.LookRotation(player.transform.forward));
+
+                //Skill influence
+                float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AbjurationSkillDef).m_level;
+
+                List<Character> allCharacters = new List<Character>();
+                allCharacters.Clear();
+                List<Character> allCharacters2 = new List<Character>();
+                allCharacters2.Clear();
+                Character.GetCharactersInRange(effects + player.transform.forward * 2f, 2.5f, allCharacters);
+                Character.GetCharactersInRange(effects + player.transform.forward * 6f, 3f, allCharacters2);
+                allCharacters.AddRange(allCharacters2);
+
+                RaycastHit hitInfo = default(RaycastHit);
+                Vector3 position = player.transform.position;
+                Vector3 target = (!Physics.Raycast(player.GetEyePoint(), player.GetLookDir(), out hitInfo, float.PositiveInfinity, ScriptChar_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
+                Physics.SphereCast(player.GetEyePoint(), 0.1f, player.GetLookDir(), out hitInfo, 4f, ScriptChar_Layermask);
+                if (hitInfo.collider != null && hitInfo.collider.gameObject != null)
+                {
+                    Character colliderChar = null;
+                    hitInfo.collider.gameObject.TryGetComponent<Character>(out colliderChar);
+                    bool flag = colliderChar != null;
+                    if (colliderChar == null)
+                    {
+                        colliderChar = (Character)hitInfo.collider.GetComponentInParent(typeof(Character));
+                        flag = colliderChar != null;
+                        if (colliderChar == null)
+                        {
+                            colliderChar = (Character)hitInfo.collider.GetComponentInChildren<Character>();
+                            flag = colliderChar != null;
+                        }
+                    }
+
+                    if (flag && !colliderChar.IsPlayer() && !allCharacters.Contains(colliderChar))
+                    {
+                        allCharacters.Add(colliderChar);
+                    }
+                }
+
+                foreach (Character ch in allCharacters)
+                {
+                    if (BaseAI.IsEnemy(player, ch))
+                    {
+                        Vector3 direction = (ch.transform.position - player.transform.position);
+                        HitData hitData = new HitData();
+                        hitData.m_damage.m_spirit = UnityEngine.Random.Range(se_v.hitCount * (1f + (.02f * sLevel)), se_v.hitCount * (2f + (.015f * sLevel))) * VL_GlobalConfigs.g_DamageModifer;
+                        hitData.m_damage.m_frost = UnityEngine.Random.Range(se_v.hitCount * (1f + (.02f * sLevel)), se_v.hitCount * (2f + (.015f * sLevel))) * VL_GlobalConfigs.g_DamageModifer;
+                        hitData.m_point = ch.GetEyePoint();
+                        hitData.m_dir = direction;
+                        hitData.m_skill = ValheimLegends.AbjurationSkill;
+                        ch.Damage(hitData);
+                    }
+                }
+
+                se_v.hitCount = 0;
+            }
+            else if(QueuedAttack == ValkyrieAttackType.HarpoonPull)
+            {
+                float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
+                Vector3 vector = player.GetEyePoint() + player.GetLookDir() * .2f + player.transform.up * .1f + player.transform.right * .28f;
+                GameObject prefab = ZNetScene.instance.GetPrefab("VL_ValkyrieSpear");
+                GameObject GO_Harpoon = UnityEngine.Object.Instantiate(prefab, vector, Quaternion.identity);
+                Projectile P_Harpoon = GO_Harpoon.GetComponent<Projectile>();
+                P_Harpoon.name = "VL_ValkyrieSpear";
+                P_Harpoon.m_respawnItemOnHit = false;
+                P_Harpoon.m_spawnOnHit = null;
+                P_Harpoon.m_ttl = 6f;
+                P_Harpoon.m_gravity = 2f;
+                P_Harpoon.m_aoe = 1f;
+                P_Harpoon.transform.localRotation = Quaternion.LookRotation(player.GetAimDir(vector));
+                GO_Harpoon.transform.localScale = Vector3.one * .8f;
+                RaycastHit hitInfo = default(RaycastHit);
+                Vector3 position = player.transform.position;
+                Vector3 target = (!Physics.Raycast(vector, player.GetLookDir(), out hitInfo, float.PositiveInfinity, ScriptChar_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
+                HitData hitData = new HitData();
+                //hitData.m_pushForce = 1f;
+                hitData.m_skill = ValheimLegends.DisciplineSkill;
+                hitData.m_dir = player.GetLookDir() * -1f;
+                hitData.m_damage.m_frost = UnityEngine.Random.Range((1f + (.2f * sLevel)), (2f + (.3f * sLevel))) * VL_GlobalConfigs.g_DamageModifer;
+                hitData.m_damage.m_spirit= UnityEngine.Random.Range((1f + (.2f * sLevel)), (2f + (.3f * sLevel))) * VL_GlobalConfigs.g_DamageModifer;
+                Vector3 a = Vector3.MoveTowards(GO_Harpoon.transform.position, target, 1f);
+                P_Harpoon.Setup(player, (a - GO_Harpoon.transform.position) * 40f, -1f, hitData, null);
+                Traverse.Create(root: P_Harpoon).Field("m_skill").SetValue(ValheimLegends.DisciplineSkill);
+                GO_Harpoon = null;
+            }
+        }
+
+        public static bool PlayerUsingShield
+        {
+            get
+            {
+                Player p = Player.m_localPlayer;
+                ItemDrop.ItemData shield = Traverse.Create(root: p).Field(name: "m_leftItem").GetValue<ItemDrop.ItemData>();
+                if (shield != null)
+                {
+                    ItemDrop.ItemData.SharedData sid = shield.m_shared;
+                    if (sid != null && sid.m_itemType == ItemDrop.ItemData.ItemType.Shield)
+                    {
+                        //ZLog.Log("using shield");
+                        return true;
+                    }
+                }                
+                return false;
+            }
+        }
+
+        public static void Impact_Effect(Player player, float altitude)
+        {
+            List<Character> allCharacters = Character.GetAllCharacters();
+            //player.Message(MessageHud.MessageType.Center, "valkyrie impact");
+            inFlight = false;
+            ValheimLegends.shouldValkyrieImpact = false;
+            foreach (Character ch in allCharacters)
+            {
+                float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
+                if (BaseAI.IsEnemy(player, ch) && (ch.transform.position - player.transform.position).magnitude <= (6f + (.03f * sLevel)))
+                {
+                    Vector3 direction = (ch.transform.position - player.transform.position);
+                    HitData hitData = new HitData();
+                    hitData.m_damage.m_blunt = 5 + (3f * altitude) + UnityEngine.Random.Range(1.5f * sLevel, 2.5f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
+                    hitData.m_pushForce = 20f * VL_GlobalConfigs.g_DamageModifer;
+                    hitData.m_point = ch.GetEyePoint();
+                    hitData.m_dir = direction;
+                    hitData.m_skill = ValheimLegends.DisciplineSkill;
+                    ch.Damage(hitData);
+                    //ch.Stagger(direction);
+                }
+            }
+            ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).StopAllCoroutines();
+            ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("battleaxe_attack2");
+            GO_CastFX = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_gdking_stomp"), player.transform.position, Quaternion.identity);
+        }
+
         public static void Process_Input(Player player)
         {
             System.Random rnd = new System.Random();
             Vector3 pVec = default(Vector3);
-            
+
+            if (player.IsBlocking() && ZInput.GetButtonDown("Attack"))
+            {
+                SE_Valkyrie se_v = (SE_Valkyrie)player.GetSEMan().GetStatusEffect("SE_VL_Valkyrie");
+                if (se_v.hitCount >= VL_Utility.GetHarpoonPullCost)
+                {
+                    //Ability Cost
+                    se_v.hitCount -= (int)VL_Utility.GetHarpoonPullCost;
+
+                    VL_Utility.RotatePlayerToTarget(player);
+                    ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).StopAllCoroutines();
+                    ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("spear_throw");
+
+                    ValheimLegends.isChargingDash = true;
+                    ValheimLegends.dashCounter = 0;
+                    QueuedAttack = ValkyrieAttackType.HarpoonPull;
+
+                    //Skill gain
+                    player.RaiseSkill(ValheimLegends.DisciplineSkill, VL_Utility.GetHarpoonPullSkillGain);
+                }
+            }
+
             if (VL_Utility.Ability3_Input_Down)
             {
-                if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability3_CD"))
+                SE_Valkyrie se_v = (SE_Valkyrie)player.GetSEMan().GetStatusEffect("SE_VL_Valkyrie");
+                if (player.IsBlocking())
+                {
+                    if (PlayerUsingShield && se_v != null && se_v.hitCount > 0)
+                    {
+                        VL_Utility.RotatePlayerToTarget(player);
+                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).StopAllCoroutines();
+                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("unarmed_attack1");
+
+                        ValheimLegends.isChargingDash = true;
+                        ValheimLegends.dashCounter = 0;
+                        QueuedAttack = ValkyrieAttackType.ShieldRelease;
+
+                        //Skill gain
+                        player.RaiseSkill(ValheimLegends.AbjurationSkill, VL_Utility.GetShieldReleaseSkillGain * se_v.hitCount);
+                    }
+                }
+                else if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability3_CD"))
                 {
                     if (player.GetStamina() >= VL_Utility.GetLeapCost)
                     {
@@ -40,8 +233,9 @@ namespace ValheimLegends
                         player.UseStamina(VL_Utility.GetLeapCost);
 
                         //Effects, animations, and sounds
-                        //((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("jump");
-                        player.StartEmote("cheer");
+                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("knife_secondary");
+                        ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetSpeed(.3f);
+                        //player.StartEmote("cheer");
                         //Apply effects
                         Vector3 velVec = player.GetVelocity();
                         Rigidbody playerBody = Traverse.Create(root: player).Field(name: "m_body").GetValue<Rigidbody>();
@@ -160,33 +354,6 @@ namespace ValheimLegends
                     player.Message(MessageHud.MessageType.TopLeft, "Ability not ready");
                 }
             }
-        }
-
-        public static void Impact_Effect(Player player, float altitude)
-        {
-            List<Character> allCharacters = Character.GetAllCharacters();
-            //player.Message(MessageHud.MessageType.Center, "valkyrie impact");
-            inFlight = false;
-            ValheimLegends.shouldValkyrieImpact = false;
-            foreach (Character ch in allCharacters)
-            {
-                float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
-                if (BaseAI.IsEnemy(player, ch) && (ch.transform.position - player.transform.position).magnitude <= (8f + (.05f * sLevel)))
-                {
-                    Vector3 direction = (ch.transform.position - player.transform.position);
-                    HitData hitData = new HitData();
-                    hitData.m_damage.m_blunt = 5 + (3f * altitude) + UnityEngine.Random.Range(2f* sLevel, 3f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
-                    hitData.m_pushForce = 20f * VL_GlobalConfigs.g_DamageModifer;
-                    hitData.m_point = ch.GetEyePoint();
-                    hitData.m_dir = (player.transform.position - ch.transform.position);
-                    hitData.m_skill = ValheimLegends.DisciplineSkill;
-                    ch.Damage(hitData);                    
-                    //ch.Stagger(direction);
-                }
-            }
-            ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).StopAllCoroutines();
-            ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("battleaxe_attack2");
-            GO_CastFX = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_gdking_stomp"), player.transform.position, Quaternion.identity);
         }
     }
 }

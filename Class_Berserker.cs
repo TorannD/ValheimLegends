@@ -26,7 +26,7 @@ namespace ValheimLegends
             UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_stonegolem_attack_hit"), player.transform.position, Quaternion.identity);
 
             float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
-            float sDamageMultiplier = .8f + (sLevel * .005f) * VL_GlobalConfigs.g_DamageModifer;
+            float sDamageMultiplier = .6f + (sLevel * .005f) * VL_GlobalConfigs.g_DamageModifer;
             if(player.GetSEMan().HaveStatusEffect("SE_VL_Berserk") || player.GetSEMan().HaveStatusEffect("SE_VL_Execute"))
             {
                 SE_Berserk se_zerk = (SE_Berserk)player.GetSEMan().GetStatusEffect("SE_VL_Berserk");
@@ -47,6 +47,7 @@ namespace ValheimLegends
             Vector3 yVec = player.transform.position;
             yVec.y += 0.1f;
             List<int> list = new List<int>();
+            float hitCount = 1;
             int i = 0;
             for (; i <= 10; i++)
             {
@@ -88,7 +89,7 @@ namespace ValheimLegends
                 {
                     HitData hitData = new HitData();                    
                     hitData.m_damage = player.GetCurrentWeapon().GetDamage();
-                    hitData.ApplyModifier(UnityEngine.Random.Range(.8f, 1.2f) * sDamageMultiplier);
+                    hitData.ApplyModifier(UnityEngine.Random.Range(.8f, 1.2f) * sDamageMultiplier / hitCount);
                     hitData.m_point = ch.GetCenterPoint();
                     hitData.m_dir = (ch.transform.position - moveVec);
                     hitData.m_skill = ValheimLegends.DisciplineSkill;                    
@@ -105,6 +106,7 @@ namespace ValheimLegends
                                 player.GetSEMan().RemoveStatusEffect(se_exec);
                             }
                         }
+                        hitCount++;
                         ch.Damage(hitData);
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_crit"), ch.GetCenterPoint(), Quaternion.identity);
                         list.Add(ch.GetInstanceID());

@@ -16,36 +16,49 @@ namespace ValheimLegends
         private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock");        
 
         private static GameObject GO_CastFX;
+        public static bool isWaterWalking = false;
 
         public static void Process_Input(Player player, ref Rigidbody playerBody, ref float altitude, ref float lastGroundTouch, float waterLevel)
         {
-            //if (ZInput.GetButton("Jump"))
-            //{
-            //    if (!player.IsDead() && !player.InAttack() && !player.IsEncumbered() && !player.InDodge() && !player.IsKnockedBack())
-            //    {
-            //        if (player.transform.position.y <= (waterLevel + .2f))
-            //        {
-            //            bool flag = true;
-            //            if (!player.HaveStamina(1f))
-            //            {
-            //                if (player.IsPlayer())
-            //                {
-            //                    Hud.instance.StaminaBarNoStaminaFlash();
-            //                }
-            //                flag = false;
-            //            }
-            //            if (flag)
-            //            {
-                            
-            //                player.UseStamina(.3f);
-            //                Vector3 newPos = new Vector3(player.transform.position.x, waterLevel + .25f, player.transform.position.z);
-            //                playerBody.position = newPos;
-            //                ZLog.Log("player position " + player.transform.position + " water level " + waterLevel + " new pos " + newPos);
-            //                UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_FlyingKick"), player.transform.position + player.transform.up * -.1f, Quaternion.LookRotation(player.transform.forward * -1f));
-            //            }
-            //        }
-            //    }
-            //}
+            ValheimLegends.isChanneling = false;
+            if (ZInput.GetButton("Jump"))
+            {
+                if (!player.IsDead() && !player.InAttack() && !player.IsEncumbered() && !player.InDodge() && !player.IsKnockedBack())
+                {
+                    if (player.transform.position.y <= (waterLevel + .4f))
+                    {
+                        bool flag = true;
+                        if (!player.HaveStamina(1f))
+                        {
+                            if (player.IsPlayer())
+                            {
+                                Hud.instance.StaminaBarNoStaminaFlash();
+                            }
+                            flag = false;
+                            isWaterWalking = false;
+                        }
+                        if (flag)
+                        {
+                            //isWaterWalking = true;
+                            player.UseStamina(.3f);
+                            VL_Utility.RotatePlayerToTarget(player);
+                            ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).StopAllCoroutines();
+
+                            Vector3 newPos = new Vector3(player.transform.position.x + (player.GetLookDir().x * .3f), waterLevel + .3f, player.transform.position.z + (player.GetLookDir().z *.3f));
+                            playerBody.position = newPos;
+                            playerBody.velocity = Vector3.zero;
+                            ValheimLegends.isChanneling = true;
+                            //ZLog.Log("player position " + player.transform.position + " water level " + waterLevel + " new pos " + newPos + " velocity " + playerBody.velocity);
+                            UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_FlyingKick"), player.transform.position + player.transform.up * -.2f, Quaternion.LookRotation(player.transform.forward * -1f));
+                        }
+                    }
+                }
+            }
+
+            if(player.transform.position.y +.3f > waterLevel)
+            {
+                isWaterWalking = false;
+            }
 
             if (VL_Utility.Ability3_Input_Down)
             {
@@ -86,7 +99,7 @@ namespace ValheimLegends
                                 hitData.m_damage.m_lightning = UnityEngine.Random.Range(6f + (.4f * sLevel), 12f + (.6f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
                                 hitData.m_pushForce = 25f + (.1f * sLevel);
                                 hitData.m_point = ch.GetEyePoint();
-                                hitData.m_dir = (player.transform.position - ch.transform.position);
+                                hitData.m_dir = direction;
                                 hitData.m_skill = ValheimLegends.EvocationSkill;
                                 ch.Damage(hitData);
                                 ch.GetSEMan().AddStatusEffect(se_spiritdrain);

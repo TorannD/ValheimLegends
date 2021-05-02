@@ -98,7 +98,7 @@ namespace ValheimLegends
                             hitData.m_damage.m_lightning = (15 + sLevel) + se_shock.m_ttl * UnityEngine.Random.Range(.03f, .06f) * (1f + .1f * sLevel);
                             hitData.m_pushForce = 0f;
                             hitData.m_point = ch.GetEyePoint();
-                            hitData.m_dir = (player.transform.position - ch.transform.position);
+                            hitData.m_dir = direction;
                             hitData.m_skill = ValheimLegends.AlterationSkill;
                             ch.Damage(hitData);
                             ch.Stagger(hitData.m_dir);
@@ -449,7 +449,7 @@ namespace ValheimLegends
 
                         //Effects, animations, and sounds
                         ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("gpower");
-                        UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_GP_Stone"), player.transform.position, Quaternion.identity);
+                        //UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_GP_Stone"), player.transform.position, Quaternion.identity);
 
                         //Lingering effects
 
@@ -458,6 +458,10 @@ namespace ValheimLegends
                         Vector3 position = player.transform.position;
                         Vector3 target = (!Physics.Raycast(player.GetEyePoint(), player.GetLookDir(), out hitInfo, float.PositiveInfinity, ScriptChar_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_Weaken"), target, Quaternion.identity);
+                        for(int i = 0; i < 4; i++)
+                        {
+                            UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_WeakenStatus"), player.transform.position + player.transform.up * (UnityEngine.Random.Range(.4f, 1.1f)), Quaternion.identity);
+                        }
 
                         SE_Weaken se_weaken = (SE_Weaken)ScriptableObject.CreateInstance(typeof(SE_Weaken));
                         se_weaken.m_ttl = SE_Weaken.m_baseTTL;

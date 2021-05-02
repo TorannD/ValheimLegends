@@ -15,6 +15,7 @@ namespace ValheimLegends
     {
         private static int Warp_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "Water", "character");
         private static int Light_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "character");
+        private static int SafeFall_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "Water");
 
         private static GameObject GO_CastFX;
 
@@ -28,10 +29,125 @@ namespace ValheimLegends
         private static float warpDistance;
         private static int warpGrowthTrigger;
 
+        public enum MetavokerAttackType
+        {
+            ForceWave = 16
+        }
+
+        public static MetavokerAttackType QueuedAttack;
+
+        public static void Execute_Attack(Player player, ref Rigidbody playerBody, ref float altitude)
+        {
+            if (QueuedAttack == MetavokerAttackType.ForceWave)
+            {
+                UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_ForceWall"), player.GetEyePoint(), Quaternion.LookRotation(player.GetLookDir()));
+                List<Character> allCharacters = new List<Character>();
+                allCharacters.Clear();
+                Vector3 center = player.GetCenterPoint() + player.transform.forward * 6f;
+                Character.GetCharactersInRange(center, 6f, allCharacters);
+                float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.EvocationSkillDef).m_level;
+                List<Projectile> projs = GameObject.FindObjectsOfType<Projectile>().ToList();
+                if(projs != null && projs.Count > 0)
+                {
+                    foreach(Projectile proj in projs)
+                    {
+                        if(Vector3.Distance(proj.transform.position, center) <= 6f)
+                        {
+                            proj.m_ttl = .05f;
+                            string name = proj.name.Substring(0, proj.name.IndexOf('('));
+                            GameObject prefab = ZNetScene.instance.GetPrefab(name);
+                            if (prefab != null)
+                            {
+                                GameObject GO_DupeProj = UnityEngine.Object.Instantiate(prefab, proj.transform.position, Quaternion.identity);
+                                Projectile P_DupeProj = GO_DupeProj.GetComponent<Projectile>();
+                                P_DupeProj.name = "DupeProj";
+                                P_DupeProj.m_respawnItemOnHit = false;
+                                P_DupeProj.m_spawnOnHit = null;
+                                P_DupeProj.m_ttl = 4f;
+                                P_DupeProj.transform.localRotation = Quaternion.LookRotation(proj.transform.forward * -1f);
+                                GO_DupeProj.transform.localScale = proj.transform.localScale;
+                                //RaycastHit hitInfo = default(RaycastHit);
+                                //Vector3 position = player.transform.position;
+                                //Vector3 target = (!Physics.Raycast(vector, player.GetLookDir(), out hitInfo, float.PositiveInfinity, ScriptChar_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
+                                HitData hitData = new HitData();
+                                hitData.m_damage = proj.m_damage;
+                                hitData.m_skill = ValheimLegends.EvocationSkill;
+                                //Vector3 a = Vector3.MoveTowards(GO_DupeProj.transform.position, target, 1f);
+                                P_DupeProj.Setup(player, proj.GetVelocity() * -1f, -1f, hitData, null);
+                                Traverse.Create(root: P_DupeProj).Field("m_skill").SetValue(ValheimLegends.EvocationSkill);
+                                GO_DupeProj = null;
+                            }
+                        }
+                    }
+                }
+                foreach (Character ch in allCharacters)
+                {
+                    if (BaseAI.IsEnemy(player, ch))
+                    {
+                        Vector3 direction = (ch.transform.position - player.transform.position);
+                        float distanceFromPlayer = direction.magnitude;
+
+                        Rigidbody chBody = Traverse.Create(root: ch).Field(name: "m_body").GetValue<Rigidbody>();                        
+
+                        if (chBody != null)
+                        {
+                            float mass = chBody.mass;
+                            //ZLog.Log("" + ch.m_name + " vector from player: " + direction + " distance from player " + distanceFromPlayer + " mass " + mass);
+                            mass *= .02f;
+                            
+                            ch.Stagger(direction);
+                            Vector3 vel = direction * ((15f - distanceFromPlayer) / mass) + new Vector3(0f, 3f / mass, 0f);
+                            //ZLog.Log("" + ch.m_name + " pushed " + vel);
+
+                            Traverse.Create(root: ch).Field(name: "m_pushForce").SetValue(vel);
+                            HitData hitData = new HitData();
+                            hitData.m_damage.m_damage = distanceFromPlayer * UnityEngine.Random.Range(.75f, 1.25f) * (1f + (.02f * sLevel));
+                            hitData.m_point = ch.GetEyePoint();
+                            hitData.m_dir = direction;
+                            hitData.m_skill = ValheimLegends.EvocationSkill;
+                            ch.Damage(hitData);
+                        }
+                            
+                    }
+                }
+            }
+        }
+
         public static void Process_Input(Player player, ref float altitude, ref Rigidbody playerBody)
         {
 
-            if(P_Light != null)
+            if (player.IsBlocking() && ZInput.GetButtonDown("Attack"))
+            {
+                if (!player.GetSEMan().HaveStatusEffect("SE_VL_Ability2_CD") && player.GetStamina() >= VL_Utility.GetForceWaveCost)
+                {
+                    //Ability Cooldown
+                    StatusEffect se_cd = (SE_Ability2_CD)ScriptableObject.CreateInstance(typeof(SE_Ability2_CD));
+                    se_cd.m_ttl = VL_Utility.GetForceWaveCooldown;
+                    player.GetSEMan().AddStatusEffect(se_cd);
+
+                    //Ability Cost
+                    player.UseStamina(VL_Utility.GetForceWaveCost);
+
+                    VL_Utility.RotatePlayerToTarget(player);
+                    ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).StopAllCoroutines();
+                    ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("battleaxe_attack2");
+
+                    ValheimLegends.isChargingDash = true;
+                    ValheimLegends.dashCounter = 0;
+                    QueuedAttack = MetavokerAttackType.ForceWave;
+
+                    //knife_secondary
+                    //sword_secondary
+                    //swing_longsword2
+                    //knife_stab2
+                    //throw_bomb
+
+                    //Skill gain
+                    player.RaiseSkill(ValheimLegends.EvocationSkill, VL_Utility.GetForceWaveSkillGain);
+                }
+            }
+
+            if (P_Light != null)
             {
                 P_Light.transform.position = player.GetEyePoint() + player.transform.up * .4f + player.transform.right * -.8f;
             }
@@ -58,11 +174,18 @@ namespace ValheimLegends
                             player.UseStamina(.6f);
                             //ZSyncAnimation zanim = Traverse.Create(root: player).Field(name: "m_zanim").GetValue<ZSyncAnimation>();
                             //Animator anim = Traverse.Create(root: player).Field(name: "m_animator").GetValue<Animator>();
-                            float heightAboveGround = ZoneSystem.instance.GetSolidHeight(player.transform.position);
-                            float heightDiff = altitude - heightAboveGround;
+                            RaycastHit hitInfo = default(RaycastHit);
+                            Vector3 position = player.transform.position;
+                            Vector3 target = (!Physics.Raycast(position, new Vector3(0f, -1f, 0f), out hitInfo, float.PositiveInfinity, SafeFall_Layermask) || !(bool)hitInfo.collider) ? (position + player.transform.up * -1000f) : hitInfo.point;
+                            //float heightAboveGround = ZoneSystem.instance.GetSolidHeight(player.transform.position);
+                            float groundHeight = hitInfo.point.y;
+                            
+                            float maxHeightAboveGround = altitude - groundHeight;
+                            //ZLog.Log("player height: " + player.transform.position.y + " max altitude " + altitude + " ground level " + hitInfo.point + " height above ground " + groundHeight + " height diff " + maxHeightAboveGround);
                             float _vy = Mathf.Clamp(-.15f * velocity.y, 0f, 1.5f);
                             float v_r = _vy / (-velocity.y);
-                            float alt_r = heightDiff * (1f - v_r);
+                            //ZLog.Log("v_r " + v_r);
+                            float alt_r = maxHeightAboveGround * v_r;
                             //ZLog.Log("adjusting " + velocity.y + " by " + _vy);
                             playerBody.velocity = velocity + new Vector3(0f, _vy, 0f);
                             //ZLog.Log("velocity y " + _vy + " adjusted to " + velocity.y);
@@ -184,8 +307,9 @@ namespace ValheimLegends
                 if (warpMagnitude > 0f)
                 {
                     //ZLog.Log("damage magnitude is " + flagDamage);
-                    
-                    UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_eikthyr_forwardshockwave"), effectVec, Quaternion.LookRotation(player.GetLookDir()));
+
+                    //UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_eikthyr_forwardshockwave"), effectVec, Quaternion.LookRotation(player.GetLookDir()));
+                    UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_ForwardLightningShock"), effectVec, Quaternion.LookRotation(player.GetLookDir()));
                     //Apply effects
                     List<Character> allCharacters = new List<Character>();
                     allCharacters.Clear();
@@ -198,9 +322,9 @@ namespace ValheimLegends
                             Vector3 direction = (ch.transform.position - player.transform.position);
                             HitData hitData = new HitData();
                             hitData.m_damage.m_lightning = UnityEngine.Random.Range(flagDamage * (sLevel/15f), flagDamage * (sLevel/10f)) * VL_GlobalConfigs.g_DamageModifer;
-                            hitData.m_pushForce = flagDamage + (.1f * sLevel);
+                            hitData.m_pushForce = (flagDamage + sLevel) * .1f;
                             hitData.m_point = ch.GetEyePoint();
-                            hitData.m_dir = (player.transform.position - ch.transform.position);
+                            hitData.m_dir = (ch.transform.position - player.transform.position);
                             hitData.m_skill = ValheimLegends.EvocationSkill;
                             ch.Damage(hitData);
                             anyHitFlag = true;
@@ -272,7 +396,10 @@ namespace ValheimLegends
                         List<Character> allCharacters = new List<Character>();
                         foreach(Character chr in Character.GetAllCharacters())
                         {
-                            allCharacters.Add(chr);
+                            if (!chr.IsBoss())
+                            {
+                                allCharacters.Add(chr);
+                            }
                         }
                         for(int i = 0; i < allCharacters.Count; i++)
                         {
@@ -284,6 +411,7 @@ namespace ValheimLegends
                                 if (original != null)
                                 {
                                     original.AddComponent<CharacterTimedDestruction>();
+                                    original.GetComponent<CharacterTimedDestruction>().m_triggerOnAwake = true;
                                     original.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 8f + (.2f * sLevel);
                                     original.GetComponent<CharacterTimedDestruction>().m_timeoutMax = 8f + (.2f * sLevel); 
                                     Vector3 rootVec = ch.transform.position;
@@ -293,8 +421,11 @@ namespace ValheimLegends
                                     if (td != null)
                                     {
                                         //ZLog.Log("td valid: " + td.isActiveAndEnabled + " timeout min " + td.m_timeoutMin + " timeout max " + td.m_timeoutMax);
+                                        td.enabled = true;                                        
                                         td.m_timeoutMin = 8f + (.2f * sLevel);
                                         td.m_timeoutMax = td.m_timeoutMin;
+                                        td.m_triggerOnAwake = true;
+                                        td.Trigger();
                                     }
                                     Character repCh = replica.GetComponent<Character>();
                                     repCh.SetMaxHealth(1f + sLevel);

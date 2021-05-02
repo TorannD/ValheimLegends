@@ -114,7 +114,7 @@ namespace ValheimLegends
                             ch.m_faction = Character.Faction.Players;
                             ch.SetTamed(true);
                             ch.SetMaxHealth(25 + (9 * sLevel));
-                            ch.transform.localScale = (0.5f + (.02f * sLevel)) * Vector3.one;                            
+                            ch.transform.localScale = (0.5f + (.015f * sLevel)) * Vector3.one;                            
                             ch.m_swimSpeed *= 2f;
                             //CharacterTimedDestruction td = GO_Wolf.GetComponent<CharacterTimedDestruction>();
                             //if (td != null)

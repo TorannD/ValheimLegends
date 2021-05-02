@@ -97,6 +97,14 @@ namespace ValheimLegends
                     {
                         (__result as SE_Monk).m_icon = SE_Monk.AbilityIcon;
                     }
+                    else if (name == "SE_Ranger")
+                    {
+                        (__result as SE_Ranger).m_icon = SE_Ranger.AbilityIcon;
+                    }
+                    else if (name == "SE_Valkyrie")
+                    {
+                        (__result as SE_Valkyrie).m_icon = SE_Valkyrie.AbilityIcon;
+                    }
                     else if (name == "SE_Weaken")
                     {
                         (__result as SE_Weaken).m_icon = SE_Weaken.AbilityIcon;
@@ -114,6 +122,10 @@ namespace ValheimLegends
                     {
                         (__result as SE_Ability3_CD).m_icon = SE_Ability3_CD.AbilityIcon;
                     }
+                    //else if(name == "SE_DyingLight_CD")
+                    //{
+                    //    (__result as SE_DyingLight_CD).m_icon = SE_Ability3_CD.AbilityIcon;
+                    //}
 
                 }
             }
@@ -136,9 +148,12 @@ namespace ValheimLegends
                 SE_Companion.AbilityIcon = ZNetScene.instance.GetPrefab("TrophyWolf").GetComponent<ItemDrop>().m_itemData.GetIcon();
                 SE_RootsBuff.AbilityIcon = ZNetScene.instance.GetPrefab("TrophyWolf").GetComponent<ItemDrop>().m_itemData.GetIcon();
                 SE_Slow.AbilityIcon = ZNetScene.instance.GetPrefab("TrophyWolf").GetComponent<ItemDrop>().m_itemData.GetIcon();
+                SE_DyingLight_CD.AbilityIcon = ZNetScene.instance.GetPrefab("TrophySkeleton").GetComponent<ItemDrop>().m_itemData.GetIcon();
                 SE_Riposte.AbilityIcon = ValheimLegends.RiposteIcon;
                 SE_Rogue.AbilityIcon = ValheimLegends.RogueIcon;
                 SE_Monk.AbilityIcon = ValheimLegends.MonkIcon;
+                SE_Ranger.AbilityIcon = ValheimLegends.RangerIcon;
+                SE_Valkyrie.AbilityIcon = ValheimLegends.ValkyrieIcon;
                 SE_Weaken.AbilityIcon = ValheimLegends.WeakenIcon;
 
                 SE_BiomeMeadows.AbilityIcon = ValheimLegends.BiomeMeadowsIcon;
@@ -170,6 +185,10 @@ namespace ValheimLegends
             {
                 odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_Ability3_CD>());
             }
+            //if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_DyingLight_CD"))
+            //{
+            //    odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_DyingLight_CD>());
+            //}
         }
 
         private static void AddStatusEffect(ObjectDB odb)
@@ -233,6 +252,14 @@ namespace ValheimLegends
             if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_Monk"))
             {
                 odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_Monk>());
+            }
+            if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_Ranger"))
+            {
+                odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_Ranger>());
+            }
+            if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_Valkyrie"))
+            {
+                odb.m_StatusEffects.Add(ScriptableObject.CreateInstance<SE_Valkyrie>());
             }
             if (!(bool)odb.m_StatusEffects.Find((StatusEffect se) => se.name == "SE_VL_Weaken"))
             {

@@ -67,7 +67,7 @@ namespace ValheimLegends
                     hitData.m_damage.m_blunt = 5 + (3f * altitude) + UnityEngine.Random.Range(1f * sLevel, 2f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
                     hitData.m_pushForce = 20f * VL_GlobalConfigs.g_DamageModifer;
                     hitData.m_point = ch.GetEyePoint();
-                    hitData.m_dir = (player.transform.position - ch.transform.position);
+                    hitData.m_dir = direction;
                     hitData.m_skill = ValheimLegends.DisciplineSkill;
                     ch.Damage(hitData);
                     //ch.Stagger(direction);
@@ -125,7 +125,7 @@ namespace ValheimLegends
                             hitData.m_damage.m_blunt = UnityEngine.Random.Range(12f + (.5f * sLevel), 24f + (1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
                             hitData.m_pushForce = 45f + (.5f * sLevel);
                             hitData.m_point = ch.GetEyePoint();
-                            hitData.m_dir = (ch.transform.position - player.transform.position);
+                            hitData.m_dir = direction;
                             hitData.m_skill = ValheimLegends.DisciplineSkill;
                             ch.Damage(hitData);
                         }
@@ -163,8 +163,8 @@ namespace ValheimLegends
                 Vector3 position = player.transform.position;
                 Vector3 target = (!Physics.Raycast(vector, player.GetLookDir(), out hitInfo, float.PositiveInfinity, ScriptChar_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
                 HitData hitData = new HitData();
-                hitData.m_damage.m_blunt = UnityEngine.Random.Range(10f + sLevel, 40f + 2f * sLevel);
-                hitData.m_damage.m_spirit= UnityEngine.Random.Range(10f + sLevel, 20f + sLevel);
+                hitData.m_damage.m_blunt = UnityEngine.Random.Range(5f + sLevel, 20f + 2f * sLevel);
+                hitData.m_damage.m_spirit= UnityEngine.Random.Range(sLevel, 5 + sLevel);
                 hitData.m_skill = ValheimLegends.DisciplineSkill;
                 Vector3 a = Vector3.MoveTowards(GO_PsiBolt.transform.position, target, 1f);
                 P_PsiBolt.Setup(player, (a - GO_PsiBolt.transform.position) * 60f, -1f, hitData, null);
@@ -230,7 +230,8 @@ namespace ValheimLegends
                         hitData.m_damage = player.GetCurrentWeapon().GetDamage();
                         hitData.ApplyModifier(UnityEngine.Random.Range(.8f, 1.2f) * sDamageMultiplier);
                         hitData.m_point = ch.GetCenterPoint();
-                        hitData.m_dir = (moveVec - ch.transform.position);
+                        hitData.m_pushForce = 4f;
+                        hitData.m_dir = ch.transform.position - moveVec;
                         hitData.m_skill = ValheimLegends.DisciplineSkill;
                         float num = Vector3.Distance(ch.transform.position, player.transform.position);
                         if (!ch.IsPlayer() && num <= 2.5f && !kicklist.Contains(ch.GetInstanceID()))
@@ -283,7 +284,8 @@ namespace ValheimLegends
                             hitData.m_damage = player.GetCurrentWeapon().GetDamage();
                             hitData.ApplyModifier(UnityEngine.Random.Range(.8f, 1.2f) * sDamageMultiplier);
                             hitData.m_point = hitVec;
-                            hitData.m_dir = (player.transform.position - hitVec);
+                            hitData.m_pushForce = 10f;
+                            hitData.m_dir = hitVec - player.transform.position;
                             hitData.m_skill = ValheimLegends.DisciplineSkill;
                             colliderChar.Damage(hitData);
                             UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("sfx_perfectblock"), player.transform.position, Quaternion.identity);

@@ -14,13 +14,13 @@ using UnityEngine.UI;
 
 namespace ValheimLegends
 {
-    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.3.1")]
+    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.3.2")]
     public class ValheimLegends : BaseUnityPlugin
     {
         public static Harmony _Harmony;
 
-        public const string Version = "0.3.1";
-        public const float VersionF = 0.31f;
+        public const string Version = "0.3.2";
+        public const float VersionF = 0.32f;
         public const string ModName = "Valheim Legends";
         public static bool playerEnabled = true;
 
@@ -31,6 +31,8 @@ namespace ValheimLegends
         public static Sprite RiposteIcon;
         public static Sprite RogueIcon;
         public static Sprite MonkIcon;
+        public static Sprite RangerIcon;
+        public static Sprite ValkyrieIcon;
         public static Sprite WeakenIcon;
         public static Sprite BiomeMeadowsIcon;
         public static Sprite BiomeBlackForestIcon;
@@ -348,6 +350,7 @@ namespace ValheimLegends
         public static Sprite Ability1_Sprite;
         public static Sprite Ability2_Sprite;
         public static Sprite Ability3_Sprite;
+        public static Sprite DyingLight_Sprite;
 
         public static string Ability1_Name;
         public static string Ability2_Name;
@@ -637,11 +640,11 @@ namespace ValheimLegends
             {
                 if (character != null && character.m_name == "Shadow Wolf")
                 {
-                    Vector3 hitVec = character.GetEyePoint();
+                    Vector3 hitVec = character.transform.position + character.transform.up * .3f;
                     RaycastHit hitInfo = default(RaycastHit);
                     //ZLog.Log("hitVec position " + hitVec);
                     //Vector3 target = (!Physics.Raycast(hitVec, character.transform.forward, out hitInfo, 5f, Script_WolfAttackMask) || !(bool)hitInfo.collider) ? (character.transform.position + character.transform.forward * 5f) : hitInfo.point;
-                    Physics.SphereCast(hitVec, 0.2f, character.transform.forward, out hitInfo, 2f, Script_WolfAttackMask);
+                    Physics.SphereCast(hitVec, 0.2f, character.transform.forward, out hitInfo, 3f, Script_WolfAttackMask);
                     if (hitInfo.collider != null && hitInfo.collider.gameObject != null)
                     {
                         //ZLog.Log("collider " + hitInfo.collider);
@@ -786,6 +789,63 @@ namespace ValheimLegends
             }
         }
 
+        [HarmonyPatch(typeof(Humanoid), "UseItem")]
+        internal class UseItemPatch
+        {
+            public static bool Prefix(Humanoid __instance, Inventory inventory, ItemDrop.ItemData item, bool fromInventoryGui, Inventory ___m_inventory, ZSyncAnimation ___m_zanim)
+            {
+                string name = item.m_shared.m_name;
+                Player player = __instance as Player;
+                if (player != null && vl_player != null && player.GetPlayerName() == vl_player.vl_name && vl_player.vl_class == PlayerClass.Druid)
+                {
+                    if (name.Contains("$item_pinecone") || name.Contains("$item_beechseeds") || name.Contains("$item_fircone") || name.Contains("$item_ancientseed"))
+                    {
+                        if (inventory == null)
+                        {
+                            inventory = ___m_inventory;
+                        }
+                        if (!inventory.ContainsItem(item))
+                        {
+                            return false;
+                        }
+                        GameObject hoverObject = __instance.GetHoverObject();
+                        Hoverable hoverable = ((bool)hoverObject) ? hoverObject.GetComponentInParent<Hoverable>() : null;
+                        if (hoverable != null && !fromInventoryGui && (hoverObject.GetComponentInParent<Interactable>()?.UseItem(__instance, item) ?? false))
+                        {
+                            return false;
+                        }
+                        SE_SeedRegeneration se_regen = (SE_SeedRegeneration)ScriptableObject.CreateInstance(typeof(SE_SeedRegeneration));
+                        se_regen.m_ttl = SE_SeedRegeneration.m_baseTTL;
+                        se_regen.m_icon = item.GetIcon();
+                        if (name.Contains("$item_pinecone"))
+                        {
+                            se_regen.m_HealAmount = 10f; 
+                        }
+                        else if(name.Contains("$item_ancientseed"))
+                        {
+                            se_regen.m_HealAmount = 20f;
+                        }
+                        else if (name.Contains("$item_fircone"))
+                        {
+                            se_regen.m_HealAmount = 7f;
+                        }
+                        else
+                        {
+                            se_regen.m_HealAmount = 5f;
+                        }
+                        player.GetSEMan().AddStatusEffect(se_regen, true);
+                        UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_Potion_stamina_medium"), player.transform.position, Quaternion.identity);
+
+                        inventory.RemoveOneItem(item);
+                        __instance.m_consumeItemEffects.Create(Player.m_localPlayer.transform.position, Quaternion.identity);
+                        ___m_zanim.SetTrigger("eat");
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+
         [HarmonyPatch(typeof(OfferingBowl), "UseItem", null)]
         public class OfferingForClass_Patch
         {
@@ -915,6 +975,18 @@ namespace ValheimLegends
             }
         }
 
+        [HarmonyPatch(typeof(Attack), "GetStaminaUsage", null)]
+        public class AttackStaminaReduction_Patch
+        {
+            public static void Postfix(Attack __instance, ItemDrop.ItemData ___m_weapon, ref float __result)
+            {
+                if(___m_weapon != null && vl_player != null && vl_player.vl_class == PlayerClass.Berserker && ___m_weapon.m_shared.m_itemType == ItemDrop.ItemData.ItemType.TwoHandedWeapon)
+                {
+                    __result *= .7f;
+                }
+            }
+        }
+
         [HarmonyPatch(typeof(Character), "Damage", null)]
         public class VL_Damage_Patch
         {
@@ -945,6 +1017,7 @@ namespace ValheimLegends
 
                 if (attacker != null)
                 {
+                    Player player = attacker as Player;
                     if(attacker.GetSEMan().HaveStatusEffect("SE_VL_Weaken"))
                     {
                         SE_Weaken se_w = (SE_Weaken)attacker.GetSEMan().GetStatusEffect("SE_VL_Weaken");
@@ -990,8 +1063,8 @@ namespace ValheimLegends
                     if (attacker.GetSEMan().HaveStatusEffect("SE_VL_Berserk"))
                     {
                         SE_Berserk se_berserk = attacker.GetSEMan().GetStatusEffect("SE_VL_Berserk") as SE_Berserk;
-                        attacker.Heal(hit.GetTotalPhysicalDamage() * se_berserk.healthAbsorbPercent, true);
-                        attacker.AddStamina(hit.GetTotalElementalDamage() * se_berserk.healthAbsorbPercent);
+                        //attacker.Heal(hit.GetTotalPhysicalDamage() * se_berserk.healthAbsorbPercent, true);
+                        attacker.AddStamina(hit.GetTotalDamage() * se_berserk.healthAbsorbPercent);
                     }
                     if (attacker.GetSEMan().HaveStatusEffect("SE_VL_Execute"))
                     {
@@ -1015,6 +1088,33 @@ namespace ValheimLegends
                     {
                         SE_RootsBuff se_RootsBuff = attacker.GetSEMan().GetStatusEffect("SE_VL_RootsBuff") as SE_RootsBuff;
                         hit.m_damage.Modify(se_RootsBuff.damageModifier);
+                    }
+                    if(vl_player != null && player != null && vl_player.vl_name == player.GetPlayerName())
+                    {
+                        if (vl_player.vl_class == PlayerClass.Berserker)
+                        {
+                            hit.m_damage.Modify(1f + ((1f - attacker.GetHealthPercentage()) * .4f));
+                        }
+                        else if (vl_player.vl_class == PlayerClass.Enchanter)
+                        {
+                            if (UnityEngine.Random.value > .30f)
+                            {
+                                float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AlterationSkillDef).m_level;
+                                float rnd = UnityEngine.Random.value;
+                                if(rnd <= .40f)
+                                {
+                                    hit.m_damage.m_fire += sLevel;
+                                }
+                                else if(rnd <= .60f)
+                                {
+                                    hit.m_damage.m_frost += sLevel;
+                                }
+                                else
+                                {
+                                    hit.m_damage.m_lightning += sLevel;
+                                }                                
+                            }
+                        }
                     }
                 }
 
@@ -1107,6 +1207,51 @@ namespace ValheimLegends
                         }
                     }
                 }
+                else if(__instance.name == "VL_ValkyrieSpear")
+                {
+                    bool hitCharacter = false;
+                    if (__instance.m_aoe > 0f)
+                    {
+                        Collider[] array = Physics.OverlapSphere(hitPoint, __instance.m_aoe, ___m_rayMaskSolids, QueryTriggerInteraction.UseGlobal);
+                        HashSet<GameObject> hashSet = new HashSet<GameObject>();
+                        Collider[] array2 = array;
+                        foreach (Collider collider2 in array2)
+                        {
+                            GameObject gameObject = Projectile.FindHitObject(collider2);
+                            IDestructible component = gameObject.GetComponent<IDestructible>();
+                            if (component != null && !hashSet.Contains(gameObject))
+                            {
+                                hashSet.Add(gameObject);
+                                if (IsValidTarget(component, ref hitCharacter, ___m_owner, __instance.m_dodgeable))
+                                {
+                                    Character ch = null;
+                                    gameObject.TryGetComponent<Character>(out ch);
+                                    bool flag = ch != null;
+                                    if (ch == null)
+                                    {
+                                        ch = (Character)gameObject.GetComponentInParent(typeof(Character));
+                                        flag = ch != null;
+                                    }
+                                    if (flag && !ch.IsPlayer() && ___m_owner is Player &&
+                                        !ch.m_boss)
+                                    {
+                                        //ZLog.Log("charming " + ch.m_name);
+                                        Player p = ___m_owner as Player;
+                                        Vector3 direction = (ch.transform.position - p.transform.position);
+                                        float distanceFromPlayer = direction.magnitude;
+                                        float mass = ch.GetMass() * .05f;
+                                        Vector3 vel = new Vector3(0f, 4f/mass, 0f);
+                                        ch.Stagger(direction);
+
+                                        //ZLog.Log("" + ch.m_name + " pushed " + vel);
+                                        UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_ParticleLightburst"), ch.transform.position, Quaternion.LookRotation(new Vector3(0f, 1f, 0f)));
+                                        Traverse.Create(root: ch).Field(name: "m_pushForce").SetValue(vel);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -1145,28 +1290,18 @@ namespace ValheimLegends
             }
         }
 
-        //[HarmonyPatch(typeof(Character), "UpdateMotion", null)]
-        //public class ClassMotionUpdate_Postfix
-        //{
-        //    public static bool Prefix(Character __instance, ref bool ___m_flying, float ___m_waterLevel)
-        //    {
-        //        if (vl_player == null || vl_player.vl_class == PlayerClass.Shaman)
-        //        {
-        //            if (ZInput.GetButton("Jump"))
-        //            {
-        //                if (__instance.transform.position.y <= (___m_waterLevel + .25f))
-        //                {
-        //                    ___m_flying = true;
-        //                }
-        //                else
-        //                {
-        //                    ___m_flying = false;
-        //                }
-        //            }
-        //        }
-        //        return true;
-        //    }
-        //}
+        [HarmonyPatch(typeof(Character), "UpdateMotion", null)]
+        public class ClassMotionUpdate_Postfix
+        {
+            public static bool Prefix(Character __instance, ref bool ___m_flying, float ___m_waterLevel)
+            {
+                if (vl_player != null && vl_player.vl_class == PlayerClass.Shaman && Class_Shaman.isWaterWalking)
+                {
+                    ___m_flying = true;
+                }
+                return true;
+            }
+        }
 
         [HarmonyPatch(typeof(Player), "GetMaxCarryWeight", null)]
         public class PlayerCarryWeight_BiomePatch
@@ -1324,6 +1459,14 @@ namespace ValheimLegends
                                     //ZLog.Log("damage mod was " + dmgMod);
                                     hitData.ApplyModifier(dmgMod);
                                     __instance.RaiseSkill(ValheimLegends.DisciplineSkill, VL_Utility.GetRiposteSkillGain * 2f);
+                                    if(__instance.GetSEMan().HaveStatusEffect("SE_VL_Ability3_CD"))
+                                    {
+                                        __instance.GetSEMan().GetStatusEffect("SE_VL_Ability3_CD").m_ttl -= 5f;
+                                    }
+                                    if (__instance.GetSEMan().HaveStatusEffect("SE_VL_Ability1_CD"))
+                                    {
+                                        __instance.GetSEMan().GetStatusEffect("SE_VL_Ability1_CD").m_ttl -= 5f;
+                                    }
                                     //ZLog.Log("riposting damage: " + hitData.m_damage.m_blunt + "b " + hitData.m_damage.m_fire + "fi " + hitData.m_damage.m_frost + "fr " + hitData.m_damage.m_lightning + "l " + hitData.m_damage.m_pierce + "p " + hitData.m_damage.m_poison + "po " + hitData.m_damage.m_slash + "s " + hitData.m_damage.m_spirit);
                                     //battleaxe_attack1
                                     //atgeir_attack1
@@ -1364,17 +1507,79 @@ namespace ValheimLegends
             }
         }
 
+        [HarmonyPatch(typeof(Character), "CheckDeath")]
+        public class OnDeath_Patch
+        {
+            public static bool Prefix(Character __instance)
+            {                
+                if (!__instance.IsDead() && __instance.GetHealth() <= 0f && vl_player != null)
+                {
+                    Player player = __instance as Player;
+                    if (player != null && vl_player.vl_class == PlayerClass.Priest && player.GetPlayerName() == vl_player.vl_name)
+                    {
+                        if (!__instance.GetSEMan().HaveStatusEffect("SE_VL_DyingLight_CD"))
+                        {
+                            StatusEffect se_cd = (SE_DyingLight_CD)ScriptableObject.CreateInstance(typeof(SE_DyingLight_CD));
+                            se_cd.m_ttl = 600f;
+                            __instance.GetSEMan().AddStatusEffect(se_cd);
+                            __instance.SetHealth(1f);
+                            return false;
+                        }
+                    }
+                    else if (vl_player.vl_class == PlayerClass.Shaman)
+                    {
+                        Player shaman = Player.m_localPlayer;
+                        if (shaman != null && vl_player.vl_name == shaman.GetPlayerName() && Vector3.Distance(shaman.transform.position, __instance.transform.position) <= 10f)
+                        {
+                            UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_AbsorbSpirit"), shaman.GetCenterPoint(), Quaternion.identity);
+                            shaman.AddStamina(25f);
+                        }
+                    }
+                }
+                return true;
+            }
+        }
+
         [HarmonyPatch(typeof(HitData), "BlockDamage")]
         public static class BlockDamage_Patch
         {
-            public static bool Prefix(HitData __instance, float damage)
+            public static bool Prefix(HitData __instance, float damage, HitData.DamageTypes ___m_damage)
             {
-                if (vl_player != null && vl_player.vl_class == PlayerClass.Monk && Class_Monk.PlayerIsUnarmed)
+                if (vl_player != null)
                 {
-                    if (__instance.GetTotalBlockableDamage() >= damage)
+                    if (vl_player.vl_class == PlayerClass.Monk && Class_Monk.PlayerIsUnarmed)
                     {
-                        SE_Monk se_monk = (SE_Monk)Player.m_localPlayer.GetSEMan().GetStatusEffect("SE_VL_Monk");
-                        se_monk.hitCount++;
+                        if (__instance.GetTotalBlockableDamage() >= damage)
+                        {
+                            SE_Monk se_monk = (SE_Monk)Player.m_localPlayer.GetSEMan().GetStatusEffect("SE_VL_Monk");
+                            se_monk.hitCount++;
+                        }
+                    }
+                    else if (vl_player.vl_class == PlayerClass.Valkyrie && Class_Valkyrie.PlayerUsingShield)
+                    {
+                        if (__instance.GetTotalBlockableDamage() >= damage)
+                        {
+                            SE_Valkyrie se_v = (SE_Valkyrie)Player.m_localPlayer.GetSEMan().GetStatusEffect("SE_VL_Valkyrie");
+                            se_v.hitCount++;
+                        }
+                    }
+                    else if(vl_player.vl_class == PlayerClass.Enchanter)
+                    {
+                        float totalDamage = __instance.GetTotalBlockableDamage();
+                        float blockRatio = damage / totalDamage;
+                        if (blockRatio > 0f)
+                        {
+                            float blockFire = ___m_damage.m_fire * blockRatio;
+                            float blockFrost = ___m_damage.m_frost * blockRatio;
+                            float blockLit = ___m_damage.m_lightning * blockRatio;
+                            float blockEle = blockFire + blockFrost + blockLit;
+                            if (blockEle > 0)
+                            {
+                                Player.m_localPlayer.AddStamina(blockEle);
+                                Player.m_localPlayer.RaiseSkill(ValheimLegends.AbjurationSkill, blockRatio);
+                                UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_Potion_stamina_medium"), Player.m_localPlayer.transform.position, Quaternion.identity);
+                            }
+                        }
                     }
                 }
                 return true;
@@ -1566,6 +1771,22 @@ namespace ValheimLegends
             }
         }
 
+        [HarmonyPatch(typeof(Player), "UpdateDodge", null)]
+        public class DodgePatch_Postfix
+        {
+            public static void Postfix(Player __instance, float ___m_queuedDodgeTimer)
+            {
+                if (___m_queuedDodgeTimer < -.5f && ___m_queuedDodgeTimer >-.55f && vl_player != null && vl_player.vl_name == __instance.GetPlayerName() && vl_player.vl_class == PlayerClass.Ranger)
+                {
+                    SE_Ranger se_r = (SE_Ranger)__instance.GetSEMan().GetStatusEffect("SE_VL_Ranger");
+                    if(se_r != null)
+                    {
+                        se_r.hitCount = 2f;
+                    }
+                }
+            }
+        }
+
         [HarmonyPatch(typeof(Player), "RaiseSkill", null)]
         public static class VinesHit_SkillRaise_Prefix
         {
@@ -1623,6 +1844,13 @@ namespace ValheimLegends
                             else if (vl_player.vl_class == PlayerClass.Ranger)
                             {
                                 Class_Ranger.Process_Input(localPlayer);
+
+                                if ((!localPlayer.GetSEMan().HaveStatusEffect("SE_VL_Ranger")))
+                                {
+                                    SE_Ranger se_m = (SE_Ranger)ScriptableObject.CreateInstance(typeof(SE_Ranger));
+                                    se_m.m_ttl = SE_Ranger.m_baseTTL;
+                                    localPlayer.GetSEMan().AddStatusEffect(se_m, true);
+                                }
                             }
                             else if (vl_player.vl_class == PlayerClass.Berserker)
                             {
@@ -1631,6 +1859,13 @@ namespace ValheimLegends
                             else if (vl_player.vl_class == PlayerClass.Valkyrie)
                             {
                                 Class_Valkyrie.Process_Input(localPlayer);
+
+                                if ((!localPlayer.GetSEMan().HaveStatusEffect("SE_VL_Valkyrie")))
+                                {
+                                    SE_Valkyrie se_m = (SE_Valkyrie)ScriptableObject.CreateInstance(typeof(SE_Valkyrie));
+                                    se_m.m_ttl = SE_Valkyrie.m_baseTTL;
+                                    localPlayer.GetSEMan().AddStatusEffect(se_m, true);
+                                }
                             }
                             else if (vl_player.vl_class == PlayerClass.Metavoker)
                             {
@@ -1681,31 +1916,46 @@ namespace ValheimLegends
                     {
                         VL_Utility.SetTimer();
                         dashCounter++;
-                        if (dashCounter >= 10 && vl_player.vl_class == PlayerClass.Berserker)
+                        if (vl_player.vl_class == PlayerClass.Berserker && dashCounter >= 12)
                         {
                             isChargingDash = false;
                             Class_Berserker.Execute_Dash(localPlayer, ref ___m_maxAirAltitude);
                         }
-                        if (dashCounter >= 10 && vl_player.vl_class == PlayerClass.Duelist)
+                        else if (vl_player.vl_class == PlayerClass.Valkyrie && dashCounter >= (int)Class_Valkyrie.QueuedAttack)
+                        {
+                            isChargingDash = false;
+                            Class_Valkyrie.Execute_Attack(localPlayer, ref ___m_body, ref ___m_maxAirAltitude);
+                        }
+                        else if (vl_player.vl_class == PlayerClass.Duelist && dashCounter >= 10)
                         {
                             isChargingDash = false;
                             ValheimLegends.isChanneling = false;
                             Class_Duelist.Execute_Slash(localPlayer);
                         }
-                        if (dashCounter >= 16 && vl_player.vl_class == PlayerClass.Rogue)
+                        else if (vl_player.vl_class == PlayerClass.Rogue && dashCounter >= 16)
                         {
                             isChargingDash = false;
                             Class_Rogue.Execute_Throw(localPlayer);
                         }
-                        if (vl_player.vl_class == PlayerClass.Monk && dashCounter >= (int)Class_Monk.QueuedAttack)
+                        else if (vl_player.vl_class == PlayerClass.Mage && dashCounter >= (int)Class_Mage.QueuedAttack)
+                        {
+                            isChargingDash = false;
+                            Class_Mage.Execute_Attack(localPlayer);
+                        }
+                        else if (vl_player.vl_class == PlayerClass.Monk && dashCounter >= (int)Class_Monk.QueuedAttack)
                         {
                             isChargingDash = false;
                             Class_Monk.Execute_Attack(localPlayer, ref ___m_body, ref ___m_maxAirAltitude);
                         }
-                        if (vl_player.vl_class == PlayerClass.Enchanter && dashCounter >= (int)Class_Enchanter.QueuedAttack)
+                        else if (vl_player.vl_class == PlayerClass.Enchanter && dashCounter >= (int)Class_Enchanter.QueuedAttack)
                         {
                             isChargingDash = false;
                             Class_Enchanter.Execute_Attack(localPlayer, ref ___m_body, ref ___m_maxAirAltitude);
+                        }
+                        else if(vl_player.vl_class == PlayerClass.Metavoker && dashCounter >= (int)Class_Metavoker.QueuedAttack)
+                        {
+                            isChargingDash = false;
+                            Class_Metavoker.Execute_Attack(localPlayer, ref ___m_body, ref ___m_maxAirAltitude);
                         }
                     }
                 }
@@ -1758,7 +2008,8 @@ namespace ValheimLegends
                     "Sacrifice: coal\n\n" +
                     "Fireball: creates a ball of fire above the caster that arcs towards the casters target.\nDamage:\n Fire - 10->40 + 2*Evocation\n Blunt - 1/2 Fire\n AoE - 3m + 1%*Evocation\nCooldown: 12s\nEnergy: 50 + 0.5*Evocation\n*Afflicts targets with burning\n\n"
                     + "Frost Nova: point blank area of effect frost damage that slows victims for a short period.\nDamage:\n Ice - 10 + 0.5*Evocation -> 20 + Evocation\n AoE - 10m + 1%*Evocation\nCooldown: 20s\nEnergy: 40\n*Slows movement of affected targets by 60% for 4s\n**Removes burning effect from caster\n\n"
-                    + "Meteor: channels energy to call down a meteor storm on the targeted area.\nDamage (per meteor):\n Fire - 30 + 0.5*Evocation -> 50 + Evocation\n Blunt - 1/2 Fire\n AoE - 8m + 0.5%*Evocation\nCooldown: 180s\nEnergy: 60 initial + 30 per second channeled\n*Afflicts targets with burning\n**Press and hold the ability button to channel the spell to create multiple meteors\n***Jump or dodge to cancel ability\n\n",
+                    + "Meteor: channels energy to call down a meteor storm on the targeted area.\nDamage (per meteor):\n Fire - 30 + 0.5*Evocation -> 50 + Evocation\n Blunt - 1/2 Fire\n AoE - 8m + 0.5%*Evocation\nCooldown: 180s\nEnergy: 60 initial + 30 per second channeled\n*Afflicts targets with burning\n**Press and hold the ability button to channel the spell to create multiple meteors\n***Jump or dodge to cancel ability\n\n"
+                    + "Bonus skills:\n - Inferno - alternate attack to Frost Nova; press the button assigned to Frost Nova while holding block to create a high powered fire blast around the caster\n - Ice Daggers - alternate attack to Fireball; press the button assigned to Fireball while holding block to throw a short range dagger made of razor sharp ice",
                     m_topic = "Legend Mage"
                 };
                 if (!Tutorial.instance.m_texts.Contains(vl_mage))
@@ -1774,8 +2025,9 @@ namespace ValheimLegends
                     "Skills: Discipline and Alteration\n" +
                     "Sacrifice: bone fragment\n\n" +
                     "Execute: empower the next several physical attacks to deal extra damage.\nDamage:\n Physical bonus (blunt/slash/pierce) - + 40% + 0.5% * Discipline\n Stagger - 50% + 0.5% * Discipline\nCharges: 3 + 0.04*Discipline\nCooldown: 60s\nEnergy: 60\n\n"
-                    + "Berserk: sacrifices health to increase movement speed, attack power, remove stamina regeneration delay and gain renewed energy through combat.\nDamage:\n Bonus +20% + 0.5%*Alteration\nMovement Speed - +20% + 0.5%*Alteration\nCooldown: 60s\nEnergy: 50\n*Absorbs 20%+0.2%*Alteration of inflicted physical damage as health\n**Absorbs 20%+0.2%*Alteration of inflicted elemental damage as stamina\n\n"
-                    + "Dash: dash forward in the blink of an eye, cutting through enemies in your way.\nDamage:\n 80% + 0.5%*Discipline of equipped weapon damage\nCooldown: 10s\nEnergy: 70\n*10m dash distance\n\n",
+                    + "Berserk: sacrifices health to increase movement speed, attack power, remove stamina regeneration delay and gain renewed energy through combat.\nDamage:\n Bonus +20% + 0.5%*Alteration\nMovement Speed - +20% + 0.5%*Alteration\nCooldown: 60s\nEnergy: 0\n*Absorbs 15%+0.2%*Alteration of total incflicted damage as stamina\n\n"
+                    + "Dash: dash forward in the blink of an eye, cutting through enemies in your way.\nDamage:\n 80% + 0.5%*Discipline of equipped weapon damage\nCooldown: 10s\nEnergy: 70\n*10m dash distance\n\n"
+                    + "Bonus skills:\n - 2H Specialist - 30% reduction in stamina use when swinging 2H weapons\n - Blood Rage - gain 4% bonus damage for every 10% of missing health",
                     m_topic = "Legend Berserker"
                 };
                 if (!Tutorial.instance.m_texts.Contains(vl_berserker))
@@ -1791,7 +2043,8 @@ namespace ValheimLegends
                     "Sacrifice: dandelion\n\n" +
                     "Regeneration: applies a heal over time to the caster and all nearby allies.\nHealing:\n Self - 0.5 + 0.4*Alteration\n Other - 2 + 0.25*Average Skill Level\nDuration: Heals every 2s for 20s\nCooldown: 60s\nEnergy: 60\n\n"
                     + "Nature's Defense: calls upon nature to defend an area.\nSummon:\n Duration - 24s + 0.3s*Conjuration\n 3x Root defenders\n 2x + 0.05*Conjuration Drusquitos\nCooldown: 120s\nEnergy: 80\n*Defender's health and attack power increase with Conjuration\n**Each Root defender restores stamina to the caster as long as the caster remains near the point Nature's Defense was activated\n\n"
-                    + "Vines: create vines that grow at an alarming speed.\nDamage:\n Piercing - 10 + 0.6*Conjuration -> 15 + 1.2*Conjuration per vine\nCooldown: 20s\nEnergy: 30 initial + 9 every .5s\n*Vines are a channeled ability, press and hold the ability button to continuously project vines\n\n",
+                    + "Vines: create vines that grow at an alarming speed.\nDamage:\n Piercing - 10 + 0.6*Conjuration -> 15 + 1.2*Conjuration per vine\nCooldown: 20s\nEnergy: 30 initial + 9 every .5s\n*Vines are a channeled ability, press and hold the ability button to continuously project vines\n\n" 
+                    + "Bonus skills:\n - Natures Restoration - consume ancient seeds, pine cones, fir cones, or beech seeds to quickly restore stamina; seeds may be consumed similar to any food item",
                     m_topic = "Legend Druid"
                 };
                 if (!Tutorial.instance.m_texts.Contains(vl_druid))
@@ -1807,8 +2060,8 @@ namespace ValheimLegends
                     "Sacrifice: raspberries\n" +
                     "Light: creates a light that follows the caster and illuminates a large area\nDamage:\n Lightning - 2 + 0.25*Illusion -> 5 + 0.5*Illusion\n Force - 100 + Illusion\nDuration: 5m (or until directed)\nCooldown: 20s\nEnergy: 50\n*Use the ability once to summon the mage light for illumination\n**Use the ability with a mage light active to direct the light as a projectile\n\n"
                     + "Replica: bends light and energy to create reinforced illusions of every nearby enemy.\nSummon:\n Duration - 8s + 0.2s*Illusion\nCooldown: 30s\nEnergy: 70\n*Replica's health and attack power increase with Illusion\n\n"
-                    + "Warp: collects the energy of the caster and projects it to a target location; any excess energy is released at the exit point.\nDamage:\n Lightning - excess distance * (0.033*Evocation -> 0.05*Evocation)\nCooldown: 20s\nEnergy: 40 initial + 60 every 1s\n*Tap ability button to instantly warp towards the target\n**Press and hold the ability button to collect energy to warp longer distances or warp with excess energy\n\n"
-                    + "Bonus skills:\n - Safe Fall - press and hold jump to slow your descent; this ability requires stamina to maintain\n\n",
+                    + "Warp: collects the energy of the caster and projects it to a target location; any excess energy is released at the exit point.\nDamage:\n Lightning - excess distance * (0.033*Evocation -> 0.05*Evocation)\nCooldown: 6s\nEnergy: 40 initial + 60 every 1s\n*Tap ability button to instantly warp towards the target\n**Press and hold the ability button to collect energy to warp longer distances or warp with excess energy\n\n"
+                    + "Bonus skills:\n - Safe Fall - press and hold jump to slow your descent; this ability requires stamina to maintain\n - Force Wave - pressing attack while holding block will create a powerful wave of energy that knocks enemies back; shares a cooldown with Replica\n",
                     m_topic = "Legend Metavoker"
                 };
                 if (!Tutorial.instance.m_texts.Contains(vl_metavoker))
@@ -1825,7 +2078,7 @@ namespace ValheimLegends
                     "Hip Shot: fires a high velocity projectile from a concealed, mechanical contraption.\nDamage:\n Pierce - 5->30 + Discipline\nCooldown: 10s\nEnergy: 25\n\n"
                     + "Riposte: turns the energy of an attack into a devastating counter-attack\nDamage:\n returns 50%+1%*Discipline of the damage upon the attacker and quickly launches an attack maneuver that deals damage based on the equipped weapon\nCooldown: 6s\nEnergy: 30\n*Riposte must be timed well to be effective. Block amount and parry force is increased 10x while riposte is active and the player executes a perfect block.\n**Riposte can only be used with a weapon equipped and without a shield.\n\n"
                     + "Seismic Slash: a combat technique that compresses energy and releases it in a tight arc as a razor thin burst.\nDamage:\n 60%+0.06%*Discipline of weapon damage\nForce: 25+0.1*Discipline\nCooldown: 30s\nEnergy: 60\n*Deals damage to all targets in a 25 degree cone in front of the caster\n\n" +
-                    "Bonus skills:\n - Weapon Master - gain a bonus to block and parry based on Discipline while wielding only a weapon\n\n",
+                    "Bonus skills:\n - Weapon Master - gain a bonus to block and parry based on Discipline while wielding only a weapon\n - Energy Conversion - redirect the energy from a parried attack to reduce the cooldown of Hip Shot and S. Slash\n",
                     m_topic = "Legend Duelist"
                 };
                 if (!Tutorial.instance.m_texts.Contains(vl_duelist))
@@ -1863,7 +2116,8 @@ namespace ValheimLegends
                     "Sacrifice: stone\n\n" +
                     "Sanctify: calls down the fiery hammer of Ragnarök to purify a target area.\nDamage:\n Blunt - (10 + 0.5*Evocation)->(20 + 0.75*Evocation)\n Fire - (10 + 0.5*Evocation)->(20 + 0.75*Evocation)\n Spirit - (10 + 0.5*Evocation)->(20 + 0.75*Evocation)\nAoE: 8m + 0.04m*Evocation\nCooldown: 45s\nEnergy: 70\n\n"
                     + "Purge: release a burst of power around the caster that burns enemies and heals allies\nDamage:\n Fire - (4 + 0.4*Evocation)->(8 + 0.8*Evocation)\n Spirit - (4 + 0.4*Evocation)->(8 + 0.8*Evocation)\nAoE: 20m + 0.2m*Evocation\nHealing: 0.5 + 0.5*Alteration in a 20m + 0.2m*Alteration around the caster\nCooldown: 15s\nEnergy: 50\n\n"
-                    + "Heal: a channeled ability that increases heal rate the longer its channeled.\nHealing:\n Initial - 10 + Alteration\n Continuous - 2x (pulse count + 0.3*Alteration)\nCooldown: 30s\nEnergy: 40 (initial), 22.5 per pulse\n*Press and hold the ability button to provide continuous healing waves\n**Each healing pulse occurs every .5s\n***Initial pulse removes 1x negative status effect (poison, burning, smoked, wet, frost)\n\n",
+                    + "Heal: a channeled ability that increases heal rate the longer its channeled.\nHealing:\n Initial - 10 + Alteration\n Continuous - 2x (pulse count + 0.3*Alteration)\nCooldown: 30s\nEnergy: 40 (initial), 22.5 per pulse\n*Press and hold the ability button to provide continuous healing waves\n**Each healing pulse occurs every .5s\n***Initial pulse removes 1x negative status effect (poison, burning, smoked, wet, frost)\n\n" +
+                    "Bonus skills:\n - Dying Light - any hit that would kill the priest reduces HP to 1 instead; can only trigger once every 10m",
                     m_topic = "Legend Priest"
                 };
                 if (!Tutorial.instance.m_texts.Contains(vl_priest))
@@ -1880,7 +2134,8 @@ namespace ValheimLegends
                     "Weaken: weakens all enemies in a target area.\nAoE: 5m + 0.01m*Alteration\nDebuff:\n Movement Speed -20%+0.1%*Alteration\n Attack Power -15%+0.15%*Alteration\nCooldown: 30s\nEnergy: 40\n*10% of the damage dealt to a weakened enemy is returned as stamina to the attacker\n\n"
                     + "Charm: turn enemies into allies for a short time\nDuration: 30s\nCooldown: 60s\nEnergy: 50\n*Charm does not work on boss enemies\n\n"
                     + "Zone(Biome) Buff: renders a unique, long lasting boon to all nearby allies that differs in each biome.\nCooldown: 180s\nEnergy: 40 (initial) + 60 per second channeled\n*Press and hold the ability button to increase the duration and power of the boon\n**Ally buffs are dependent on their average skill level; the caster's buff is based on their abjuration skill and channeled charge amount\n***The enchanter may 'burn' an active zone buff by pressing the ability button while a zone buff is active; this creates a burst of electric energy from the casters hands that deals damage based on the time remaining on the zone buff\n"
-                    + "\nThe benefits of each biome are:\n Meadows - 1 + 0.1 Health every 5s\n\n Black Forest - carry capacity increased by 50 + Abjuration; always under cover\n\n Swamp - poison resistance increased 20% + 0.2%*Abjuration; the player emits a small amount of light\n\n Mountain - frost resistance increased 20% + 0.2%*Abjuration; stamina regeneration 5 + 0.075*Abjuration every 5s\n\n Plains - fire resistance increased 20% + 0.2%*Abjuration; run speed increased 10% + 0.1%*Abjuration\n\n Ocean - lightning resistance increased 20% + 0.2%*Abjuration; swim speed increased 50% + 1%*Abjuration\n\n Mistland -  spirit and frost resistance increased 20% + 0.2%*Abjuration; each attack deals 20 + 0.3*Abjuration as additional frost damage\n\n Ashland - fire and poison resistance increase 20% + 0.2%*Abjuration; each attack deals 26 + 0.4*Abjuration as additional fire damage",
+                    + "\nThe benefits of each biome are:\n Meadows - 1 + 0.1 Health every 5s\n\n Black Forest - carry capacity increased by 50 + Abjuration; always under cover\n\n Swamp - poison resistance increased 20% + 0.2%*Abjuration; the player emits a small amount of light\n\n Mountain - frost resistance increased 20% + 0.2%*Abjuration; stamina regeneration 5 + 0.075*Abjuration every 5s\n\n Plains - fire resistance increased 20% + 0.2%*Abjuration; run speed increased 10% + 0.1%*Abjuration\n\n Ocean - lightning resistance increased 20% + 0.2%*Abjuration; swim speed increased 50% + 1%*Abjuration\n\n Mistland -  spirit and frost resistance increased 20% + 0.2%*Abjuration; each attack deals 20 + 0.3*Abjuration as additional frost damage\n\n Ashland - fire and poison resistance increase 20% + 0.2%*Abjuration; each attack deals 26 + 0.4*Abjuration as additional fire damage\n\n"
+                    + "Bonus skills:\n - Elemental Touch - 30% chance for any damage dealt by the enchanter to deal additional elemental (Lightning/Fire/Frost) damage; damage is based on alteration skill\n - Elemental Absorption - blocked elemental damage is absorbed by the enchanter as stamina",
                     m_topic = "Legend Enchanter"
                 };
                 if (!Tutorial.instance.m_texts.Contains(vl_enchanter))
@@ -1897,7 +2152,7 @@ namespace ValheimLegends
                     "Chi strike: attack with a blow so powerful it creates a shockwave.\nDamage:\n Blunt - 12 + 0.5*Discipline -> 24 + Discipline\nCooldown: 1s\nEnergy: 3 chi\n*Uses chi instead of stamina; build chi through unarmed combat\n**Activate while on the ground to create a powerful frontal attack; use from sufficient height to propel the monk to the ground, creating a powerful AoE attack\n\n"
                     + "Flying Kick: launches into a flying whirlwind kick.\nDamage:\n Blunt - 80% + 0.5% of unarmed damage per hit\nCooldown: 6s\nEnergy: 50\n*Can strike multiple times - attack past or above targets to land multiple hits\n**Attack directly at the target for an assured strike that will rebound the monk into the air (hint: combo with Chi Strike)\n\n"
                     + "Chi Bolt: projects condensed energy that detonates on impact.\nDamage:\n Blunt - 10 + Discipline -> 40 + 2*Discipline\n Spirit - 10 + Discipline + 20 + Discipline\nAoE - 3m\nCooldown: 1s\nEnergy: 5 chi\n\n"
-                    + "Bonus Skills:\nChi - each unarmed attack that hits and each fully blocked attack generates a charge of chi\nLiving Weapon - unarmed attacks deal 25% more damage\nStrong Body - unarmed block amount is increased by 1 for each level in Discipline and monks can fall from over double the height before taking damage\n\n",
+                    + "Bonus Skills:\n - Chi - each unarmed attack that hits and each fully blocked attack generates a charge of chi\n - Living Weapon - unarmed attacks deal 25% more damage\n - Strong Body - unarmed block amount is increased by 1 for each level in Discipline and monks can fall from over double the height before taking damage\n\n",
                     m_topic = "Legend Monk"
                 };
                 if (!Tutorial.instance.m_texts.Contains(vl_monk))
@@ -1913,7 +2168,8 @@ namespace ValheimLegends
                     "Sacrifice: greydwarf eye\n\n" +
                     "Enrage: incite allies into a frenzied rage that increases movement and endurance.\nAugment:\n Speed - 120% + 0.2%*Alteration\n Stamina Regeneration - 5 + 0.1*Alteration per second\nAoE: 30m\nDuration: 16s + 0.2s*Alteration\nCooldown: 60s\nEnergy: 60\n*Skill bonus is calculated as the average of all skills for allies, and Alteration skill for the caster\n\n"
                     + "Shell: surround allies in a protection shell that resists elemental attacks and augments attacks with spirit damage.\nDamage:\n Spirit - 6 + 0.3 * Abjuration added to each attack\nBuff: reduces all elemental damage by 40% + 0.6%*Abjuration\nAoE: 30m\nDuration: 25s + 0.3*Abjuration\nCooldown: 60s\nEnergy: 80\n\n"
-                    + "Spirit Shock: generate a powerful blast that shocks all nearby enemies\nDamage:\n Lightning - 6 + 0.4*Evocation -> 12 + 0.6*Evocation\n Spirit - 6 + 0.4*Evocation -> 12 + 0.6*Evocation\nAoE: 11m + 0.05m*Evocation\nCooldown: 30s\nEnergy: 80\n\n",
+                    + "Spirit Shock: generate a powerful blast that shocks all nearby enemies\nDamage:\n Lightning - 6 + 0.4*Evocation -> 12 + 0.6*Evocation\n Spirit - 6 + 0.4*Evocation -> 12 + 0.6*Evocation\nAoE: 11m + 0.05m*Evocation\nCooldown: 30s\nEnergy: 80\n\n" 
+                    + "Bonus skills:\n - Water Glide - press and hold jump to quickly glide across water; rapidly consumes stamina\n - Spirit Guide - gain 25 stamina any time a creature dies nearby",
                     m_topic = "Legend Shaman"
                 };
                 if (!Tutorial.instance.m_texts.Contains(vl_shaman))
@@ -1929,7 +2185,8 @@ namespace ValheimLegends
                     "Skills: Discipline and Abjuration\n\n" +
                     "Bulwark: manifest a powerful shield that reduces all damage to the valkyrie.\nAugment: damage reduced by 25% + 0.5%*Abjuration\nDuration: 12s + 0.2s*Alteration\nCooldown: 60s\nEnergy: 60\n\n"
                     + "Stagger: send forth a shock wave that staggers all nearby enemies.\nAoE: 6m\nCooldown: 20s\nEnergy: 40\n\n"
-                    + "Leap: jump high into the air to come crashing down on your enemies.\nDamage:\n Blunt - 2*Discipline -> 3*Discipline + velocity bonus\nAoE: 8m + 0.05m*Discipline\nCooldown: 15s\nEnergy: 50\n*Velocity bonus is calculated based on the max height reached above ground\n**Leap multiplies existing velocity; triggering leap while running and jumping will produce the longest jumps\n\n",
+                    + "Leap: jump high into the air to come crashing down on your enemies.\nDamage:\n Blunt - 2*Discipline -> 3*Discipline + velocity bonus\nAoE: 6m + 0.05m*Discipline\nCooldown: 15s\nEnergy: 50\n*Velocity bonus is calculated based on the max height reached above ground\n**Leap multiplies existing velocity; triggering leap while running and jumping will produce the longest jumps\n\n"
+                    + "Bonus skills:\n - Aegis - successful blocks store energy charges that can be released all at once as a icy wave that extends from the Valkyrie or used to throw a spear that encases a struck enemy in ice",
                     m_topic = "Legend Valkyrie"
                 };
                 if (!Tutorial.instance.m_texts.Contains(vl_valkyrie))
@@ -1945,7 +2202,8 @@ namespace ValheimLegends
                     "Sacrifice: raw meat\n\n" +
                     "Shadow Stalk: fade into the shadows gaining a burst of speed and augmenting stealth.\nAugment:\n All movement speed increased by 50% + 1%*Discipline for 3s + 0.03s*Discipline\n Stealth movement speed increased by 50% + 1%*Discipline\nDuration: 20s + 0.9s*Discipline\nCooldown: 45s\nEnergy: 40\n*Shadow stalk causes enemies to lose track of the ranger\n\n"
                     + "Shadow Wolf: call a trained shadow wolf to fight by your side.\nDamage:\n Slash - 70 * (0.05 + 0.01*Conjuration)\nHealth: 25 + 9*Conjuration\nHealth Regeneration: 1 + 0.1*Conjuration every 5s\nCooldown: 10m\nEnergy: 75\n*Shadow wolves will vanish when the player logs out or after the duration expires\n**Feeding the shadow wolf will restore its health by 250hp\n\n"
-                    + "Power Shot: charge the next few projectiles with great velocity and damage.\nDamage:\n Bonus - 40% + 1.5%*Discipline\nVelocity doubled\nCharge Count: 3 + 0.05*Discipline\nCooldown: 60s\nEnergy: 60\n*Bonus damage applies to all projectiles created by the player (not just arrows)\n**Using Power Shot while the buff is still active will refresh the number of charges\n\n",
+                    + "Power Shot: charge the next few projectiles with great velocity and damage.\nDamage:\n Bonus - 40% + 1.5%*Discipline\nVelocity doubled\nCharge Count: 3 + 0.05*Discipline\nCooldown: 60s\nEnergy: 60\n*Bonus damage applies to all projectiles created by the player (not just arrows)\n**Using Power Shot while the buff is still active will refresh the number of charges\n\n"
+                    + "Bonus skills:\n - Woodland Stride - passive skill that reduces stamina used while running by 25%\n - Poison resistance - passive skill that reduces poison damage by 25%\n - Quick Dodge - move 2x faster for 2s following a dodge roll",
                     m_topic = "Legend Ranger"
                 };
                 if (!Tutorial.instance.m_texts.Contains(vl_ranger))
@@ -2080,6 +2338,7 @@ namespace ValheimLegends
             //assets
             VL_Utility.ModID = "valheim.torann.valheimlegends";
             VL_Utility.Folder = Path.GetDirectoryName(this.Info.Location);
+            ZLog.Log("Valheim Legends attempting to find VLAssets in the directory with " + this.Info.Location);
             Texture2D tex_abjuration = VL_Utility.LoadTextureFromAssets("abjuration_skill.png");
             Sprite icon_abjuration = Sprite.Create(tex_abjuration, new Rect(0f, 0f, (float)tex_abjuration.width, (float)tex_abjuration.height), new Vector2(0.5f, 0.5f));
             Texture2D tex_conjuration = VL_Utility.LoadTextureFromAssets("conjuration_skill.png");
@@ -2108,6 +2367,10 @@ namespace ValheimLegends
             MonkIcon = Sprite.Create(tex_monk, new Rect(0f, 0f, (float)tex_monk.width, (float)tex_monk.height), new Vector2(0.5f, 0.5f));
             Texture2D tex_weaken = VL_Utility.LoadTextureFromAssets("weaken_icon.png");
             WeakenIcon = Sprite.Create(tex_weaken, new Rect(0f, 0f, (float)tex_weaken.width, (float)tex_weaken.height), new Vector2(0.5f, 0.5f));
+            Texture2D tex_ranger = VL_Utility.LoadTextureFromAssets("ranger_icon.png");
+            RangerIcon = Sprite.Create(tex_ranger, new Rect(0f, 0f, (float)tex_ranger.width, (float)tex_ranger.height), new Vector2(0.5f, 0.5f));
+            Texture2D tex_valkyrie = VL_Utility.LoadTextureFromAssets("valkyrie_icon.png");
+            ValkyrieIcon = Sprite.Create(tex_valkyrie, new Rect(0f, 0f, (float)tex_valkyrie.width, (float)tex_valkyrie.height), new Vector2(0.5f, 0.5f));
 
             Texture2D tex_biome_meadows = VL_Utility.LoadTextureFromAssets("biome_meadows_icon.png");
             BiomeMeadowsIcon = Sprite.Create(tex_biome_meadows, new Rect(0f, 0f, (float)tex_biome_meadows.width, (float)tex_biome_meadows.height), new Vector2(0.5f, 0.5f));
@@ -2388,7 +2651,8 @@ namespace ValheimLegends
         private static GameObject VL_ThrowingKnife;
         private static GameObject VL_PsiBolt;
         private static GameObject VL_Charm;
-        //private static GameObject VL_BiomeLight;
+        private static GameObject VL_FrostDagger;
+        private static GameObject VL_ValkyrieSpear;
 
         private static GameObject fx_VL_Lightburst;
         private static GameObject fx_VL_ParticleLightburst;
@@ -2412,6 +2676,12 @@ namespace ValheimLegends
         private static GameObject fx_VL_HealPulse;
         private static GameObject fx_VL_Replica;
         private static GameObject fx_VL_ReplicaCreate;
+        private static GameObject fx_VL_ForwardLightningShock;
+        private static GameObject fx_VL_Flames;
+        private static GameObject fx_VL_FlameBurst;
+        private static GameObject fx_VL_AbsorbSpirit;
+        private static GameObject fx_VL_ForceWall;
+        private static GameObject fx_VL_ShieldRelease;
 
         public static AnimationClip anim_player_float;
 
@@ -2427,7 +2697,8 @@ namespace ValheimLegends
             VL_ThrowingKnife = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_ThrowingKnife.prefab");
             VL_PsiBolt = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_PsiBolt.prefab");
             VL_Charm = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_Charm.prefab");
-            //VL_BiomeLight = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_BiomeLight.prefab");
+            VL_FrostDagger = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_FrostDagger.prefab");
+            VL_ValkyrieSpear = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_ValkyrieSpear.prefab");
 
             fx_VL_Lightburst = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_Lightburst.prefab");
             fx_VL_ParticleLightburst = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_ParticleLightburst.prefab");
@@ -2451,6 +2722,12 @@ namespace ValheimLegends
             fx_VL_ChiPulse = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_ChiPulse.prefab");
             fx_VL_Replica = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_Replica.prefab");
             fx_VL_ReplicaCreate = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_ReplicaCreate.prefab");
+            fx_VL_ForwardLightningShock = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_ForwardLightningShock.prefab");
+            fx_VL_Flames = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_Flames.prefab");
+            fx_VL_FlameBurst = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_FlameBurst.prefab");
+            fx_VL_AbsorbSpirit = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_AbsorbSpirit.prefab");
+            fx_VL_ForceWall = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_ForceWall.prefab");
+            fx_VL_ShieldRelease = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_ShieldRelease.prefab");
 
             anim_player_float = assetBundle.LoadAsset<AnimationClip>("Assets/CustomAssets/anim_float.anim");
         }
@@ -2525,12 +2802,18 @@ namespace ValheimLegends
                     Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
                     m_itemsByHash[VL_Charm.name.GetStableHashCode()] = VL_Charm;
                 }
-                //if (ObjectDB.instance.GetItemPrefab(VL_BiomeLight.name.GetStableHashCode()) == null)
-                //{
-                //    ObjectDB.instance.m_items.Add(VL_BiomeLight);
-                //    Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
-                //    m_itemsByHash[VL_BiomeLight.name.GetStableHashCode()] = VL_BiomeLight;
-                //}
+                if (ObjectDB.instance.GetItemPrefab(VL_FrostDagger.name.GetStableHashCode()) == null)
+                {
+                    ObjectDB.instance.m_items.Add(VL_FrostDagger);
+                    Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
+                    m_itemsByHash[VL_FrostDagger.name.GetStableHashCode()] = VL_FrostDagger;
+                }
+                if (ObjectDB.instance.GetItemPrefab(VL_ValkyrieSpear.name.GetStableHashCode()) == null)
+                {
+                    ObjectDB.instance.m_items.Add(VL_ValkyrieSpear);
+                    Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
+                    m_itemsByHash[VL_ValkyrieSpear.name.GetStableHashCode()] = VL_ValkyrieSpear;
+                }
 
 
                 if (ObjectDB.instance.GetItemPrefab(VL_SanctifyHammer.name.GetStableHashCode()) == null)
@@ -2671,6 +2954,42 @@ namespace ValheimLegends
                     Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
                     m_itemsByHash[fx_VL_ReplicaCreate.name.GetStableHashCode()] = fx_VL_ReplicaCreate;
                 }
+                if (ObjectDB.instance.GetItemPrefab(fx_VL_ForwardLightningShock.name.GetStableHashCode()) == null)
+                {
+                    ObjectDB.instance.m_items.Add(fx_VL_ForwardLightningShock);
+                    Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
+                    m_itemsByHash[fx_VL_ForwardLightningShock.name.GetStableHashCode()] = fx_VL_ForwardLightningShock;
+                }
+                if (ObjectDB.instance.GetItemPrefab(fx_VL_Flames.name.GetStableHashCode()) == null)
+                {
+                    ObjectDB.instance.m_items.Add(fx_VL_Flames);
+                    Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
+                    m_itemsByHash[fx_VL_Flames.name.GetStableHashCode()] = fx_VL_Flames;
+                }
+                if (ObjectDB.instance.GetItemPrefab(fx_VL_FlameBurst.name.GetStableHashCode()) == null)
+                {
+                    ObjectDB.instance.m_items.Add(fx_VL_FlameBurst);
+                    Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
+                    m_itemsByHash[fx_VL_FlameBurst.name.GetStableHashCode()] = fx_VL_FlameBurst;
+                }
+                if (ObjectDB.instance.GetItemPrefab(fx_VL_AbsorbSpirit.name.GetStableHashCode()) == null)
+                {
+                    ObjectDB.instance.m_items.Add(fx_VL_AbsorbSpirit);
+                    Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
+                    m_itemsByHash[fx_VL_AbsorbSpirit.name.GetStableHashCode()] = fx_VL_AbsorbSpirit;
+                }
+                if (ObjectDB.instance.GetItemPrefab(fx_VL_ForceWall.name.GetStableHashCode()) == null)
+                {
+                    ObjectDB.instance.m_items.Add(fx_VL_ForceWall);
+                    Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
+                    m_itemsByHash[fx_VL_ForceWall.name.GetStableHashCode()] = fx_VL_ForceWall;
+                }
+                if (ObjectDB.instance.GetItemPrefab(fx_VL_ShieldRelease.name.GetStableHashCode()) == null)
+                {
+                    ObjectDB.instance.m_items.Add(fx_VL_ShieldRelease);
+                    Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
+                    m_itemsByHash[fx_VL_ShieldRelease.name.GetStableHashCode()] = fx_VL_ShieldRelease;
+                }
             }
         }
 
@@ -2693,7 +3012,9 @@ namespace ValheimLegends
                 __instance.m_prefabs.Add(VL_ThrowingKnife);
                 __instance.m_prefabs.Add(VL_PsiBolt);
                 __instance.m_prefabs.Add(VL_Charm);
-                //__instance.m_prefabs.Add(VL_BiomeLight);
+                __instance.m_prefabs.Add(VL_FrostDagger);
+                __instance.m_prefabs.Add(VL_ValkyrieSpear);
+
                 __instance.m_prefabs.Add(fx_VL_Lightburst);
                 __instance.m_prefabs.Add(fx_VL_ParticleLightburst);
                 __instance.m_prefabs.Add(fx_VL_ParticleLightSuction);
@@ -2716,6 +3037,12 @@ namespace ValheimLegends
                 __instance.m_prefabs.Add(fx_VL_ChiPulse);
                 __instance.m_prefabs.Add(fx_VL_Replica);
                 __instance.m_prefabs.Add(fx_VL_ReplicaCreate);
+                __instance.m_prefabs.Add(fx_VL_ForwardLightningShock);
+                __instance.m_prefabs.Add(fx_VL_Flames);
+                __instance.m_prefabs.Add(fx_VL_FlameBurst);
+                __instance.m_prefabs.Add(fx_VL_AbsorbSpirit);
+                __instance.m_prefabs.Add(fx_VL_ForceWall);
+                __instance.m_prefabs.Add(fx_VL_ShieldRelease);
             }
         }
 

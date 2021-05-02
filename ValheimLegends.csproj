@@ -125,8 +125,12 @@
     <Compile Include="Class_Necromancer.cs" />
     <Compile Include="Class_Priest.cs" />
     <Compile Include="Class_Metavoker.cs" />
+    <Compile Include="SE_DyingLight_CD.cs" />
     <Compile Include="SE_Charm.cs" />
+    <Compile Include="SE_Valkyrie.cs" />
+    <Compile Include="SE_Ranger.cs" />
     <Compile Include="SE_Monk.cs" />
+    <Compile Include="SE_SeedRegeneration.cs" />
     <Compile Include="SE_Rogue.cs" />
     <Compile Include="SE_Riposte.cs" />
     <Compile Include="SE_BiomeMeadows.cs" />

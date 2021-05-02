@@ -51,9 +51,9 @@ namespace ValheimLegends
                 GameObject GO_Bomb = UnityEngine.Object.Instantiate(prefab, vector, Quaternion.identity);
                 GameObject GOB_Explosion = ZNetScene.instance.GetPrefab("VL_PoisonBombExplosion");
                 Aoe aoe = GOB_Explosion.gameObject.GetComponentInChildren<Aoe>();
-                aoe.m_damage.m_poison = 10f + sLevel;
+                aoe.m_damage.m_poison = 10f + (2*sLevel);
                 aoe.m_ttl = 4f + .1f * sLevel;
-                aoe.m_hitInterval = .5f - (.0025f * sLevel);
+                aoe.m_hitInterval = .5f;
                 Projectile P_Bomb = GO_Bomb.GetComponent<Projectile>();
                 P_Bomb.name = "Poison Bomb";
                 P_Bomb.m_respawnItemOnHit = false;
@@ -214,9 +214,9 @@ namespace ValheimLegends
                                     HitData hitData = new HitData();
                                     hitData.m_damage = player.GetCurrentWeapon().GetDamage();
                                     hitData.m_damage.Modify(UnityEngine.Random.Range(.6f, .8f) * (1f + .005f * sLevel));
-                                    hitData.m_pushForce = 10f + .5f * sLevel;
+                                    hitData.m_pushForce = 10f + .1f * sLevel;
                                     hitData.m_point = ch.GetEyePoint();
-                                    hitData.m_dir = (player.transform.position - ch.transform.position);
+                                    hitData.m_dir = direction;
                                     hitData.m_skill = ValheimLegends.DisciplineSkill;
                                     ch.Damage(hitData);
                                 }

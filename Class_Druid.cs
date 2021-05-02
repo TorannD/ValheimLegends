@@ -209,6 +209,8 @@ namespace ValheimLegends
                             //ZLog.Log("td valid: " + td.isActiveAndEnabled + " timeout min " + td.m_timeoutMin + " timeout max " + td.m_timeoutMax);
                             td.m_timeoutMin = 24f + (.3f *sLevel);
                             td.m_timeoutMax = td.m_timeoutMin;
+                            td.m_triggerOnAwake = true;
+                            td.enabled = true;
                         }
                         List<Vector3> rootVecs = new List<Vector3>();
                         rootVecs.Clear();
@@ -250,6 +252,8 @@ namespace ValheimLegends
                             //ZLog.Log("td valid: " + td2.isActiveAndEnabled + " timeout min " + td2.m_timeoutMin + " timeout max " + td2.m_timeoutMax);
                             td2.m_timeoutMin = 24f + (.3f * sLevel);
                             td2.m_timeoutMax = td2.m_timeoutMin;
+                            td2.m_triggerOnAwake = true;
+                            td2.enabled = true;
                         }
                         int rootDefenderCount = 2 + Mathf.RoundToInt(.05f * sLevel);
                         for (int i = 0; i < rootDefenderCount; i++)

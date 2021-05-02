@@ -17,7 +17,7 @@ namespace ValheimLegends
         public static float m_baseTTL = 18f;
         public float speedModifier = 1.2f;
         public float damageModifier = 1.2f;
-        public float healthAbsorbPercent = .2f;
+        public float healthAbsorbPercent = .15f;
         private float m_timer = 0f;
         private float m_interval = 3f;
 
@@ -54,7 +54,7 @@ namespace ValheimLegends
                 HitData hitData = new HitData();
                 hitData.m_damage.m_spirit = Mathf.Clamp(.05f * m_character.GetMaxHealth(), 1f, 15f);
                 hitData.m_point = m_character.GetEyePoint();
-                m_character.Damage(hitData);
+                m_character.ApplyDamage(hitData, true, true, HitData.DamageModifier.Normal);
                 UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_deathsquito_hit"), m_character.GetCenterPoint(), Quaternion.identity);
             }
         }

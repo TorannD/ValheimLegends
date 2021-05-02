@@ -530,6 +530,27 @@ namespace ValheimLegends
                 return .75f * VL_GlobalConfigs.g_SkillGainModifer;
             }
         }
+        public static float GetForceWaveCost
+        {
+            get
+            {
+                return 30f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
+        public static float GetForceWaveSkillGain
+        {
+            get
+            {
+                return .4f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+        public static float GetForceWaveCooldown
+        {
+            get
+            {
+                return 6f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
 
         /// 
         //MAGE
@@ -673,11 +694,46 @@ namespace ValheimLegends
                 return .6f * VL_GlobalConfigs.g_SkillGainModifer;
             }
         }
+        public static float GetHarpoonPullCost
+        {
+            get
+            {
+                return 1f;
+            }
+        }
+        public static float GetHarpoonPullSkillGain
+        {
+            get
+            {
+                return .25f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
+        public static float GetHarpoonPullCooldown
+        {
+            get
+            {
+                return 10f * VL_GlobalConfigs.g_CooldownModifer;
+            }
+        }
+        public static float GetShieldReleaseSkillGain
+        {
+            get
+            {
+                return .25f * VL_GlobalConfigs.g_SkillGainModifer;
+            }
+        }
 
         /// 
         //DRUID
         ///
 
+        public static float GetVineHookCost
+        {
+            get
+            {
+                return 40f * VL_GlobalConfigs.g_EnergyCostModifer;
+            }
+        }
         public static float GetRegenerationCost
         {
             get
@@ -820,7 +876,7 @@ namespace ValheimLegends
         }
         public static float GetBerserkCost(Player p)
         {
-            float cost = 50f * VL_GlobalConfigs.g_EnergyCostModifer;
+            float cost = 0f * VL_GlobalConfigs.g_EnergyCostModifer;
             return cost;
         }
         public static float GetBerserkCooldown(Player p)
