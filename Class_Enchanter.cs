@@ -15,7 +15,7 @@ namespace ValheimLegends
     public class Class_Enchanter
     {
         private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock");
-        private static int ScriptChar_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "piece", "terrain", "vehicle", "viewblock", "character", "character_noenv", "character_trigger", "Water");
+        private static int ScriptChar_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "piece", "terrain", "vehicle", "viewblock", "character", "character_noenv", "character_trigger", "character_net", "character_ghost", "Water");
 
 
         private static bool zonechargeCharging = false;
@@ -61,7 +61,7 @@ namespace ValheimLegends
                 P_Charm.name = "VL_Charm";
                 P_Charm.m_respawnItemOnHit = false;
                 P_Charm.m_spawnOnHit = null;
-                P_Charm.m_ttl = 30f;
+                P_Charm.m_ttl = 30f * VL_GlobalConfigs.c_enchanterCharm;
                 P_Charm.m_gravity = 0f;
                 P_Charm.m_rayRadius = .01f;
                 P_Charm.m_aoe = 1f + (.01f * sLevel);
@@ -95,7 +95,7 @@ namespace ValheimLegends
                         {
                             Vector3 direction = (ch.transform.position - player.transform.position);
                             HitData hitData = new HitData();
-                            hitData.m_damage.m_lightning = (15 + sLevel) + se_shock.m_ttl * UnityEngine.Random.Range(.03f, .06f) * (1f + .1f * sLevel);
+                            hitData.m_damage.m_lightning = (15 + sLevel) + se_shock.m_ttl * UnityEngine.Random.Range(.03f, .06f) * (1f + .1f * sLevel) * VL_GlobalConfigs.c_enchanterBiomeShock;
                             hitData.m_pushForce = 0f;
                             hitData.m_point = ch.GetEyePoint();
                             hitData.m_dir = direction;
@@ -203,10 +203,10 @@ namespace ValheimLegends
                 float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AbjurationSkillDef).m_level;
 
                 UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_ParticleFieldBurst"), player.transform.position, Quaternion.identity);
-                List<Player> allPlayers = new List<Player>();
-                allPlayers.Clear();
-                Player.GetPlayersInRange(player.transform.position, (30f + .2f * sLevel), allPlayers);
-                float bonusModifiers = (3f * sLevel) + 2 * zonechargeCount;
+                List<Character> allCharacters = new List<Character>();
+                allCharacters.Clear();
+                Character.GetCharactersInRange(player.transform.position, (30f + .2f * sLevel), allCharacters);
+                float bonusModifiers = ((3f * sLevel) + 2 * zonechargeCount) * VL_GlobalConfigs.c_enchanterBiome;
                 //SE_Ability3_CD se3 = (SE_Ability3_CD)player.GetSEMan().GetStatusEffect("SE_VL_Ability3_CD");
                 //if (se3 != null)
                 //{
@@ -216,161 +216,218 @@ namespace ValheimLegends
                 if (player.GetCurrentBiome() == Heightmap.Biome.Meadows)
                 {
                     GameObject effect = ZNetScene.instance.GetPrefab("vfx_Potion_stamina_medium");
-                    foreach (Player p in allPlayers)
+                    foreach (Character p in allCharacters)
                     {
                         SE_BiomeMeadows SE_BiomeMeadows = (SE_BiomeMeadows)ScriptableObject.CreateInstance(typeof(SE_BiomeMeadows));
                         SE_BiomeMeadows.m_ttl = SE_BiomeMeadows.m_baseTTL + bonusModifiers;
                         SE_BiomeMeadows.regenBonus = (1f + (.1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
                         SE_BiomeMeadows.doOnce = false;
-                        if (p == Player.m_localPlayer)
+                        if (!BaseAI.IsEnemy(p, player))
                         {
-                            p.GetSEMan().AddStatusEffect(SE_BiomeMeadows, true);
-                        }
-                        else
-                        {
-                            p.GetSEMan().AddStatusEffect(SE_BiomeMeadows.name, true);
-                        }
-                        UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);
+                            if (p == Player.m_localPlayer)
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeMeadows, true);
+                            }
+                            else if (p.IsPlayer())
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeMeadows.name, true);
+                            }
+                            else
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeMeadows, true);
+                            }
+                            UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);
+                        }                        
                     }
                 }
                 else if(player.GetCurrentBiome() == Heightmap.Biome.BlackForest)
                 {
                     GameObject effect = ZNetScene.instance.GetPrefab("fx_Potion_frostresist");
-                    foreach (Player p in allPlayers)
+                    foreach (Character p in allCharacters)
                     {
                         SE_BiomeBlackForest SE_BiomeBlackForest = (SE_BiomeBlackForest)ScriptableObject.CreateInstance(typeof(SE_BiomeBlackForest));
                         SE_BiomeBlackForest.m_ttl = SE_BiomeBlackForest.m_baseTTL + bonusModifiers;
                         SE_BiomeBlackForest.carryModifier = (50f + sLevel);
                         SE_BiomeBlackForest.doOnce = false;
-                        if (p == Player.m_localPlayer)
+                        if (!BaseAI.IsEnemy(p, player))
                         {
-                            p.GetSEMan().AddStatusEffect(SE_BiomeBlackForest, true);
+                            if (p == Player.m_localPlayer)
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeBlackForest, true);
+                            }
+                            else if (p.IsPlayer())
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeBlackForest.name, true);
+                            }
+                            else
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeBlackForest, true);
+                            }
+                            UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);
                         }
-                        else
-                        {
-                            p.GetSEMan().AddStatusEffect(SE_BiomeBlackForest.name, true);
-                        }
-                        UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);
                     }
                 }
                 else if(player.GetCurrentBiome() == Heightmap.Biome.Swamp)
                 {
                     GameObject effect = ZNetScene.instance.GetPrefab("vfx_Potion_health_medium");
-                    foreach (Player p in allPlayers)
+                    foreach (Character p in allCharacters)
                     {
                         SE_BiomeSwamp SE_BiomeSwamp = (SE_BiomeSwamp)ScriptableObject.CreateInstance(typeof(SE_BiomeSwamp));
                         SE_BiomeSwamp.m_ttl = SE_BiomeSwamp.m_baseTTL + bonusModifiers;
                         SE_BiomeSwamp.resistModifier = .8f - (.002f * sLevel);
                         SE_BiomeSwamp.doOnce = false;
-                        if (p == Player.m_localPlayer)
+                        if (!BaseAI.IsEnemy(p, player))
                         {
-                            p.GetSEMan().AddStatusEffect(SE_BiomeSwamp, true);
+                            if (p == Player.m_localPlayer)
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeSwamp, true);
+                            }
+                            else if (p.IsPlayer())
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeSwamp.name, true);
+                            }
+                            else
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeSwamp, true);
+                            }
+                            UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);
                         }
-                        else
-                        {
-                            p.GetSEMan().AddStatusEffect(SE_BiomeSwamp.name, true);
-                        }                        
                     }
                 }
                 else if(player.GetCurrentBiome() == Heightmap.Biome.Mountain)
                 {
                     GameObject effect = ZNetScene.instance.GetPrefab("fx_Potion_frostresist");
-                    foreach (Player p in allPlayers)
+                    foreach (Character p in allCharacters)
                     {
                         SE_BiomeMountain SE_BiomeMountain = (SE_BiomeMountain)ScriptableObject.CreateInstance(typeof(SE_BiomeMountain));
                         SE_BiomeMountain.m_ttl = SE_BiomeMountain.m_baseTTL + bonusModifiers;
                         SE_BiomeMountain.resistModifier = (1f + (.1f * sLevel));
                         SE_BiomeMountain.staminaRegen = 5f + (.075f * sLevel);
                         SE_BiomeMountain.doOnce = false;
-                        if (p == Player.m_localPlayer)
+                        if (!BaseAI.IsEnemy(p, player))
                         {
-                            p.GetSEMan().AddStatusEffect(SE_BiomeMountain, true);
+                            if (p == Player.m_localPlayer)
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeMountain, true);
+                            }
+                            else if (p.IsPlayer())
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeMountain.name, true);
+                            }
+                            else
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeMountain, true);
+                            }
+                            UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);
                         }
-                        else
-                        {
-                            p.GetSEMan().AddStatusEffect(SE_BiomeMountain.name, true);
-                        }
-                        UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);
                     }
                 }
                 else if(player.GetCurrentBiome() == Heightmap.Biome.Plains)
                 {
                     GameObject effect = ZNetScene.instance.GetPrefab("vfx_Potion_stamina_medium");
-                    foreach (Player p in allPlayers)
+                    foreach (Character p in allCharacters)
                     {
                         SE_BiomePlains SE_BiomePlains = (SE_BiomePlains)ScriptableObject.CreateInstance(typeof(SE_BiomePlains));
                         SE_BiomePlains.m_ttl = SE_BiomePlains.m_baseTTL + bonusModifiers;
                         //SE_BiomePlains.regenBonus = (1f + (.1f * sLevel)) * ValheimLegends.vl_mce_abilityDamageMultiplier.Value;
                         SE_BiomePlains.doOnce = false;
-                        if (p == Player.m_localPlayer)
+                        if (!BaseAI.IsEnemy(p, player))
                         {
-                            p.GetSEMan().AddStatusEffect(SE_BiomePlains, true);
+                            if (p == Player.m_localPlayer)
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomePlains, true);
+                            }
+                            else if (p.IsPlayer())
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomePlains.name, true);
+                            }
+                            else
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomePlains, true);
+                            }
+                            UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);
                         }
-                        else
-                        {
-                            p.GetSEMan().AddStatusEffect(SE_BiomePlains.name, true);
-                        }
-                        UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);
                     }
                 }
                 else if(player.GetCurrentBiome() == Heightmap.Biome.Ocean)
                 {
                     GameObject effect = ZNetScene.instance.GetPrefab("fx_Potion_frostresist");
-                    foreach (Player p in allPlayers)
+                    foreach (Character p in allCharacters)
                     {
                         SE_BiomeOcean SE_BiomeOcean = (SE_BiomeOcean)ScriptableObject.CreateInstance(typeof(SE_BiomeOcean));
                         SE_BiomeOcean.m_ttl = SE_BiomeOcean.m_baseTTL + bonusModifiers;
                         //SE_BiomeOcean.regenBonus = (1f + (.1f * sLevel)) * ValheimLegends.vl_mce_abilityDamageMultiplier.Value;
                         SE_BiomeOcean.doOnce = false;
-                        if (p == Player.m_localPlayer)
+                        if (!BaseAI.IsEnemy(p, player))
                         {
-                            p.GetSEMan().AddStatusEffect(SE_BiomeOcean, true);
+                            if (p == Player.m_localPlayer)
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeOcean, true);
+                            }
+                            else if (p.IsPlayer())
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeOcean.name, true);
+                            }
+                            else
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeOcean, true);
+                            }
+                            UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);
                         }
-                        else
-                        {
-                            p.GetSEMan().AddStatusEffect(SE_BiomeOcean.name, true);
-                        }
-                        UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);
                     }
                 }
                 else if(player.GetCurrentBiome() == Heightmap.Biome.Mistlands)
                 {
                     GameObject effect = ZNetScene.instance.GetPrefab("fx_Potion_frostresist");
-                    foreach (Player p in allPlayers)
+                    foreach (Character p in allCharacters)
                     {
                         SE_BiomeMist SE_BiomeMist = (SE_BiomeMist)ScriptableObject.CreateInstance(typeof(SE_BiomeMist));
                         SE_BiomeMist.m_ttl = SE_BiomeMist.m_baseTTL + bonusModifiers;
                         //SE_BiomeMist.regenBonus = (1f + (.1f * sLevel)) * ValheimLegends.vl_mce_abilityDamageMultiplier.Value;
                         SE_BiomeMist.doOnce = false;
-                        if (p == Player.m_localPlayer)
+                        if (!BaseAI.IsEnemy(p, player))
                         {
-                            p.GetSEMan().AddStatusEffect(SE_BiomeMist, true);
+                            if (p == Player.m_localPlayer)
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeMist, true);
+                            }
+                            else if (p.IsPlayer())
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeMist.name, true);
+                            }
+                            else
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeMist, true);
+                            }
+                            UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);
                         }
-                        else
-                        {
-                            p.GetSEMan().AddStatusEffect(SE_BiomeMist.name, true);
-                        }
-                        UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);
                     }
                 }
                 else if(player.GetCurrentBiome() == Heightmap.Biome.AshLands)
                 {
                     GameObject effect = ZNetScene.instance.GetPrefab("vfx_Potion_health_medium");
-                    foreach (Player p in allPlayers)
+                    foreach (Character p in allCharacters)
                     {
                         SE_BiomeAsh SE_BiomeAsh = (SE_BiomeAsh)ScriptableObject.CreateInstance(typeof(SE_BiomeAsh));
                         SE_BiomeAsh.m_ttl = SE_BiomeAsh.m_baseTTL + bonusModifiers;
                         //SE_BiomeAsh.regenBonus = (1f + (.1f * sLevel)) * ValheimLegends.vl_mce_abilityDamageMultiplier.Value;
                         SE_BiomeAsh.doOnce = false;
-                        if (p == Player.m_localPlayer)
+                        if (!BaseAI.IsEnemy(p, player))
                         {
-                            p.GetSEMan().AddStatusEffect(SE_BiomeAsh, true);
+                            if (p == Player.m_localPlayer)
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeAsh, true);
+                            }
+                            else if (p.IsPlayer())
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeAsh.name, true);
+                            }
+                            else
+                            {
+                                p.GetSEMan().AddStatusEffect(SE_BiomeAsh, true);
+                            }
+                            UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);
                         }
-                        else
-                        {
-                            p.GetSEMan().AddStatusEffect(SE_BiomeAsh.name, true);
-                        }
-                        UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);
                     }
                 }
                 else
@@ -465,9 +522,9 @@ namespace ValheimLegends
 
                         SE_Weaken se_weaken = (SE_Weaken)ScriptableObject.CreateInstance(typeof(SE_Weaken));
                         se_weaken.m_ttl = SE_Weaken.m_baseTTL;
-                        se_weaken.damageReduction = .15f + (.0015f * sLevel);
+                        se_weaken.damageReduction = (.15f + (.0015f * sLevel)) * VL_GlobalConfigs.c_enchanterWeaken;
                         se_weaken.speedReduction = .8f - (.001f * sLevel);
-                        se_weaken.staminaDrain = .1f + (.001f * sLevel);
+                        se_weaken.staminaDrain = (.1f + (.001f * sLevel)) * VL_GlobalConfigs.c_enchanterWeaken;
 
                         List<Character> allCharacters = Character.GetAllCharacters();
                         foreach (Character ch in allCharacters)

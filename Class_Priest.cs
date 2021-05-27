@@ -14,7 +14,7 @@ namespace ValheimLegends
 {
     public class Class_Priest
     {
-        private static int Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "character", "Water");
+        private static int Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "character", "character_net", "character_ghost", "Water");
 
         private static GameObject GO_CastFX;
 
@@ -36,17 +36,20 @@ namespace ValheimLegends
         {
             if(effectNames != null && effectNames.Count > 0)
             {
-                List<Player> allPlayers = new List<Player>();
-                allPlayers.Clear();
-                Player.GetPlayersInRange(healer.transform.position, radius, allPlayers);
-                foreach (Player p in allPlayers)
+                List<Character> allCharacters = new List<Character>();
+                allCharacters.Clear();
+                Character.GetCharactersInRange(healer.transform.position, radius, allCharacters);
+                foreach (Character p in allCharacters)
                 {
-                    foreach(string effect in effectNames)
+                    if (!BaseAI.IsEnemy(p, healer))
                     {
-                        if(p.GetSEMan().HaveStatusEffect(effect))
+                        foreach (string effect in effectNames)
                         {
-                            p.GetSEMan().RemoveStatusEffect(effect);
-                            break;
+                            if (p.GetSEMan().HaveStatusEffect(effect))
+                            {
+                                p.GetSEMan().RemoveStatusEffect(effect);
+                                break;
+                            }
                         }
                     }
                 }
@@ -55,12 +58,15 @@ namespace ValheimLegends
 
         public static void HealNearbyPlayers(Player healer, float radius, float amount)
         {
-            List<Player> allPlayers = new List<Player>();
-            allPlayers.Clear();
-            Player.GetPlayersInRange(healer.transform.position, radius, allPlayers);
-            foreach (Player p in allPlayers)
+            List<Character> allCharacters = new List<Character>();
+            allCharacters.Clear();
+            Character.GetCharactersInRange(healer.transform.position, radius, allCharacters);
+            foreach (Character p in allCharacters)
             {
-                p.Heal(amount, true);
+                if (!BaseAI.IsEnemy(p, healer))
+                {
+                    p.Heal(amount, true);
+                }
             }
         }
 
@@ -95,7 +101,7 @@ namespace ValheimLegends
                         //Lingering effects
                         healCharging = true;
                         healChargeAmount = 0;
-                        healChargeAmountMax = 30;
+                        healChargeAmountMax = 60;
                         //Apply effects
                         List<string> effectList = new List<string>();
                         effectList.Clear();
@@ -105,7 +111,7 @@ namespace ValheimLegends
                         effectList.Add("Wet");
                         effectList.Add("Smoked");
                         PurgeStatus_NearbyPlayers(player, 30f + .2f * sLevel, effectList);
-                        HealNearbyPlayers(player, 30f + .2f * sLevel, 10f + sLevel);
+                        HealNearbyPlayers(player, 30f + .2f * sLevel, (10f + sLevel) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_priestHeal);
 
                         //Skill gain
                         player.RaiseSkill(ValheimLegends.AlterationSkill, VL_Utility.GetHealSkillGain);
@@ -134,7 +140,7 @@ namespace ValheimLegends
                     //((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetSpeed(1.5f);                    
                     UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_HealPulse"), player.GetCenterPoint(), Quaternion.identity);
                     float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AlterationSkillDef).m_level;
-                    HealNearbyPlayers(player, 20f + .2f * sLevel, ((healCount + sLevel * .3f) * 2f));
+                    HealNearbyPlayers(player, 20f + .2f * sLevel, ((healCount + sLevel * .3f) * 2f) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_priestHeal);
 
                     //Skill gain
                     player.RaiseSkill(ValheimLegends.AlterationSkill, VL_Utility.GetHealSkillGain * .5f);
@@ -173,7 +179,7 @@ namespace ValheimLegends
                         //Lingering effects
 
                         //Apply effects
-                        HealNearbyPlayers(player, 20f + (.2f * sHealLevel), .5f + UnityEngine.Random.Range(.4f, .6f) * sHealLevel);
+                        HealNearbyPlayers(player, 20f + (.2f * sHealLevel), .5f + UnityEngine.Random.Range(.4f, .6f) * sHealLevel * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_priestPurgeHeal);
                         List<Character> allCharacters = new List<Character>();
                         allCharacters.Clear();
                         Character.GetCharactersInRange(player.transform.position, 20f + (.2f * sPurgeLevel), allCharacters);
@@ -183,8 +189,8 @@ namespace ValheimLegends
                             {
                                 Vector3 direction = (ch.transform.position - player.transform.position);
                                 HitData hitData = new HitData();
-                                hitData.m_damage.m_spirit = UnityEngine.Random.Range(4f + (.4f * sPurgeLevel), 8f + (.8f * sPurgeLevel)) * VL_GlobalConfigs.g_DamageModifer;
-                                hitData.m_damage.m_fire = UnityEngine.Random.Range(4f + (.4f * sPurgeLevel), 8f + (.8f * sPurgeLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                                hitData.m_damage.m_spirit = UnityEngine.Random.Range(4f + (.4f * sPurgeLevel), 8f + (.8f * sPurgeLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_priestPurgeDamage;
+                                hitData.m_damage.m_fire = UnityEngine.Random.Range(4f + (.4f * sPurgeLevel), 8f + (.8f * sPurgeLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_priestPurgeDamage;
                                 hitData.m_pushForce = 0f;
                                 hitData.m_point = ch.GetEyePoint();
                                 hitData.m_dir = (player.transform.position - ch.transform.position);
@@ -252,9 +258,10 @@ namespace ValheimLegends
                         GO_Sanctify.transform.localScale = Vector3.one;
 
                         HitData hitData = new HitData();
-                        hitData.m_damage.m_fire = UnityEngine.Random.Range(10f + (.5f * sLevel), 20f + (.75f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
-                        hitData.m_damage.m_blunt = UnityEngine.Random.Range(10f + (.5f * sLevel), 20f + (.75f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
-                        hitData.m_damage.m_spirit = UnityEngine.Random.Range(10f + (.5f * sLevel), 20f + (.75f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                        hitData.m_damage.m_fire = UnityEngine.Random.Range(10f + (.5f * sLevel), 20f + (.75f * sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_priestSanctify;
+                        hitData.m_damage.m_blunt = UnityEngine.Random.Range(10f + (.5f * sLevel), 20f + (.75f * sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_priestSanctify;
+                        hitData.m_damage.m_spirit = UnityEngine.Random.Range(10f + (.5f * sLevel), 20f + (.75f * sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_priestSanctify;
+                        hitData.SetAttacker(player);
                         hitData.m_pushForce = 50f;
                         hitData.m_skill = ValheimLegends.EvocationSkill;
                         //Vector3 a = Vector3.MoveTowards(GO_Sanctify.transform.position, target, 1f);

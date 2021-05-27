@@ -116,19 +116,19 @@ namespace ValheimLegends
                             ch.SetMaxHealth(25 + (9 * sLevel));
                             ch.transform.localScale = (0.5f + (.015f * sLevel)) * Vector3.one;                            
                             ch.m_swimSpeed *= 2f;
-                            //CharacterTimedDestruction td = GO_Wolf.GetComponent<CharacterTimedDestruction>();
-                            //if (td != null)
-                            //{
-                            //    //ZLog.Log("td valid: " + td2.isActiveAndEnabled + " timeout min " + td2.m_timeoutMin + " timeout max " + td2.m_timeoutMax);
-                            //    td.m_triggerOnAwake = true;
-                            //    td.m_timeoutMin = 900f;
-                            //    td.m_timeoutMax = td.m_timeoutMin;
-                            //    td.Trigger();
-                            //}
+                            CharacterTimedDestruction td = GO_Wolf.GetComponent<CharacterTimedDestruction>();
+                            if (td != null)
+                            {
+                                //ZLog.Log("td valid: " + td2.isActiveAndEnabled + " timeout min " + td2.m_timeoutMin + " timeout max " + td2.m_timeoutMax);
+                                //td.m_triggerOnAwake = true;
+                                td.m_timeoutMin = 600f;
+                                td.m_timeoutMax = td.m_timeoutMin;
+                                td.Trigger();
+                            }
 
                             SE_Companion se_companion = (SE_Companion)ScriptableObject.CreateInstance(typeof(SE_Companion));
                             se_companion.m_ttl = SE_Companion.m_baseTTL;
-                            se_companion.damageModifier = (.05f + (.01f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                            se_companion.damageModifier = (.05f + (.01f * sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_rangerShadowWolf;
                             se_companion.healthRegen = 1f + (.1f * sLevel);
                             se_companion.speedModifier = 1.2f;
                             se_companion.summoner = player;
@@ -187,7 +187,7 @@ namespace ValheimLegends
                         //Lingering effects
                         SE_ShadowStalk se_shadowstalk = (SE_ShadowStalk)ScriptableObject.CreateInstance(typeof(SE_ShadowStalk));
                         se_shadowstalk.m_ttl = SE_ShadowStalk.m_baseTTL * (1f + (.02f * sLevel));
-                        se_shadowstalk.speedAmount = 1.5f + (.01f * sLevel);
+                        se_shadowstalk.speedAmount = 1.5f + (.01f * sLevel) * VL_GlobalConfigs.c_rangerShadowStalk;
                         se_shadowstalk.speedDuration = 3f + (.03f * sLevel);
 
                         //Apply effects

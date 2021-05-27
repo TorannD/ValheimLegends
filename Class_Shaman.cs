@@ -17,13 +17,15 @@ namespace ValheimLegends
 
         private static GameObject GO_CastFX;
         public static bool isWaterWalking = false;
+        private static int glideDelay = 0;
 
         public static void Process_Input(Player player, ref Rigidbody playerBody, ref float altitude, ref float lastGroundTouch, float waterLevel)
         {
             ValheimLegends.isChanneling = false;
             if (ZInput.GetButton("Jump"))
             {
-                if (!player.IsDead() && !player.InAttack() && !player.IsEncumbered() && !player.InDodge() && !player.IsKnockedBack())
+                glideDelay++;
+                if (!player.IsDead() && !player.InAttack() && !player.IsEncumbered() && !player.InDodge() && !player.IsKnockedBack() && glideDelay > 20)
                 {
                     if (player.transform.position.y <= (waterLevel + .4f))
                     {
@@ -40,7 +42,7 @@ namespace ValheimLegends
                         if (flag)
                         {
                             //isWaterWalking = true;
-                            player.UseStamina(.3f);
+                            player.UseStamina(.3f * VL_GlobalConfigs.c_shamanBonusWaterGlideCost);
                             VL_Utility.RotatePlayerToTarget(player);
                             ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).StopAllCoroutines();
 
@@ -53,6 +55,10 @@ namespace ValheimLegends
                         }
                     }
                 }
+            }
+            else
+            {
+                glideDelay = 0;
             }
 
             if(player.transform.position.y +.3f > waterLevel)
@@ -95,8 +101,8 @@ namespace ValheimLegends
                             {
                                 Vector3 direction = (ch.transform.position - player.transform.position);
                                 HitData hitData = new HitData();
-                                hitData.m_damage.m_spirit = UnityEngine.Random.Range(6f + (.4f * sLevel), 12f + (.6f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
-                                hitData.m_damage.m_lightning = UnityEngine.Random.Range(6f + (.4f * sLevel), 12f + (.6f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                                hitData.m_damage.m_spirit = UnityEngine.Random.Range(6f + (.4f * sLevel), 12f + (.6f * sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_shamanSpiritShock;
+                                hitData.m_damage.m_lightning = UnityEngine.Random.Range(6f + (.4f * sLevel), 12f + (.6f * sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_shamanSpiritShock;
                                 hitData.m_pushForce = 25f + (.1f * sLevel);
                                 hitData.m_point = ch.GetEyePoint();
                                 hitData.m_dir = direction;
@@ -145,27 +151,34 @@ namespace ValheimLegends
 
                         //Lingering effects
                         
-                        List<Player> allPlayers = new List<Player>();
-                        allPlayers.Clear();
-                        Player.GetPlayersInRange(player.transform.position, (30f + .2f * sLevel), allPlayers);
+                        List<Character> allCharacters = new List<Character>();
+                        allCharacters.Clear();
+                        Character.GetCharactersInRange(player.transform.position, (30f + .2f * sLevel), allCharacters);
                         GameObject effect = ZNetScene.instance.GetPrefab("fx_guardstone_permitted_add");
-                        foreach (Player p in allPlayers)
+                        foreach (Character p in allCharacters)
                         {
                             SE_Shell se_shell = (SE_Shell)ScriptableObject.CreateInstance(typeof(SE_Shell));
                             se_shell.m_ttl = SE_Shell.m_baseTTL + (.3f * sLevel);
-                            se_shell.spiritDamageOffset = (6f + (.3f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
-                            se_shell.resistModifier = .6f - (.006f * sLevel);
+                            se_shell.spiritDamageOffset = (6f + (.3f * sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_shamanShell;
+                            se_shell.resistModifier = (.6f - (.006f * sLevel)) * VL_GlobalConfigs.c_shamanShell;
                             se_shell.m_icon = ZNetScene.instance.GetPrefab("ShieldSerpentscale").GetComponent<ItemDrop>().m_itemData.GetIcon();
                             se_shell.doOnce = false;
-                            if(p == Player.m_localPlayer)
+                            if (!BaseAI.IsEnemy(player, p))
                             {
-                                p.GetSEMan().AddStatusEffect(se_shell, true);
-                            }
-                            else
-                            {
-                                p.GetSEMan().AddStatusEffect(se_shell.name, true);
-                            }
-                            UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);                            
+                                if (p == Player.m_localPlayer)
+                                {
+                                    p.GetSEMan().AddStatusEffect(se_shell, true);
+                                }
+                                else if (p.IsPlayer())
+                                {
+                                    p.GetSEMan().AddStatusEffect(se_shell.name, true);
+                                }
+                                else
+                                {
+                                    p.GetSEMan().AddStatusEffect(se_shell, true);
+                                }
+                                UnityEngine.Object.Instantiate(effect, p.GetCenterPoint(), Quaternion.identity);
+                            }                         
                         }
 
                         //Apply effects
@@ -217,27 +230,33 @@ namespace ValheimLegends
 
                         //Apply effects
                         GameObject effectApplied = ZNetScene.instance.GetPrefab("fx_GP_Activation");
-                        List<Player> allPlayers = new List<Player>();
-                        Player.GetPlayersInRange(player.transform.position, 30f, allPlayers);
+                        List<Character> allCharacters = new List<Character>();
+                        Character.GetCharactersInRange(player.transform.position, 30f, allCharacters);
                         SE_Enrage se_enrage = (SE_Enrage)ScriptableObject.CreateInstance(typeof(SE_Enrage));
                         se_enrage.m_ttl = 16f + (.2f * sLevel);
-                        se_enrage.staminaModifier = (5f + (.1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                        se_enrage.staminaModifier = (5f + (.1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_shamanEnrage;
                         se_enrage.speedModifier = 1.2f + (.0025f * sLevel); 
                         se_enrage.m_icon = ZNetScene.instance.GetPrefab("TrophyGoblinBrute").GetComponent<ItemDrop>().m_itemData.GetIcon();
                         se_enrage.doOnce = false;
-                        
-                        for(int i = 0; i < allPlayers.Count; i++)
+
+                        foreach (Character p in allCharacters)
                         {
-                            if (allPlayers[i] == Player.m_localPlayer)
+                            if (!BaseAI.IsEnemy(player, p))
                             {
-                                allPlayers[i].GetSEMan().AddStatusEffect(se_enrage, true);
+                                if (p == Player.m_localPlayer)
+                                {
+                                    p.GetSEMan().AddStatusEffect(se_enrage, true);
+                                }
+                                else if (p.IsPlayer())
+                                {
+                                    p.GetSEMan().AddStatusEffect(se_enrage.name, true);
+                                }
+                                else
+                                {
+                                    p.GetSEMan().AddStatusEffect(se_enrage, true);
+                                }
+                                UnityEngine.Object.Instantiate(effectApplied, p.GetCenterPoint(), Quaternion.identity);
                             }
-                            else
-                            {                                
-                                allPlayers[i].GetSEMan().AddStatusEffect(se_enrage.name, true);
-                                
-                            }
-                            UnityEngine.Object.Instantiate(effectApplied, allPlayers[i].GetCenterPoint(), Quaternion.identity); 
                         }
 
                         //Skill gain

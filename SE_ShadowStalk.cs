@@ -35,7 +35,7 @@ namespace ValheimLegends
         {
             if(m_character.IsSneaking())
             {
-                speed *= 1.5f + (.01f * m_character.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level);
+                speed *= (1.5f + (.01f * m_character.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level)) * VL_GlobalConfigs.c_rangerShadowStalk;
             }
             else if(speedDuration > 0)
             {

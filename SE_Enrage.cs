@@ -43,7 +43,7 @@ namespace ValheimLegends
                 doOnce = false;
                 float sLevel = m_character.GetSkills().GetTotalSkill() / (float)m_character.GetSkills().GetSkillList().Count;
                 m_ttl = 20f + (.2f * sLevel);
-                staminaModifier = 5f + (.1f * sLevel);
+                staminaModifier = (5f + (.1f * sLevel)) * VL_GlobalConfigs.c_shamanEnrage;
                 speedModifier = 1.2f + (.002f * sLevel);  //1.4f
             }
             m_timer -= dt;

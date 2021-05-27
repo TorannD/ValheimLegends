@@ -14,13 +14,13 @@ using UnityEngine.UI;
 
 namespace ValheimLegends
 {
-    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.3.2")]
+    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.3.6")]
     public class ValheimLegends : BaseUnityPlugin
     {
         public static Harmony _Harmony;
 
-        public const string Version = "0.3.2";
-        public const float VersionF = 0.32f;
+        public const string Version = "0.3.6";
+        public const float VersionF = 0.36f;
         public const string ModName = "Valheim Legends";
         public static bool playerEnabled = true;
 
@@ -77,6 +77,7 @@ namespace ValheimLegends
         public static ConfigEntry<float> vl_svr_cooldownMultiplier;
         public static ConfigEntry<float> vl_svr_abilityDamageMultiplier;
         public static ConfigEntry<float> vl_svr_skillGainMultiplier;
+        public static ConfigEntry<float> vl_svr_unarmedDamageMultiplier;
 
         public static ConfigEntry<float> icon_X_Offset;
         public static ConfigEntry<float> icon_Y_Offset;
@@ -87,6 +88,79 @@ namespace ValheimLegends
         public static ConfigEntry<string> chosenClass;
         public static ConfigEntry<bool> vl_svr_enforceConfigClass;
         public static readonly Color abilityCooldownColor = new Color(1f, .3f, .3f, .5f);
+
+        //Class configs
+        public static ConfigEntry<float> vl_svr_berserkerDash;
+        public static ConfigEntry<float> vl_svr_berserkerBerserk;
+        public static ConfigEntry<float> vl_svr_berserkerExecute;
+        public static ConfigEntry<float> vl_svr_berserkerBonusDamage;
+        public static ConfigEntry<float> vl_svr_berserkerBonus2h;
+
+        public static ConfigEntry<float> vl_svr_druidVines;
+        public static ConfigEntry<float> vl_svr_druidRegen;
+        public static ConfigEntry<float> vl_svr_druidDefenders;
+        public static ConfigEntry<float> vl_svr_druidBonusSeeds;
+
+        public static ConfigEntry<float> vl_svr_duelistSeismicSlash;
+        public static ConfigEntry<float> vl_svr_duelistRiposte;
+        public static ConfigEntry<float> vl_svr_duelistHipShot;
+        public static ConfigEntry<float> vl_svr_duelistBonusParry;
+
+        public static ConfigEntry<float> vl_svr_enchanterWeaken;
+        public static ConfigEntry<float> vl_svr_enchanterCharm;
+        public static ConfigEntry<float> vl_svr_enchanterBiome;
+        public static ConfigEntry<float> vl_svr_enchanterBiomeShock;
+        public static ConfigEntry<float> vl_svr_enchanterBonusElementalBlock;
+        public static ConfigEntry<float> vl_svr_enchanterBonusElementalTouch;
+
+        public static ConfigEntry<float> vl_svr_mageFireball;
+        public static ConfigEntry<float> vl_svr_mageFrostDagger;
+        public static ConfigEntry<float> vl_svr_mageFrostNova;
+        public static ConfigEntry<float> vl_svr_mageInferno;
+        public static ConfigEntry<float> vl_svr_mageMeteor;
+
+        public static ConfigEntry<float> vl_svr_metavokerLight;
+        public static ConfigEntry<float> vl_svr_metavokerReplica;
+        public static ConfigEntry<float> vl_svr_metavokerWarpDamage;
+        public static ConfigEntry<float> vl_svr_metavokerWarpDistance;
+        public static ConfigEntry<float> vl_svr_metavokerBonusSafeFallCost;
+        public static ConfigEntry<float> vl_svr_metavokerBonusForceWave;
+
+        public static ConfigEntry<float> vl_svr_monkChiPunch;
+        public static ConfigEntry<float> vl_svr_monkChiSlam;
+        public static ConfigEntry<float> vl_svr_monkChiBlast;
+        public static ConfigEntry<float> vl_svr_monkFlyingKick;
+        public static ConfigEntry<float> vl_svr_monkBonusBlock;
+        public static ConfigEntry<float> vl_svr_monkSurge;
+
+        public static ConfigEntry<float> vl_svr_priestHeal;
+        public static ConfigEntry<float> vl_svr_priestPurgeHeal;
+        public static ConfigEntry<float> vl_svr_priestPurgeDamage;
+        public static ConfigEntry<float> vl_svr_priestSanctify;
+        public static ConfigEntry<float> vl_svr_priestBonusDyingLightCooldown;
+
+        public static ConfigEntry<float> vl_svr_rangerPowerShot;
+        public static ConfigEntry<float> vl_svr_rangerShadowWolf;
+        public static ConfigEntry<float> vl_svr_rangerShadowStalk;
+        public static ConfigEntry<float> vl_svr_rangerBonusPoisonResistance;
+        public static ConfigEntry<float> vl_svr_rangerBonusRunCost;
+
+        public static ConfigEntry<float> vl_svr_rogueBackstab;
+        public static ConfigEntry<float> vl_svr_rogueFadeCooldown;
+        public static ConfigEntry<float> vl_svr_roguePoisonBomb;
+        public static ConfigEntry<float> vl_svr_rogueBonusThrowingDagger;
+
+        public static ConfigEntry<float> vl_svr_shamanSpiritShock;
+        public static ConfigEntry<float> vl_svr_shamanEnrage;
+        public static ConfigEntry<float> vl_svr_shamanShell;
+        public static ConfigEntry<float> vl_svr_shamanBonusSpiritGuide;
+        public static ConfigEntry<float> vl_svr_shamanBonusWaterGlideCost;
+
+        public static ConfigEntry<float> vl_svr_valkyrieLeap;
+        public static ConfigEntry<float> vl_svr_valkyrieStaggerCooldown;
+        public static ConfigEntry<float> vl_svr_valkyrieBulwark;
+        public static ConfigEntry<float> vl_svr_valkyrieBonusChillWave;
+        public static ConfigEntry<float> vl_svr_valkyrieBonusIceLance;
 
         //Save and load data
 
@@ -559,6 +633,21 @@ namespace ValheimLegends
         //mod patches
         //
 
+        [HarmonyPatch(typeof(Humanoid), "GetCurrentWeapon")]
+        public static class UnarmedDamage
+        {
+            private static ItemDrop.ItemData Postfix(ItemDrop.ItemData __weapon, ref Character __instance)
+            {
+                if (__weapon != null && __weapon.m_shared.m_name == "Unarmed")
+                {
+                    Player player = (Player)__instance;
+                    //ZLog.Log("weapon damage " + __weapon.m_shared.m_damages.m_blunt + " skill factor " + player.GetSkillFactor(Skills.SkillType.Unarmed) + "  modifier " + VL_GlobalConfigs.g_UnarmedDamage);
+                    __weapon.m_shared.m_damages.m_blunt = player.GetSkillFactor(Skills.SkillType.Unarmed) * VL_GlobalConfigs.g_UnarmedDamage * 100f;
+                }
+                return __weapon;
+            }
+        }
+
         [HarmonyPatch(typeof(Player), "ActivateGuardianPower", null)]
         public class ActivatePowerPrevention_Patch
         {
@@ -636,10 +725,43 @@ namespace ValheimLegends
         [HarmonyPatch(typeof(Attack), "Start", null)]
         public class ShadowWolfAttack_Patch
         {
-            public static bool Prefix(Attack __instance, Humanoid character, Rigidbody body, ZSyncAnimation zanim, CharacterAnimEvent animEvent, VisEquipment visEquipment, ItemDrop.ItemData weapon, Attack previousAttack, float timeSinceLastAttack, float attackDrawPercentage)
+            public static bool Prefix(Attack __instance, Humanoid character, Rigidbody body, ZSyncAnimation zanim, CharacterAnimEvent animEvent, VisEquipment visEquipment, ItemDrop.ItemData weapon, Attack previousAttack, float timeSinceLastAttack, float attackDrawPercentage, string ___m_attackAnimation)
             {
-                if (character != null && character.m_name == "Shadow Wolf")
+
+                if (character != null && (character.m_name == "Shadow Wolf" || character.m_name.Contains("Demon Wolf")))
                 {
+                    //Vector3 hitVec = character.transform.position + character.transform.forward * .2f + character.transform.up * .2f;
+
+                    //GameObject prefab = ZNetScene.instance.GetPrefab("VL_ShadowWolfAttack");
+                    //GameObject GO_ShadowWolfAttack = UnityEngine.Object.Instantiate(prefab, hitVec, Quaternion.identity);
+                    //Projectile P_ShadowWolfAttack = GO_ShadowWolfAttack.GetComponent<Projectile>();
+                    ////P_ShadowWolfAttack.name = "ShadowWolfAttack";
+                    //P_ShadowWolfAttack.m_respawnItemOnHit = false;
+                    //P_ShadowWolfAttack.m_blockable = true;
+                    //P_ShadowWolfAttack.m_dodgeable = true;
+                    //P_ShadowWolfAttack.m_spawnOnHit = null;
+                    //P_ShadowWolfAttack.m_ttl = .5f;
+                    //P_ShadowWolfAttack.m_gravity = 0f;
+                    //P_ShadowWolfAttack.m_rayRadius = .1f;
+                    //GO_ShadowWolfAttack.transform.localScale = Vector3.zero;
+
+                    //RaycastHit hitInfo = default(RaycastHit);
+                    //Vector3 position = character.transform.position;
+                    //Vector3 target = (!Physics.Raycast(hitVec, character.transform.forward, out hitInfo, float.PositiveInfinity, Script_WolfAttackMask) || !(bool)hitInfo.collider) ? (position + character.transform.forward * 1000f) : hitInfo.point;
+
+                    //float dmgMod = UnityEngine.Random.Range(.6f, 1.2f);
+                    //if (character.GetSEMan().HaveStatusEffect("SE_VL_Companion"))
+                    //{
+                    //    SE_Companion se_comp = (SE_Companion)character.GetSEMan().GetStatusEffect("SE_VL_Companion");
+                    //    dmgMod *= se_comp.damageModifier;
+                    //}
+                    //HitData hitData = new HitData();
+                    //hitData.m_damage = P_ShadowWolfAttack.m_damage;
+                    //hitData.ApplyModifier(dmgMod);
+                    //Vector3 a = Vector3.MoveTowards(GO_ShadowWolfAttack.transform.position, target, 1f);
+                    //P_ShadowWolfAttack.Setup(character, (a - GO_ShadowWolfAttack.transform.position) * 10f, -1f, hitData, null);
+                    //GO_ShadowWolfAttack = null;
+
                     Vector3 hitVec = character.transform.position + character.transform.up * .3f;
                     RaycastHit hitInfo = default(RaycastHit);
                     //ZLog.Log("hitVec position " + hitVec);
@@ -662,7 +784,7 @@ namespace ValheimLegends
                                 flag = ch != null;
                             }
                         }
-                        if (flag)
+                        if (flag && BaseAI.IsEnemy(ch, character) && !ch.IsDodgeInvincible())
                         {
                             //ZLog.Log("collider game object is character");
                             //ZLog.Log("" + ch.m_name + " position " + ch.transform.position + " distance of " + (ch.transform.position - hitVec).magnitude + "  away and center is " + (ch.GetCenterPoint() - hitVec).magnitude);
@@ -678,9 +800,24 @@ namespace ValheimLegends
                             hitData.m_damage = weapon.GetDamage();
                             hitData.m_damage.m_slash = weapon.GetDamage().m_slash * dmgMod;
                             hitData.m_point = hitInfo.point;
-                            hitData.m_dir = (character.transform.position - ch.transform.position);
+                            hitData.m_dir = (ch.transform.position - character.transform.position);
                             hitData.m_skill = Skills.SkillType.Unarmed;
-                            ch.Damage(hitData);
+                            if(ch.IsBlocking())
+                            {
+                                Player p = ch as Player;
+                                if (p != null)
+                                {
+                                    MethodBase BlockAttack = AccessTools.Method(typeof(Humanoid), "BlockAttack", null, null);
+                                    BlockAttack.Invoke(p, new object[2] {
+                                        hitData,
+                                        character
+                                    });
+                                }
+                            }
+                            else
+                            {
+                                ch.Damage(hitData);
+                            }                            
                         }
                     }
                 }
@@ -833,6 +970,7 @@ namespace ValheimLegends
                         {
                             se_regen.m_HealAmount = 5f;
                         }
+                        se_regen.m_HealAmount *= VL_GlobalConfigs.c_druidBonusSeeds;
                         player.GetSEMan().AddStatusEffect(se_regen, true);
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_Potion_stamina_medium"), player.transform.position, Quaternion.identity);
 
@@ -841,122 +979,6 @@ namespace ValheimLegends
                         ___m_zanim.SetTrigger("eat");
                         return false;
                     }
-                }
-                return true;
-            }
-        }
-
-        [HarmonyPatch(typeof(OfferingBowl), "UseItem", null)]
-        public class OfferingForClass_Patch
-        {
-            public static bool Prefix(OfferingBowl __instance, Humanoid user, ItemDrop.ItemData item, Transform ___m_itemSpawnPoint, EffectList ___m_fuelAddedEffects, ref bool __result)
-            {
-                //ZLog.Log("offered item is " + item.m_shared.m_name + " to string " + item.ToString());
-                int num = user.GetInventory().CountItems(item.m_shared.m_name);
-                bool flag = false;
-                if (item.m_shared.m_name.Contains("item_greydwarfeye") && vl_player.vl_class != PlayerClass.Shaman)
-                {                    
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Shaman");
-                    vl_player.vl_class = PlayerClass.Shaman;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_meat_raw") && vl_player.vl_class != PlayerClass.Ranger)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Ranger");
-                    vl_player.vl_class = PlayerClass.Ranger;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_coal") && vl_player.vl_class != PlayerClass.Mage)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Mage");
-                    vl_player.vl_class = PlayerClass.Mage;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_flint") && vl_player.vl_class != PlayerClass.Valkyrie)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Valkyrie");
-                    vl_player.vl_class = PlayerClass.Valkyrie;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_dandelion") && vl_player.vl_class != PlayerClass.Druid)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Druid");
-                    vl_player.vl_class = PlayerClass.Druid;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_bonefragments") && vl_player.vl_class != PlayerClass.Berserker)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Berserker");
-                    vl_player.vl_class = PlayerClass.Berserker;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_raspberries") && vl_player.vl_class != PlayerClass.Metavoker)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Metavoker");
-                    vl_player.vl_class = PlayerClass.Metavoker;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_stone") && vl_player.vl_class != PlayerClass.Priest)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Priest");
-                    vl_player.vl_class = PlayerClass.Priest;
-                    flag = true;
-                }
-                //else if (item.m_shared.m_name.Contains("item_trophy_skeleton") && vl_player.vl_class != PlayerClass.Necromancer)
-                //{
-                //    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Necromancer");
-                //    vl_player.vl_class = PlayerClass.Necromancer;
-                //    flag = true;
-                //}
-                else if (item.m_shared.m_name.Contains("item_wood") && vl_player.vl_class != PlayerClass.Monk)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Monk");
-                    vl_player.vl_class = PlayerClass.Monk;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_thistle") && vl_player.vl_class != PlayerClass.Duelist)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Duelist");
-                    vl_player.vl_class = PlayerClass.Duelist;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_resin") && vl_player.vl_class != PlayerClass.Enchanter)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Enchanter");
-                    vl_player.vl_class = PlayerClass.Enchanter;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_honey") && vl_player.vl_class != PlayerClass.Rogue)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Rogue");
-                    vl_player.vl_class = PlayerClass.Rogue;
-                    flag = true;
-                }
-                if (flag)
-                {
-                    user.GetInventory().RemoveItem(item.m_shared.m_name, 1);
-                    user.ShowRemovedMessage(item, 1);
-                    UpdateVLPlayer(Player.m_localPlayer);
-                    NameCooldowns();
-                    if ((bool)___m_itemSpawnPoint && ___m_fuelAddedEffects != null)
-                    {
-                        ___m_fuelAddedEffects.Create(___m_itemSpawnPoint.position, __instance.transform.rotation);
-                    }
-                    UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_GP_Activation"), user.GetCenterPoint(), Quaternion.identity);
-
-                    if (ValheimLegends.abilitiesStatus != null)
-                    {
-                        foreach (RectTransform ability in ValheimLegends.abilitiesStatus)
-                        {
-                            if (ability.gameObject != null)
-                            {
-                                UnityEngine.Object.Destroy(ability.gameObject);
-                            }
-                        }
-                        ValheimLegends.abilitiesStatus.Clear();
-                    }
-                    __result = true;
-                    return false;
                 }
                 return true;
             }
@@ -982,7 +1004,7 @@ namespace ValheimLegends
             {
                 if(___m_weapon != null && vl_player != null && vl_player.vl_class == PlayerClass.Berserker && ___m_weapon.m_shared.m_itemType == ItemDrop.ItemData.ItemType.TwoHandedWeapon)
                 {
-                    __result *= .7f;
+                    __result *= .7f * VL_GlobalConfigs.c_berserkerBonus2h;
                 }
             }
         }
@@ -1017,6 +1039,10 @@ namespace ValheimLegends
 
                 if (attacker != null)
                 {
+                    if(__instance.m_name == "Shadow Wolf" && !BaseAI.IsEnemy(__instance, attacker))
+                    {
+                        hit.m_damage.Modify(.1f);
+                    }
                     Player player = attacker as Player;
                     if(attacker.GetSEMan().HaveStatusEffect("SE_VL_Weaken"))
                     {
@@ -1039,9 +1065,9 @@ namespace ValheimLegends
                     if (attacker.GetSEMan().HaveStatusEffect("SE_VL_Monk"))
                     {
                         SE_Monk se_m = (SE_Monk)attacker.GetSEMan().GetStatusEffect("SE_VL_Monk");
-                        if (Class_Monk.PlayerIsUnarmed)
+                        if (Class_Monk.PlayerIsUnarmed && hit.m_damage.m_blunt > 0)
                         {
-                            hit.m_damage.Modify(1.25f);
+                            hit.m_damage.m_blunt *= 1.25f;
                             se_m.hitCount++;
                         }
                     }
@@ -1093,7 +1119,7 @@ namespace ValheimLegends
                     {
                         if (vl_player.vl_class == PlayerClass.Berserker)
                         {
-                            hit.m_damage.Modify(1f + ((1f - attacker.GetHealthPercentage()) * .4f));
+                            hit.m_damage.Modify(1f + ((1f - attacker.GetHealthPercentage()) * .4f * VL_GlobalConfigs.c_berserkerBonusDamage));
                         }
                         else if (vl_player.vl_class == PlayerClass.Enchanter)
                         {
@@ -1103,15 +1129,15 @@ namespace ValheimLegends
                                 float rnd = UnityEngine.Random.value;
                                 if(rnd <= .40f)
                                 {
-                                    hit.m_damage.m_fire += sLevel;
+                                    hit.m_damage.m_fire += (sLevel * VL_GlobalConfigs.c_enchanterBonusElementalTouch);
                                 }
                                 else if(rnd <= .60f)
                                 {
-                                    hit.m_damage.m_frost += sLevel;
+                                    hit.m_damage.m_frost += (sLevel * VL_GlobalConfigs.c_enchanterBonusElementalTouch);
                                 }
                                 else
                                 {
-                                    hit.m_damage.m_lightning += sLevel;
+                                    hit.m_damage.m_lightning += (sLevel * VL_GlobalConfigs.c_enchanterBonusElementalTouch);
                                 }                                
                             }
                         }
@@ -1125,6 +1151,17 @@ namespace ValheimLegends
             }
         }
 
+        [HarmonyPatch(typeof(Player), "TeleportTo", null)]
+        public class DestroySummonedWhenTeleporting_Patch
+        {
+            public static bool Prefix(Player __instance)
+            {
+                RemoveSummonedWolf();
+                return true;
+            }
+        }
+
+
         [HarmonyPatch(typeof(Attack), "DoMeleeAttack", null)]
         public class MeleeAttack_Patch
         {
@@ -1132,7 +1169,8 @@ namespace ValheimLegends
             {
                 if (___m_character.GetSEMan().HaveStatusEffect("SE_VL_Berserk"))
                 {
-                    ___m_damageMultiplier *= 1.2f;
+                    SE_Berserk se_b = (SE_Berserk)___m_character.GetSEMan().GetStatusEffect("SE_VL_Berserk");
+                    ___m_damageMultiplier *= (se_b.damageModifier);
                 }
                 return true;
             }
@@ -1141,18 +1179,26 @@ namespace ValheimLegends
         [HarmonyPatch(typeof(Attack), "FireProjectileBurst", null)]
         public class ProjectileAttack_Prefix
         {
-            public static bool Prefix(Attack __instance, Humanoid ___m_character, ref float ___m_projectileVel, ref float ___m_forceMultiplier, ref float ___m_staggerMultiplier, ref float ___m_damageMultiplier, ref ItemDrop.ItemData ___m_weapon)
+            public static bool Prefix(Attack __instance, Humanoid ___m_character, ref float ___m_attackDrawPercentage, ref float ___m_projectileVel, ref float ___m_forceMultiplier, ref float ___m_staggerMultiplier, ref float ___m_damageMultiplier, ref float ___m_projectileAccuracy, ref float ___m_projectileAccuracyMin, ref float ___m_projectileVelMin, ref ItemDrop.ItemData ___m_weapon)
             {
                 if (___m_character.GetSEMan().HaveStatusEffect("SE_VL_PowerShot"))
                 {
                     ___m_projectileVel *= 2f;
-                    ___m_damageMultiplier = 1.4f + (___m_character.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == DisciplineSkillDef).m_level * .015f);
+                    ___m_damageMultiplier = (1.4f * VL_GlobalConfigs.c_rangerPowerShot) + (___m_character.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == DisciplineSkillDef).m_level * .015f);
                     SE_PowerShot se_shot = ___m_character.GetSEMan().GetStatusEffect("SE_VL_PowerShot") as SE_PowerShot;
 
                     se_shot.hitCount--;
                     if (se_shot.hitCount <= 0)
                     {
                         ___m_character.GetSEMan().RemoveStatusEffect(se_shot, true);
+                    }
+                }
+                if(___m_character.GetSEMan().HaveStatusEffect("SE_VL_Ranger"))
+                {
+                    SE_Ranger se_r = (SE_Ranger)___m_character.GetSEMan().GetStatusEffect("SE_VL_Ranger");
+                    if (se_r.hitCount > 0)
+                    {
+                        ___m_attackDrawPercentage = .9f;
                     }
                 }
                 return true;
@@ -1195,7 +1241,7 @@ namespace ValheimLegends
                                         //ZLog.Log("charming " + ch.m_name);
                                         Player p = ___m_owner as Player;
                                         SE_Charm se_charm = (SE_Charm)ScriptableObject.CreateInstance(typeof(SE_Charm));
-                                        se_charm.m_ttl = SE_Charm.m_baseTTL;
+                                        se_charm.m_ttl = SE_Charm.m_baseTTL * VL_GlobalConfigs.c_enchanterCharm;
                                         se_charm.summoner = p;
                                         se_charm.originalFaction = ch.m_faction;
                                         ch.m_faction = p.GetFaction();                                        
@@ -1396,17 +1442,17 @@ namespace ValheimLegends
                         float sLevel = __instance.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
                         bool flag = currentBlocker.m_shared.m_timedBlockBonus > 1f && ___m_blockTimer != -1f && ___m_blockTimer < 0.25f;
                         float skillFactor = __instance.GetSkillFactor(Skills.SkillType.Blocking);
-                        float num = currentBlocker.GetBlockPower(skillFactor);                        
+                        float num = currentBlocker.GetBlockPower(skillFactor);
                         if (flag)
                         {
                             num *= currentBlocker.m_shared.m_timedBlockBonus;
-                            if(__instance.GetSEMan().HaveStatusEffect("SE_VL_Riposte"))
+                            if (__instance.GetSEMan().HaveStatusEffect("SE_VL_Riposte"))
                             {
-                                num += 10f * sLevel;
+                                num += 10f * sLevel * VL_GlobalConfigs.c_duelistBonusParry;
                             }
                             else
                             {
-                                num += 2f * sLevel;
+                                num += 2f * sLevel * VL_GlobalConfigs.c_duelistBonusParry;
                             }
                         }
                         float totalBlockableDamage = hit.GetTotalBlockableDamage();
@@ -1457,9 +1503,9 @@ namespace ValheimLegends
                                     ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("atgeir_attack2");
                                     float dmgMod = UnityEngine.Random.Range(.3f, .5f) + sLevel / 150f;
                                     //ZLog.Log("damage mod was " + dmgMod);
-                                    hitData.ApplyModifier(dmgMod);
+                                    hitData.ApplyModifier(dmgMod * VL_GlobalConfigs.c_duelistRiposte);
                                     __instance.RaiseSkill(ValheimLegends.DisciplineSkill, VL_Utility.GetRiposteSkillGain * 2f);
-                                    if(__instance.GetSEMan().HaveStatusEffect("SE_VL_Ability3_CD"))
+                                    if (__instance.GetSEMan().HaveStatusEffect("SE_VL_Ability3_CD"))
                                     {
                                         __instance.GetSEMan().GetStatusEffect("SE_VL_Ability3_CD").m_ttl -= 5f;
                                     }
@@ -1475,7 +1521,7 @@ namespace ValheimLegends
                                 attacker.Damage(hitData);
                             }
                         }
-                        
+
                         __result = true;
                         return false;
                     }
@@ -1502,7 +1548,7 @@ namespace ValheimLegends
                 }
                 if(vl_player.vl_class == PlayerClass.Monk && __instance.m_shared != null && __instance.m_shared.m_name == "Unarmed")
                 {
-                    __result += Player.m_localPlayer.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
+                    __result += (Player.m_localPlayer.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level) * VL_GlobalConfigs.c_monkBonusBlock;
                 }
             }
         }
@@ -1520,7 +1566,7 @@ namespace ValheimLegends
                         if (!__instance.GetSEMan().HaveStatusEffect("SE_VL_DyingLight_CD"))
                         {
                             StatusEffect se_cd = (SE_DyingLight_CD)ScriptableObject.CreateInstance(typeof(SE_DyingLight_CD));
-                            se_cd.m_ttl = 600f;
+                            se_cd.m_ttl = 600f * VL_GlobalConfigs.c_priestBonusDyingLightCooldown;
                             __instance.GetSEMan().AddStatusEffect(se_cd);
                             __instance.SetHealth(1f);
                             return false;
@@ -1532,7 +1578,7 @@ namespace ValheimLegends
                         if (shaman != null && vl_player.vl_name == shaman.GetPlayerName() && Vector3.Distance(shaman.transform.position, __instance.transform.position) <= 10f)
                         {
                             UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_AbsorbSpirit"), shaman.GetCenterPoint(), Quaternion.identity);
-                            shaman.AddStamina(25f);
+                            shaman.AddStamina(25f * VL_GlobalConfigs.c_shamanBonusSpiritGuide);
                         }
                     }
                 }
@@ -1575,7 +1621,7 @@ namespace ValheimLegends
                             float blockEle = blockFire + blockFrost + blockLit;
                             if (blockEle > 0)
                             {
-                                Player.m_localPlayer.AddStamina(blockEle);
+                                Player.m_localPlayer.AddStamina(blockEle * VL_GlobalConfigs.c_enchanterBonusElementalBlock);
                                 Player.m_localPlayer.RaiseSkill(ValheimLegends.AbjurationSkill, blockRatio);
                                 UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_Potion_stamina_medium"), Player.m_localPlayer.transform.position, Quaternion.identity);
                             }
@@ -1614,32 +1660,6 @@ namespace ValheimLegends
                 }
             }
         }
-
-        [HarmonyPatch(typeof(ZNet), "OnDestroy")]
-        public static class RemoveHud_Patch
-        {
-            public static bool Prefix()
-            {
-                if (abilitiesStatus != null)
-                {
-                    foreach (RectTransform ability in ValheimLegends.abilitiesStatus)
-                    {
-                        if (ability.gameObject != null)
-                        {
-                            UnityEngine.Object.Destroy(ability.gameObject);
-                        }
-                    }
-                    abilitiesStatus.Clear();
-                    abilitiesStatus = null;
-                }
-                if(vl_player != null)
-                {
-                    vl_player = null;
-                }
-                return true;
-            }
-        }
-
 
         [HarmonyPatch(typeof(Hud), "UpdateStatusEffects")]
         public static class SkillIcon_Patch
@@ -1681,6 +1701,10 @@ namespace ValheimLegends
                                 {
                                     component.color = Color.white;
                                     iconText = Ability1_Hotkey.Value;
+                                    if(ValheimLegends.Ability1_Hotkey_Combo.Value != "")
+                                    {
+                                        iconText += " + " + Ability1_Hotkey_Combo.Value;
+                                    }
                                 }
                             }
                             else if (j == 1)
@@ -1696,11 +1720,14 @@ namespace ValheimLegends
                                 {
                                     component.color = Color.white;
                                     iconText = Ability2_Hotkey.Value;
+                                    if (ValheimLegends.Ability2_Hotkey_Combo.Value != "")
+                                    {
+                                        iconText += " + " + Ability2_Hotkey_Combo.Value;
+                                    }
                                 }
                             }
                             else
                             {
-
                                 component.sprite = Ability3_Sprite;
                                 if (Player.m_localPlayer.GetSEMan().HaveStatusEffect("SE_VL_Ability3_CD"))
                                 {
@@ -1711,9 +1738,12 @@ namespace ValheimLegends
                                 {
                                     component.color = Color.white;
                                     iconText = Ability3_Hotkey.Value;
+                                    if (ValheimLegends.Ability3_Hotkey_Combo.Value != "")
+                                    {
+                                        iconText += " + " + Ability3_Hotkey_Combo.Value;
+                                    }
                                 }
                             }
-
 
                             //rectTransform2.GetComponentInChildren<Text>().text = Localization.instance.Localize((Ability1.Name).ToString());
                             Text component2 = rectTransform2.Find("TimeText").GetComponent<Text>();
@@ -1759,18 +1789,6 @@ namespace ValheimLegends
             }
         }
 
-        [HarmonyPatch(typeof(Player), "OnSpawned", null)]
-        public class SetLegendClass_Postfix
-        {
-            public static void Postfix(Player __instance)
-            {
-                if (vl_player == null || vl_player.vl_name != __instance.GetPlayerName())
-                {                    
-                    SetVLPlayer(__instance);
-                }
-            }
-        }
-
         [HarmonyPatch(typeof(Player), "UpdateDodge", null)]
         public class DodgePatch_Postfix
         {
@@ -1781,7 +1799,7 @@ namespace ValheimLegends
                     SE_Ranger se_r = (SE_Ranger)__instance.GetSEMan().GetStatusEffect("SE_VL_Ranger");
                     if(se_r != null)
                     {
-                        se_r.hitCount = 2f;
+                        se_r.hitCount = 3f;
                     }
                 }
             }
@@ -1807,6 +1825,159 @@ namespace ValheimLegends
             }
         }
 
+
+        [HarmonyPatch(typeof(OfferingBowl), "UseItem", null)]
+        public class OfferingForClass_Patch
+        {
+            public static bool Prefix(OfferingBowl __instance, Humanoid user, ItemDrop.ItemData item, Transform ___m_itemSpawnPoint, EffectList ___m_fuelAddedEffects, ref bool __result)
+            {
+                //ZLog.Log("offered item is " + item.m_shared.m_name + " to string " + item.ToString());
+                int num = user.GetInventory().CountItems(item.m_shared.m_name);
+                bool flag = false;
+                if (item.m_shared.m_name.Contains("item_greydwarfeye") && vl_player.vl_class != PlayerClass.Shaman)
+                {
+                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Shaman");
+                    vl_player.vl_class = PlayerClass.Shaman;
+                    flag = true;
+                }
+                else if (item.m_shared.m_name.Contains("item_meat_raw") && vl_player.vl_class != PlayerClass.Ranger)
+                {
+                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Ranger");
+                    vl_player.vl_class = PlayerClass.Ranger;
+                    flag = true;
+                }
+                else if (item.m_shared.m_name.Contains("item_coal") && vl_player.vl_class != PlayerClass.Mage)
+                {
+                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Mage");
+                    vl_player.vl_class = PlayerClass.Mage;
+                    flag = true;
+                }
+                else if (item.m_shared.m_name.Contains("item_flint") && vl_player.vl_class != PlayerClass.Valkyrie)
+                {
+                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Valkyrie");
+                    vl_player.vl_class = PlayerClass.Valkyrie;
+                    flag = true;
+                }
+                else if (item.m_shared.m_name.Contains("item_dandelion") && vl_player.vl_class != PlayerClass.Druid)
+                {
+                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Druid");
+                    vl_player.vl_class = PlayerClass.Druid;
+                    flag = true;
+                }
+                else if (item.m_shared.m_name.Contains("item_bonefragments") && vl_player.vl_class != PlayerClass.Berserker)
+                {
+                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Berserker");
+                    vl_player.vl_class = PlayerClass.Berserker;
+                    flag = true;
+                }
+                else if (item.m_shared.m_name.Contains("item_raspberries") && vl_player.vl_class != PlayerClass.Metavoker)
+                {
+                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Metavoker");
+                    vl_player.vl_class = PlayerClass.Metavoker;
+                    flag = true;
+                }
+                else if (item.m_shared.m_name.Contains("item_stone") && vl_player.vl_class != PlayerClass.Priest)
+                {
+                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Priest");
+                    vl_player.vl_class = PlayerClass.Priest;
+                    flag = true;
+                }
+                //else if (item.m_shared.m_name.Contains("item_trophy_skeleton") && vl_player.vl_class != PlayerClass.Necromancer)
+                //{
+                //    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Necromancer");
+                //    vl_player.vl_class = PlayerClass.Necromancer;
+                //    flag = true;
+                //}
+                else if (item.m_shared.m_name.Contains("item_wood") && vl_player.vl_class != PlayerClass.Monk)
+                {
+                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Monk");
+                    vl_player.vl_class = PlayerClass.Monk;
+                    flag = true;
+                }
+                else if (item.m_shared.m_name.Contains("item_thistle") && vl_player.vl_class != PlayerClass.Duelist)
+                {
+                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Duelist");
+                    vl_player.vl_class = PlayerClass.Duelist;
+                    flag = true;
+                }
+                else if (item.m_shared.m_name.Contains("item_resin") && vl_player.vl_class != PlayerClass.Enchanter)
+                {
+                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Enchanter");
+                    vl_player.vl_class = PlayerClass.Enchanter;
+                    flag = true;
+                }
+                else if (item.m_shared.m_name.Contains("item_honey") && vl_player.vl_class != PlayerClass.Rogue)
+                {
+                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Rogue");
+                    vl_player.vl_class = PlayerClass.Rogue;
+                    flag = true;
+                }
+                if (flag)
+                {
+                    user.GetInventory().RemoveItem(item.m_shared.m_name, 1);
+                    user.ShowRemovedMessage(item, 1);
+                    UpdateVLPlayer(Player.m_localPlayer);
+                    NameCooldowns();
+                    if ((bool)___m_itemSpawnPoint && ___m_fuelAddedEffects != null)
+                    {
+                        ___m_fuelAddedEffects.Create(___m_itemSpawnPoint.position, __instance.transform.rotation);
+                    }
+                    UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_GP_Activation"), user.GetCenterPoint(), Quaternion.identity);
+
+                    if (ValheimLegends.abilitiesStatus != null)
+                    {
+                        foreach (RectTransform ability in ValheimLegends.abilitiesStatus)
+                        {
+                            if (ability.gameObject != null)
+                            {
+                                UnityEngine.Object.Destroy(ability.gameObject);
+                            }
+                        }
+                        ValheimLegends.abilitiesStatus.Clear();
+                    }
+                    __result = true;
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        [HarmonyPatch(typeof(ZNet), "OnDestroy")]
+        public static class RemoveHud_Patch
+        {
+            public static bool Prefix()
+            {
+                if (abilitiesStatus != null)
+                {
+                    foreach (RectTransform ability in ValheimLegends.abilitiesStatus)
+                    {
+                        if (ability.gameObject != null)
+                        {
+                            UnityEngine.Object.Destroy(ability.gameObject);
+                        }
+                    }
+                    abilitiesStatus.Clear();
+                    abilitiesStatus = null;
+                }
+                //if (vl_player != null)
+                //{
+                //    vl_player = null;
+                //}
+                return true;
+            }
+        }
+
+        [HarmonyPatch(typeof(Player), "OnSpawned", null)]
+        public class SetLegendClass_Postfix
+        {
+            public static void Postfix(Player __instance)
+            {
+                //if (vl_player == null || vl_player.vl_name != __instance.GetPlayerName())
+                //{
+                    SetVLPlayer(__instance);
+                //}
+            }
+        }
 
         [HarmonyPatch(typeof(Player), "Update", null)]
         public class AbilityInput_Postfix
@@ -2325,13 +2496,162 @@ namespace ValheimLegends
             //vl_mce_skillGainMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "vl_mce_skillGainMultiplier", 1f, "Modifiers", "This value modifies the amount of skill experience gained after using an ability", false);
             vl_svr_skillGainMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_skillGainMultiplier", 1f, "This value modifies the amount of skill experience gained after using an ability");
             //vl_mce_cooldownMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "vl_mce_cooldownMultiplier", 1f, "Modifiers", "This value multiplied on overall cooldown time of abilities", false);
+            vl_svr_unarmedDamageMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_unarmedDamageMultiplier", 1f, "This value modifies unarmed damage increased by unarmed skill\nOnly use unarmed damage modifiers from a single mod");
+
+            vl_svr_berserkerDash = this.Config.Bind<float>("Class Modifiers", "vl_svr_berserkerDash", 1f, "Modifies the damage dealt by Dash"); 
+            vl_svr_berserkerBerserk = this.Config.Bind<float>("Class Modifiers", "vl_svr_berserkerBerserk", 1f, "Modifies the damage bonus from Berserk"); 
+            vl_svr_berserkerExecute = this.Config.Bind<float>("Class Modifiers", "vl_svr_berserkerExecute", 1f, "Modifies the damage bonus from Execute"); 
+            vl_svr_berserkerBonusDamage = this.Config.Bind<float>("Class Modifiers", "vl_svr_berserkerBonusDamage", 1f, "Modifies the damage Bonus gained from missing health"); 
+            vl_svr_berserkerBonus2h = this.Config.Bind<float>("Class Modifiers", "vl_svr_berserkerBonus2h", 1f, "Decreases the stamina cost when using 2h weapons"); 
+
+            vl_svr_druidVines = this.Config.Bind<float>("Class Modifiers", "vl_svr_druidVines", 1f, "Modifies the damage of Vines"); 
+            vl_svr_druidRegen = this.Config.Bind<float>("Class Modifiers", "vl_svr_druidRegen", 1f, "Modifies the amount healed by Regenerate"); 
+            vl_svr_druidDefenders = this.Config.Bind<float>("Class Modifiers", "vl_svr_druidDefenders", 1f, "Modifies the damage of summoned Defenders"); 
+            vl_svr_druidBonusSeeds = this.Config.Bind<float>("Class Modifiers", "vl_svr_druidBonusSeeds", 1f, "Modifies the stamina regeneration from consuming seeds"); 
+
+            vl_svr_duelistSeismicSlash = this.Config.Bind<float>("Class Modifiers", "vl_svr_duelistSeismicSlash", 1f, "Modifies the damage dealt by Seismic Slash"); 
+            vl_svr_duelistRiposte = this.Config.Bind<float>("Class Modifiers", "vl_svr_duelistRiposte", 1f, "Modifies the damage dealt by Riposte"); 
+            vl_svr_duelistHipShot = this.Config.Bind<float>("Class Modifiers", "vl_svr_duelistHipShot", 1f, "Modifies the damage dealt by Hip Shot"); 
+            vl_svr_duelistBonusParry = this.Config.Bind<float>("Class Modifiers", "vl_svr_duelistBonusParry", 1f, "Modifies the parry bonus"); 
+
+            vl_svr_enchanterWeaken = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterWeaken", 1f, "Modifies the power of Weaken"); 
+            vl_svr_enchanterCharm = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterCharm", 1f, "Modifies the duration of Charm"); 
+            vl_svr_enchanterBiome = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterBiome", 1f, "Modifies the duration of Biome buffs"); 
+            vl_svr_enchanterBiomeShock = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterBiomeShock", 1f, "Modifies the damage dealt by Biome Shock"); 
+            vl_svr_enchanterBonusElementalBlock = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterBonusElementalBlock", 1f, "Modifies the amount of stamina gained when blocking elemental damage"); 
+            vl_svr_enchanterBonusElementalTouch = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterBonusElementalTouch", 1f, "Modifies the damage of elemental attacks caused by elemental touch"); 
+
+            vl_svr_mageFireball = this.Config.Bind<float>("Class Modifiers", "vl_svr_mageFireball", 1f, "Modifies the damage and speed of Fireball"); 
+            vl_svr_mageFrostDagger = this.Config.Bind<float>("Class Modifiers", "vl_svr_mageFrostDagger", 1f, "Modifies the damage of Frost Daggers"); 
+            vl_svr_mageFrostNova = this.Config.Bind<float>("Class Modifiers", "vl_svr_mageFrostNova", 1f, "Modifies the damage of Frost Nova"); 
+            vl_svr_mageInferno = this.Config.Bind<float>("Class Modifiers", "vl_svr_mageInferno", 1f, "Modifies the damage of Inferno"); 
+            vl_svr_mageMeteor = this.Config.Bind<float>("Class Modifiers", "vl_svr_mageMeteor", 1f, "Modifies the damage of Meteors"); 
+
+            vl_svr_metavokerLight = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerLight", 1f, "Modifies the damage and force of Light"); 
+            vl_svr_metavokerReplica = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerReplica", 1f, "Modifies the damage dealt by Replicas"); 
+            vl_svr_metavokerWarpDamage = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerWarpDamage", 1f, "Modifies the damage dealt by excess Warp energy"); 
+            vl_svr_metavokerWarpDistance = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerWarpDistance", 1f, "Modifies the distance travelled when warping\n**WARNING: excessive warp distance can cause unpredictable results"); 
+            vl_svr_metavokerBonusSafeFallCost = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerBonusSafeFallCost", 1f, "Modifies the stamina cost of safe fall"); 
+            vl_svr_metavokerBonusForceWave = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerBonusForceWave", 1f, "Modifies the force and damage of Force Wall"); 
+
+            vl_svr_monkChiPunch = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkChiPunch", 1f, "Modifies the power of Chi Punch"); 
+            vl_svr_monkChiSlam = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkChiSlam", 1f, "Modifies the power of Chi Slam"); 
+            vl_svr_monkChiBlast = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkChiBlast", 1f, "Modifies the power of Chi Blast"); 
+            vl_svr_monkFlyingKick = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkFlyingKick", 1f, "Modifies the power of Flying Kick"); 
+            vl_svr_monkBonusBlock = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkBonusBlock", 1f, "Modifies the block bonus while unarmed");
+            vl_svr_monkSurge = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkSurge", 1f, "Modifies the health and stamina restored while Chi surging");
+
+            vl_svr_priestHeal = this.Config.Bind<float>("Class Modifiers", "vl_svr_priestHeal", 1f, "Modifies the power of Heal"); 
+            vl_svr_priestPurgeHeal = this.Config.Bind<float>("Class Modifiers", "vl_svr_priestPurgeHeal", 1f, "Modifies the healing amount of Purge"); 
+            vl_svr_priestPurgeDamage = this.Config.Bind<float>("Class Modifiers", "vl_svr_priestPurgeDamage", 1f, "Modifies the damage amount of Purge"); 
+            vl_svr_priestSanctify = this.Config.Bind<float>("Class Modifiers", "vl_svr_priestSanctify", 1f, "Modifies the power of Sanctify"); 
+            vl_svr_priestBonusDyingLightCooldown = this.Config.Bind<float>("Class Modifiers", "vl_svr_priestBonusDyingLightCooldown", 1f, "Modifies the cooldown of Dying Light"); 
+
+            vl_svr_rangerPowerShot = this.Config.Bind<float>("Class Modifiers", "vl_svr_rangerPowerShot", 1f, "Modifies the damage bonus of Power Shot"); 
+            vl_svr_rangerShadowWolf = this.Config.Bind<float>("Class Modifiers", "vl_svr_rangerShadowWolf", 1f, "Modifies the damage of Shadow Wolves"); 
+            vl_svr_rangerShadowStalk = this.Config.Bind<float>("Class Modifiers", "vl_svr_rangerShadowStalk", 1f, "Modifies the movement speed from Shadow Stalk"); 
+            vl_svr_rangerBonusPoisonResistance = this.Config.Bind<float>("Class Modifiers", "vl_svr_rangerBonusPoisonResistance", 1f, "Modifies the bonus from Poison Resitance"); 
+            vl_svr_rangerBonusRunCost = this.Config.Bind<float>("Class Modifiers", "vl_svr_rangerBonusRunCost", 1f, "Modifies the bonus stamina reduction while running"); 
+
+            vl_svr_rogueBackstab = this.Config.Bind<float>("Class Modifiers", "vl_svr_rogueBackstab", 1f, "Modifies the damage of Backstab"); 
+            vl_svr_rogueFadeCooldown = this.Config.Bind<float>("Class Modifiers", "vl_svr_rogueFadeCooldown", 1f, "Modifies the cooldown of Fade"); 
+            vl_svr_roguePoisonBomb = this.Config.Bind<float>("Class Modifiers", "vl_svr_roguePoisonBomb", 1f, "Modifies the damage dealt by Poison Bomb"); 
+            vl_svr_rogueBonusThrowingDagger = this.Config.Bind<float>("Class Modifiers", "vl_svr_rogueBonusThrowingDagger", 1f, "Modifies the damage dealt by Throwing knives"); 
+
+            vl_svr_shamanSpiritShock = this.Config.Bind<float>("Class Modifiers", "vl_svr_shamanSpiritShock", 1f, "Modifies the power of Spirit Shock"); 
+            vl_svr_shamanEnrage = this.Config.Bind<float>("Class Modifiers", "vl_svr_shamanEnrage", 1f, "Modifies the stamina regeneration from Enrage"); 
+            vl_svr_shamanShell = this.Config.Bind<float>("Class Modifiers", "vl_svr_shamanShell", 1f, "Modifies the elemental protection applied by Shell"); 
+            vl_svr_shamanBonusSpiritGuide = this.Config.Bind<float>("Class Modifiers", "vl_svr_shamanBonusSpiritGuide", 1f, "Modifies the amount of stamina gained from Spirit Guide"); 
+            vl_svr_shamanBonusWaterGlideCost = this.Config.Bind<float>("Class Modifiers", "vl_svr_shamanBonusWaterGlideCost", 1f, "Modifies the stamina cost to Water Glide"); 
+
+            vl_svr_valkyrieLeap = this.Config.Bind<float>("Class Modifiers", "vl_svr_valkyrieLeap", 1f, "Modifies the damage of Leap"); 
+            vl_svr_valkyrieStaggerCooldown = this.Config.Bind<float>("Class Modifiers", "vl_svr_valkyrieStaggerCooldown", 1f, "Modifies the cooldown of Stagger"); 
+            vl_svr_valkyrieBulwark = this.Config.Bind<float>("Class Modifiers", "vl_svr_valkyrieBulwark", 1f, "Modifies the damage reduction of Bulwark"); 
+            vl_svr_valkyrieBonusChillWave = this.Config.Bind<float>("Class Modifiers", "vl_svr_valkyrieBonusChillWave", 1f, "Modifies the damage from Chill Wave"); 
+            vl_svr_valkyrieBonusIceLance = this.Config.Bind<float>("Class Modifiers", "vl_svr_valkyrieBonusIceLance", 1f, "Modifies the damage from Ice Lance"); 
 
             VL_GlobalConfigs.ConfigStrings = new Dictionary<string, float>();
             VL_GlobalConfigs.ConfigStrings.Clear();
+            //Global
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_energyCostMultiplier", vl_svr_energyCostMultiplier.Value);
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_cooldownMultiplier", vl_svr_cooldownMultiplier.Value);
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_abilityDamageMultiplier", vl_svr_abilityDamageMultiplier.Value);
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_skillGainMultiplier", vl_svr_skillGainMultiplier.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_unarmedDamageMultiplier", vl_svr_unarmedDamageMultiplier.Value);
+            //Class
+
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_berserkerDash", vl_svr_berserkerDash.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_berserkerBerserk", vl_svr_berserkerBerserk.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_berserkerExecute", vl_svr_berserkerExecute.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_berserkerBonusDamage", vl_svr_berserkerBonusDamage.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_berserkerBonus2h", vl_svr_berserkerBonus2h.Value);
+
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_druidVines", vl_svr_druidVines.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_druidRegen", vl_svr_druidRegen.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_druidDefenders", vl_svr_druidDefenders.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_druidBonusSeeds", vl_svr_druidBonusSeeds.Value);
+
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_duelistSeismicSlash", vl_svr_duelistSeismicSlash.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_duelistRiposte", vl_svr_duelistRiposte.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_duelistHipShot", vl_svr_duelistHipShot.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_duelistBonusParry", vl_svr_duelistBonusParry.Value);
+
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_enchanterWeaken", vl_svr_enchanterWeaken.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_enchanterCharm", vl_svr_enchanterCharm.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_enchanterBiome", vl_svr_enchanterBiome.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_enchanterBiomeShock", vl_svr_enchanterBiomeShock.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_enchanterBonusElementalBlock", vl_svr_enchanterBonusElementalBlock.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_enchanterBonusElementalTouch", vl_svr_enchanterBonusElementalTouch.Value);
+
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_mageFireball", vl_svr_mageFireball.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_mageFrostDagger", vl_svr_mageFrostDagger.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_mageFrostNova", vl_svr_mageFrostNova.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_mageInferno", vl_svr_mageInferno.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_mageMeteor", vl_svr_mageMeteor.Value);
+
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_meteavokerLight", vl_svr_metavokerLight.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_metavokerReplica", vl_svr_metavokerReplica.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_metavokerWarpDamage", vl_svr_metavokerWarpDamage.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_metavokerWarpDistance", vl_svr_metavokerWarpDistance.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_metavokerBonusSafeFallCost", vl_svr_metavokerBonusSafeFallCost.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_metavokerBonusForceWave", vl_svr_metavokerBonusForceWave.Value);
+
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_monkChiPunch", vl_svr_monkChiPunch.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_monkChiSlam", vl_svr_monkChiSlam.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_monkChiBlast", vl_svr_monkChiBlast.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_monkFlyingKick", vl_svr_monkFlyingKick.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_monkBonusBlock", vl_svr_monkBonusBlock.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_monkSurge", vl_svr_monkSurge.Value);
+
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_priestHeal", vl_svr_priestHeal.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_priestPurgeHeal", vl_svr_priestPurgeHeal.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_priestPurgeDamage", vl_svr_priestPurgeDamage.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_priestSanctify", vl_svr_priestSanctify.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_priestBonusDyingLightCooldown", vl_svr_priestBonusDyingLightCooldown.Value);
+
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_rangerPowerShot", vl_svr_rangerPowerShot.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_rangerShadowWolf", vl_svr_rangerShadowWolf.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_rangerShadowStalk", vl_svr_rangerShadowStalk.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_rangerBonusPoisonResistance", vl_svr_rangerBonusPoisonResistance.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_rangerBonusRunCost", vl_svr_rangerBonusRunCost.Value);
+
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_rogueBackstab", vl_svr_rogueBackstab.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_rogueFadeCooldown", vl_svr_rogueFadeCooldown.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_roguePoisonBomb", vl_svr_roguePoisonBomb.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_rogueBonusThrowingDagger", vl_svr_rogueBonusThrowingDagger.Value);
+
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_shamanSpiritShock", vl_svr_shamanSpiritShock.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_shamanEnrage", vl_svr_shamanEnrage.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_shamanShell", vl_svr_shamanShell.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_shamanBonusSpiritGuide", vl_svr_shamanBonusSpiritGuide.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_shamanBonusWaterGlideCost", vl_svr_shamanBonusWaterGlideCost.Value);
+
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_valkyrieLeap", vl_svr_valkyrieLeap.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_valkyrieStaggerCooldown", vl_svr_valkyrieStaggerCooldown.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_valkyrieBulwark", vl_svr_valkyrieBulwark.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_valkyrieBonusChillWave", vl_svr_valkyrieBonusChillWave.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_valkyrieBonusIceLance", vl_svr_valkyrieBonusIceLance.Value);
+
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_enforceConfigClass", vl_svr_enforceConfigClass.Value ? 1f : 0f);
             //VL_GlobalConfigs.ConfigStrings.Add("vl_svr_version", Version);
 
@@ -2644,6 +2964,7 @@ namespace ValheimLegends
         //Custom prefabs
         private static GameObject VL_Deathsquit;
         private static GameObject VL_ShadowWolf;
+        private static GameObject VL_DemonWolf;
         private static GameObject VL_Light;
         private static GameObject VL_SanctifyHammer;
         private static GameObject VL_PoisonBomb;
@@ -2653,6 +2974,7 @@ namespace ValheimLegends
         private static GameObject VL_Charm;
         private static GameObject VL_FrostDagger;
         private static GameObject VL_ValkyrieSpear;
+        private static GameObject VL_ShadowWolfAttack;
 
         private static GameObject fx_VL_Lightburst;
         private static GameObject fx_VL_ParticleLightburst;
@@ -2690,6 +3012,7 @@ namespace ValheimLegends
             var assetBundle = GetAssetBundleFromResources("vl_assetbundle");
             VL_Deathsquit = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_Deathsquit.prefab");
             VL_ShadowWolf = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_ShadowWolf.prefab");
+            VL_DemonWolf = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_DemonWolf.prefab");
             VL_Light = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_Light.prefab");
             VL_SanctifyHammer = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_SanctifyHammer.prefab");
             VL_PoisonBomb = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_PoisonBomb.prefab");
@@ -2699,6 +3022,7 @@ namespace ValheimLegends
             VL_Charm = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_Charm.prefab");
             VL_FrostDagger = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_FrostDagger.prefab");
             VL_ValkyrieSpear = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_ValkyrieSpear.prefab");
+            VL_ShadowWolfAttack = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/VL_ShadowWolfAttack.prefab");
 
             fx_VL_Lightburst = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_Lightburst.prefab");
             fx_VL_ParticleLightburst = assetBundle.LoadAsset<GameObject>("Assets/CustomAssets/fx_VL_ParticleLightburst.prefab");
@@ -2766,6 +3090,12 @@ namespace ValheimLegends
                     Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
                     m_itemsByHash[VL_ShadowWolf.name.GetStableHashCode()] = VL_ShadowWolf;
                 }
+                if (ObjectDB.instance.GetItemPrefab(VL_DemonWolf.name.GetStableHashCode()) == null)
+                {
+                    ObjectDB.instance.m_items.Add(VL_DemonWolf);
+                    Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
+                    m_itemsByHash[VL_DemonWolf.name.GetStableHashCode()] = VL_DemonWolf;
+                }
                 if (ObjectDB.instance.GetItemPrefab(VL_Light.name.GetStableHashCode()) == null)
                 {
                     ObjectDB.instance.m_items.Add(VL_Light);
@@ -2813,6 +3143,12 @@ namespace ValheimLegends
                     ObjectDB.instance.m_items.Add(VL_ValkyrieSpear);
                     Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
                     m_itemsByHash[VL_ValkyrieSpear.name.GetStableHashCode()] = VL_ValkyrieSpear;
+                }
+                if (ObjectDB.instance.GetItemPrefab(VL_ShadowWolfAttack.name.GetStableHashCode()) == null)
+                {
+                    ObjectDB.instance.m_items.Add(VL_ShadowWolfAttack);
+                    Dictionary<int, GameObject> m_itemsByHash = (Dictionary<int, GameObject>)typeof(ObjectDB).GetField("m_itemByHash", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(ObjectDB.instance);
+                    m_itemsByHash[VL_ShadowWolfAttack.name.GetStableHashCode()] = VL_ShadowWolfAttack;
                 }
 
 
@@ -3005,6 +3341,7 @@ namespace ValheimLegends
 
                 __instance.m_prefabs.Add(VL_Deathsquit);
                 __instance.m_prefabs.Add(VL_ShadowWolf);
+                __instance.m_prefabs.Add(VL_DemonWolf);
                 __instance.m_prefabs.Add(VL_Light);
                 __instance.m_prefabs.Add(VL_PoisonBomb);
                 __instance.m_prefabs.Add(VL_PoisonBombExplosion);
@@ -3014,6 +3351,7 @@ namespace ValheimLegends
                 __instance.m_prefabs.Add(VL_Charm);
                 __instance.m_prefabs.Add(VL_FrostDagger);
                 __instance.m_prefabs.Add(VL_ValkyrieSpear);
+                __instance.m_prefabs.Add(VL_ShadowWolfAttack);
 
                 __instance.m_prefabs.Add(fx_VL_Lightburst);
                 __instance.m_prefabs.Add(fx_VL_ParticleLightburst);

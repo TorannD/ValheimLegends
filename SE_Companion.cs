@@ -50,9 +50,11 @@ namespace ValheimLegends
         {
             if(m_ttl > 0f && m_time > m_ttl)
             {
+                ZLog.Log("killing " + m_character.m_name);
                 HitData hit = new HitData();
                 hit.m_damage.m_spirit = 99999f;
                 base.m_character.ApplyDamage(hit, true, true, HitData.DamageModifier.VeryWeak);
+
             }
             return base.IsDone();
         }

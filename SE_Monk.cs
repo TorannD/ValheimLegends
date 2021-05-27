@@ -18,6 +18,9 @@ namespace ValheimLegends
         public int hitCount = 0;
         private float m_interval = 12f;
         private int maxHitCount = 5;
+        public bool surging = false;
+        private float m_SurgeTimer = 1f;
+        private float m_SurgeInterval = 1f;
 
         public SE_Monk()
         {
@@ -30,7 +33,11 @@ namespace ValheimLegends
 
         public override void ModifySpeed(ref float speed)
         {
-
+            if(surging)
+            {
+                float sLevel = m_character.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
+                speed *= 1.2f + (.003f * sLevel);
+            }
             base.ModifySpeed(ref speed);
         }
 
@@ -43,6 +50,21 @@ namespace ValheimLegends
                 m_timer = m_interval;
                 hitCount--;
                 hitCount = Mathf.Clamp(hitCount, 0, maxHitCount);
+            }
+            m_SurgeTimer -= dt;
+            if(surging && m_SurgeTimer <= 0)
+            {
+                hitCount--;
+                m_SurgeTimer = m_SurgeInterval;
+                float sLevel = m_character.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
+                m_character.Heal(.2f * sLevel * VL_GlobalConfigs.c_monkSurge);
+                m_character.AddStamina(.4f * sLevel * VL_GlobalConfigs.c_monkSurge);
+                if(hitCount <= 0)
+                {
+                    hitCount = 0;
+                    surging = false;
+                    m_SurgeTimer = m_SurgeInterval;
+                }
             }
             m_ttl = hitCount;
             m_time = 0;

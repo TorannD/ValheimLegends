@@ -28,24 +28,24 @@ namespace ValheimLegends
             m_ttl = m_baseTTL;
         }
 
-        public override void ModifySpeed(ref float speed)
-        {
-            if(hitCount > 0)
-            {
-                speed *= 2f;
-            }
-            base.ModifySpeed(ref speed);
-        }
+        //public override void ModifySpeed(ref float speed)
+        //{
+        //    if(hitCount > 0)
+        //    {
+        //        speed *= 2f;
+        //    }
+        //    base.ModifySpeed(ref speed);
+        //}
 
         public override void OnDamaged(HitData hit, Character attacker)
         {
-            hit.m_damage.m_poison *= .75f;
+            hit.m_damage.m_poison *= .75f * VL_GlobalConfigs.c_rangerBonusPoisonResistance;
             base.OnDamaged(hit, attacker);
         }
 
         public override void ModifyRunStaminaDrain(float baseDrain, ref float drain)
         {
-            drain *= .75f;
+            drain *= .75f * VL_GlobalConfigs.c_rangerBonusRunCost;
             base.ModifyRunStaminaDrain(baseDrain, ref drain);
         }
 

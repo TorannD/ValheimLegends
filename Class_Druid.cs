@@ -13,7 +13,7 @@ namespace ValheimLegends
 {
     public class Class_Druid
     {
-        private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "character");        
+        private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "character", "character_net", "character_ghost");        
 
         private static GameObject GO_CastFX;
 
@@ -115,7 +115,7 @@ namespace ValheimLegends
                         Vector3 position = player.transform.position;
                         Vector3 target = (!Physics.Raycast(player.GetEyePoint(), player.GetLookDir(), out hitInfo, float.PositiveInfinity, Script_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
                         HitData hitData = new HitData();
-                        hitData.m_damage.m_pierce = UnityEngine.Random.Range(10f + (.6f * sLevel), 15 + (1.2f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                        hitData.m_damage.m_pierce = UnityEngine.Random.Range(10f + (.6f * sLevel), 15 + (1.2f * sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_druidVines;
                         hitData.m_pushForce = 2f;
                         Vector3 a = Vector3.MoveTowards(GO_Root.transform.position, target, 1f);
                         if (P_Root != null && P_Root.name == "Root")
@@ -163,6 +163,7 @@ namespace ValheimLegends
                     HitData hitData = new HitData();
                     hitData.m_damage.m_pierce = 10f;
                     hitData.m_pushForce = 10f;
+                    hitData.SetAttacker(player);
                     Vector3 a = Vector3.MoveTowards(GO_Root.transform.position, target, 1f);
                     P_Root.Setup(player, (a - GO_Root.transform.position) * 65f, -1f, hitData, null);
                     Traverse.Create(root: P_Root).Field("m_skill").SetValue(ValheimLegends.ConjurationSkill);
@@ -230,7 +231,7 @@ namespace ValheimLegends
                             {
                                 SE_RootsBuff se_RootsBuff = (SE_RootsBuff)ScriptableObject.CreateInstance(typeof(SE_RootsBuff));
                                 se_RootsBuff.m_ttl = SE_RootsBuff.m_baseTTL;
-                                se_RootsBuff.damageModifier = .5f + (.015f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
+                                se_RootsBuff.damageModifier = .5f + (.015f * sLevel) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_druidDefenders;
                                 se_RootsBuff.staminaRegen = .5f + (.05f * sLevel);
                                 se_RootsBuff.summoner = player;
                                 se_RootsBuff.centerPoint = player.transform.position;
@@ -267,7 +268,7 @@ namespace ValheimLegends
                             {
                                 SE_Companion se_companion = (SE_Companion)ScriptableObject.CreateInstance(typeof(SE_Companion));
                                 se_companion.m_ttl = 60f;
-                                se_companion.damageModifier = .05f + (.0075f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
+                                se_companion.damageModifier = .05f + (.0075f * sLevel) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_druidDefenders;
                                 se_companion.summoner = player;
                                 ch2.GetSEMan().AddStatusEffect(se_companion);
 
@@ -326,22 +327,29 @@ namespace ValheimLegends
                         SE_Regeneration se_regen = (SE_Regeneration)ScriptableObject.CreateInstance(typeof(SE_Regeneration));
                         se_regen.m_ttl = SE_Regeneration.m_baseTTL;
                         se_regen.m_icon = ZNetScene.instance.GetPrefab("TrophyGreydwarfShaman").GetComponent<ItemDrop>().m_itemData.GetIcon();
-                        se_regen.m_HealAmount = .5f + (.4f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
+                        se_regen.m_HealAmount = .5f + (.4f * sLevel) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_druidRegen;
                         se_regen.doOnce = false;
 
                         //Apply effects
-                        List<Player> allPlayers = new List<Player>();
+                        List<Character> allPlayers = new List<Character>();
                         allPlayers.Clear();
-                        Player.GetPlayersInRange(player.GetCenterPoint(), 30f + (.2f * sLevel), allPlayers);
-                        foreach (Player p in allPlayers)
+                        Character.GetCharactersInRange(player.GetCenterPoint(), 30f + (.2f * sLevel), allPlayers);
+                        foreach (Character p in allPlayers)
                         {
-                            if(p == Player.m_localPlayer)
+                            if(!BaseAI.IsEnemy(player, p))
                             {
-                                p.GetSEMan().AddStatusEffect(se_regen, true);
-                            }
-                            else
-                            {
-                                p.GetSEMan().AddStatusEffect(se_regen.name, true);
+                                if (p == Player.m_localPlayer)
+                                {
+                                    p.GetSEMan().AddStatusEffect(se_regen, true);
+                                }
+                                else if (p.IsPlayer())
+                                {
+                                    p.GetSEMan().AddStatusEffect(se_regen.name, true);
+                                }
+                                else
+                                {
+                                    p.GetSEMan().AddStatusEffect(se_regen, true);
+                                }
                             }
                         }
 

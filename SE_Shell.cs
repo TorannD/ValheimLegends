@@ -36,8 +36,8 @@ namespace ValheimLegends
                 //ZLog.Log("setting up shell, level is " + m_character.GetLevel());
                 float sLevel = m_character.GetSkills().GetTotalSkill() / (float)m_character.GetSkills().GetSkillList().Count;
                 m_ttl = m_baseTTL + (.3f * sLevel);
-                spiritDamageOffset = (6f + (.3f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
-                resistModifier = .6f - (.006f * sLevel);
+                spiritDamageOffset = (6f + (.3f * sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_shamanShell;
+                resistModifier = (.6f - (.006f * sLevel)) * VL_GlobalConfigs.c_shamanShell;
             }
             base.UpdateStatusEffect(dt);
         }

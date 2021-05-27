@@ -28,7 +28,7 @@ namespace ValheimLegends
         public override void OnDamaged(HitData hit, Character attacker)
         {
             float modifier = .75f - (m_character.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.AbjurationSkillDef).m_level / 200f);
-            hit.m_damage.Modify(modifier);
+            hit.m_damage.Modify(modifier * VL_GlobalConfigs.c_valkyrieBulwark);
             base.OnDamaged(hit, attacker);
         }
 

@@ -14,7 +14,7 @@ namespace ValheimLegends
 {
     public class Class_Duelist
     {
-        private static int ScriptChar_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "character");
+        private static int ScriptChar_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "character", "character_net", "character_ghost");
 
         private static GameObject GO_CastFX;
 
@@ -27,7 +27,7 @@ namespace ValheimLegends
 
             //Skill influence
             float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
-            float sDamageMultiplier = .6f + (sLevel * .006f) * VL_GlobalConfigs.g_DamageModifer;
+            float sDamageMultiplier = .6f + (sLevel * .006f) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_duelistSeismicSlash;
 
             //Apply effects                        
             Vector3 center = player.GetEyePoint() + player.GetLookDir() * 6f;
@@ -169,7 +169,8 @@ namespace ValheimLegends
                         P_QuickShot.m_spawnOnHit = null;
                         P_QuickShot.m_ttl = 10f;
                         P_QuickShot.m_gravity = 1.2f;
-                        P_QuickShot.m_rayRadius = .05f;                       
+                        P_QuickShot.m_rayRadius = .05f;
+                        P_QuickShot.m_hitNoise = 20;
                         P_QuickShot.transform.localRotation = Quaternion.LookRotation(player.GetAimDir(vector));
                         GO_QuickShot.transform.localScale = new Vector3(.6f, .6f, .6f);
 
@@ -177,7 +178,7 @@ namespace ValheimLegends
                         //Vector3 position = player.transform.position;
                         Vector3 target = (!Physics.Raycast(player.GetEyePoint(), player.GetLookDir(), out hitInfo, float.PositiveInfinity, ScriptChar_Layermask) || !(bool)hitInfo.collider) ? (player.GetEyePoint() + player.GetLookDir() * 1000f) : hitInfo.point;
                         HitData hitData = new HitData();
-                        hitData.m_damage.m_pierce = UnityEngine.Random.Range(5f + (1f *sLevel), 30f + (1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                        hitData.m_damage.m_pierce = UnityEngine.Random.Range(5f + (1f *sLevel), 30f + (1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_duelistHipShot;
                         hitData.m_pushForce = 1f;
                         hitData.m_skill = ValheimLegends.DisciplineSkill;
                         Vector3 a = Vector3.MoveTowards(vector, target, 1f);

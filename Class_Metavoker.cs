@@ -13,8 +13,8 @@ namespace ValheimLegends
 {
     public class Class_Metavoker
     {
-        private static int Warp_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "Water", "character");
-        private static int Light_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "character");
+        private static int Warp_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "Water", "character", "character_net", "character_ghost");
+        private static int Light_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "character", "character_net", "character_ghost");
         private static int SafeFall_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "Water");
 
         private static GameObject GO_CastFX;
@@ -71,6 +71,7 @@ namespace ValheimLegends
                                 //Vector3 target = (!Physics.Raycast(vector, player.GetLookDir(), out hitInfo, float.PositiveInfinity, ScriptChar_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
                                 HitData hitData = new HitData();
                                 hitData.m_damage = proj.m_damage;
+                                hitData.SetAttacker(player);
                                 hitData.m_skill = ValheimLegends.EvocationSkill;
                                 //Vector3 a = Vector3.MoveTowards(GO_DupeProj.transform.position, target, 1f);
                                 P_DupeProj.Setup(player, proj.GetVelocity() * -1f, -1f, hitData, null);
@@ -93,21 +94,24 @@ namespace ValheimLegends
                         {
                             float mass = chBody.mass;
                             //ZLog.Log("" + ch.m_name + " vector from player: " + direction + " distance from player " + distanceFromPlayer + " mass " + mass);
-                            mass *= .02f;
+                            if(UnityEngine.Random.value * (1f - (mass / 100f)) > .5f)
+                            {
+                                ch.Stagger(direction);
+                            }
+                            mass *= .02f;                            
                             
-                            ch.Stagger(direction);
-                            Vector3 vel = direction * ((15f - distanceFromPlayer) / mass) + new Vector3(0f, 3f / mass, 0f);
+                            Vector3 vel = direction * ((15f - distanceFromPlayer) / mass) + new Vector3(0f, Mathf.Clamp(3f / mass, 1f, 5f), 0f);
+                            vel *= VL_GlobalConfigs.c_metavokerBonusForceWave;
                             //ZLog.Log("" + ch.m_name + " pushed " + vel);
 
                             Traverse.Create(root: ch).Field(name: "m_pushForce").SetValue(vel);
                             HitData hitData = new HitData();
-                            hitData.m_damage.m_damage = distanceFromPlayer * UnityEngine.Random.Range(.75f, 1.25f) * (1f + (.02f * sLevel));
+                            hitData.m_damage.m_damage = distanceFromPlayer * UnityEngine.Random.Range(.75f, 1.25f) * (1f + (.02f * sLevel)) * VL_GlobalConfigs.c_metavokerBonusForceWave;
                             hitData.m_point = ch.GetEyePoint();
                             hitData.m_dir = direction;
                             hitData.m_skill = ValheimLegends.EvocationSkill;
                             ch.Damage(hitData);
-                        }
-                            
+                        }                            
                     }
                 }
             }
@@ -171,7 +175,7 @@ namespace ValheimLegends
                         }
                         if (flag)
                         {
-                            player.UseStamina(.6f);
+                            player.UseStamina(.6f * VL_GlobalConfigs.c_metavokerBonusSafeFallCost);
                             //ZSyncAnimation zanim = Traverse.Create(root: player).Field(name: "m_zanim").GetValue<ZSyncAnimation>();
                             //Animator anim = Traverse.Create(root: player).Field(name: "m_animator").GetValue<Animator>();
                             RaycastHit hitInfo = default(RaycastHit);
@@ -278,7 +282,7 @@ namespace ValheimLegends
             {
                 //player.Message(MessageHud.MessageType.Center, "root - deactivate");
                 float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.EvocationSkillDef).m_level;
-                warpDistance = warpDistance * (1f + (.01f * sLevel));
+                warpDistance = warpDistance * (1f + (.01f * sLevel)) * VL_GlobalConfigs.c_metavokerWarpDistance;
                 //ZLog.Log("triggering warp with  distance of " + warpDistance);
                 ValheimLegends.isChanneling = false;
                 RaycastHit hitInfo = default(RaycastHit);
@@ -321,7 +325,7 @@ namespace ValheimLegends
                         {
                             Vector3 direction = (ch.transform.position - player.transform.position);
                             HitData hitData = new HitData();
-                            hitData.m_damage.m_lightning = UnityEngine.Random.Range(flagDamage * (sLevel/15f), flagDamage * (sLevel/10f)) * VL_GlobalConfigs.g_DamageModifer;
+                            hitData.m_damage.m_lightning = UnityEngine.Random.Range(flagDamage * (sLevel/15f), flagDamage * (sLevel/10f)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_metavokerWarpDamage;
                             hitData.m_pushForce = (flagDamage + sLevel) * .1f;
                             hitData.m_point = ch.GetEyePoint();
                             hitData.m_dir = (ch.transform.position - player.transform.position);
@@ -410,8 +414,10 @@ namespace ValheimLegends
                                 GameObject original = ZNetScene.instance.GetPrefab(name);
                                 if (original != null)
                                 {
-                                    original.AddComponent<CharacterTimedDestruction>();
-                                    original.GetComponent<CharacterTimedDestruction>().m_triggerOnAwake = true;
+                                    if (original.GetComponent<CharacterTimedDestruction>() == null)
+                                    {
+                                        original.AddComponent<CharacterTimedDestruction>();
+                                    }
                                     original.GetComponent<CharacterTimedDestruction>().m_timeoutMin = 8f + (.2f * sLevel);
                                     original.GetComponent<CharacterTimedDestruction>().m_timeoutMax = 8f + (.2f * sLevel); 
                                     Vector3 rootVec = ch.transform.position;
@@ -420,11 +426,9 @@ namespace ValheimLegends
                                     CharacterTimedDestruction td = replica.GetComponent<CharacterTimedDestruction>();
                                     if (td != null)
                                     {
-                                        //ZLog.Log("td valid: " + td.isActiveAndEnabled + " timeout min " + td.m_timeoutMin + " timeout max " + td.m_timeoutMax);
-                                        td.enabled = true;                                        
+                                        //ZLog.Log("td valid: " + td.isActiveAndEnabled + " timeout min " + td.m_timeoutMin + " timeout max " + td.m_timeoutMax);                                      
                                         td.m_timeoutMin = 8f + (.2f * sLevel);
                                         td.m_timeoutMax = td.m_timeoutMin;
-                                        td.m_triggerOnAwake = true;
                                         td.Trigger();
                                     }
                                     Character repCh = replica.GetComponent<Character>();
@@ -432,7 +436,7 @@ namespace ValheimLegends
                                     repCh.transform.localScale = (0.8f) * Vector3.one;
                                     SE_Companion se_companion = (SE_Companion)ScriptableObject.CreateInstance(typeof(SE_Companion));
                                     se_companion.m_ttl = 8f + (.2f * sLevel);
-                                    se_companion.damageModifier = .05f + (.0075f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
+                                    se_companion.damageModifier = .05f + (.0075f * sLevel) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_metavokerReplica;
                                     se_companion.summoner = player;
                                     repCh.GetSEMan().AddStatusEffect(se_companion);
                                     repCh.m_faction = Character.Faction.Players;
@@ -505,9 +509,10 @@ namespace ValheimLegends
                     RaycastHit hitInfo = default(RaycastHit);
                     Vector3 position = player.transform.position;
                     Vector3 target = (!Physics.Raycast(player.GetEyePoint(), player.GetLookDir(), out hitInfo, float.PositiveInfinity, Light_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
-                    hitData.m_damage.m_lightning = UnityEngine.Random.Range(5f + (.3f * sLevel), 10f + (.6f*sLevel)) * VL_GlobalConfigs.g_DamageModifer;
-                    hitData.m_damage.m_pierce = UnityEngine.Random.Range(5f + (.3f * sLevel), 10f + (.6f*sLevel)) * VL_GlobalConfigs.g_DamageModifer;
-                    hitData.m_pushForce = 100f + 2*sLevel;                    
+                    hitData.m_damage.m_lightning = UnityEngine.Random.Range(5f + (.3f * sLevel), 10f + (.6f*sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_meteavokerLight;
+                    hitData.m_damage.m_pierce = UnityEngine.Random.Range(5f + (.3f * sLevel), 10f + (.6f*sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_meteavokerLight;
+                    hitData.m_pushForce = (100f + 2*sLevel) * VL_GlobalConfigs.c_meteavokerLight;
+                    hitData.SetAttacker(player);
                     Vector3 a = Vector3.MoveTowards(GO_LL.transform.position, target, 1f);
                     P_LL.Setup(player, (a - GO_LL.transform.position) * 80f, -1f, hitData, null);
                     Traverse.Create(root: P_LL).Field("m_skill").SetValue(ValheimLegends.IllusionSkill);

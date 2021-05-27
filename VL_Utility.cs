@@ -16,6 +16,7 @@ namespace ValheimLegends
         //shared
         public static string ModID;
         public static string Folder;
+        private static int m_interactMask = LayerMask.GetMask("item", "piece", "piece_nonsolid", "Default", "static_solid", "Default_small", "character", "character_net", "terrain", "vehicle");
 
         public static string GetModDataPath(this PlayerProfile profile)
         {
@@ -39,10 +40,20 @@ namespace ValheimLegends
 
         public static Texture2D LoadTextureFromAssets(string path)
         {
-            byte[] data = File.ReadAllBytes(Path.Combine(Folder, "VLAssets", path));
-            Texture2D texture2D = new Texture2D(1, 1);
-            texture2D.LoadImage(data);
-            return texture2D;
+            try
+            {
+                byte[] data = File.ReadAllBytes(Path.Combine(Folder, "VLAssets", path));
+                Texture2D texture2D = new Texture2D(1, 1);
+                texture2D.LoadImage(data);
+                return texture2D;
+            }
+            catch
+            {
+                byte[] data = File.ReadAllBytes(Path.Combine(Folder, path));
+                Texture2D texture2D = new Texture2D(1, 1);
+                texture2D.LoadImage(data);
+                return texture2D;
+            }
         }
 
         public static bool TakeInput(Player p)
@@ -101,6 +112,52 @@ namespace ValheimLegends
             p.transform.rotation = Quaternion.LookRotation(lookVec);
         }
 
+        public static void FindCrosshairObject(Player p, Vector3 originEyePoint, float maxDistance, out GameObject hover, out Character hoverCreature)
+        {
+            hover = null;
+            hoverCreature = null;
+            RaycastHit[] array = Physics.RaycastAll(GameCamera.instance.transform.position, GameCamera.instance.transform.forward, 50f, m_interactMask);
+            Array.Sort(array, (RaycastHit x, RaycastHit y) => x.distance.CompareTo(y.distance));
+            RaycastHit[] array2 = array;
+            int num = 0;
+            RaycastHit raycastHit;
+            while (true)
+            {
+                if (num >= array2.Length)
+                {
+                    return;
+                }
+                raycastHit = array2[num];
+                if (!(bool)raycastHit.collider.attachedRigidbody || !(raycastHit.collider.attachedRigidbody.gameObject == p.gameObject))
+                {
+                    break;
+                }
+                num++;
+            }
+            if (hoverCreature == null)
+            {
+                Character character = ((bool)raycastHit.collider.attachedRigidbody) ? raycastHit.collider.attachedRigidbody.GetComponent<Character>() : raycastHit.collider.GetComponent<Character>();
+                if (character != null)
+                {
+                    hoverCreature = character;
+                }
+            }
+            if (Vector3.Distance(originEyePoint, raycastHit.point) < maxDistance)
+            {
+                if (raycastHit.collider.GetComponent<Hoverable>() != null)
+                {
+                    hover = raycastHit.collider.gameObject;
+                }
+                else if ((bool)raycastHit.collider.attachedRigidbody)
+                {
+                    hover = raycastHit.collider.attachedRigidbody.gameObject;
+                }
+                else
+                {
+                    hover = raycastHit.collider.gameObject;
+                }
+            }
+        }
 
         /// 
         //Enchanter
@@ -185,7 +242,7 @@ namespace ValheimLegends
         {
             get
             {
-                return 3f * VL_GlobalConfigs.g_EnergyCostModifer;
+                return 3f;
             }
         }
         public static float GetMeteorPunchCooldownTime
@@ -206,7 +263,7 @@ namespace ValheimLegends
         {
             get
             {
-                return 5f * VL_GlobalConfigs.g_EnergyCostModifer;
+                return 5f;
             }
         }
         public static float GetPsiBoltCooldownTime
@@ -220,7 +277,7 @@ namespace ValheimLegends
         {
             get
             {
-                return .15f * VL_GlobalConfigs.g_SkillGainModifer;
+                return .05f * VL_GlobalConfigs.g_SkillGainModifer;
             }
         }
         public static float GetFlyingKickCost
@@ -548,7 +605,7 @@ namespace ValheimLegends
         {
             get
             {
-                return 6f * VL_GlobalConfigs.g_CooldownModifer;
+                return 20f * VL_GlobalConfigs.g_CooldownModifer;
             }
         }
 

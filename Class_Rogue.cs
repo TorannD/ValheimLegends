@@ -14,7 +14,7 @@ namespace ValheimLegends
 {
     public class Class_Rogue
     {
-        private static int ScriptChar_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "piece", "terrain", "vehicle", "viewblock", "character", "character_noenv", "character_trigger", "Water");
+        private static int ScriptChar_Layermask = LayerMask.GetMask("character", "character_noenv", "character_trigger", "character_net", "character_ghost", "Default", "static_solid", "Default_small", "piece_nonsolid", "piece", "terrain", "vehicle", "viewblock", "Water");
         public static Vector3 fadePoint;
         public static Vector3 backstabPoint;
         public static Vector3 backstabVector;
@@ -51,7 +51,7 @@ namespace ValheimLegends
                 GameObject GO_Bomb = UnityEngine.Object.Instantiate(prefab, vector, Quaternion.identity);
                 GameObject GOB_Explosion = ZNetScene.instance.GetPrefab("VL_PoisonBombExplosion");
                 Aoe aoe = GOB_Explosion.gameObject.GetComponentInChildren<Aoe>();
-                aoe.m_damage.m_poison = 10f + (2*sLevel);
+                aoe.m_damage.m_poison = (10f + (2*sLevel)) * VL_GlobalConfigs.c_roguePoisonBomb;
                 aoe.m_ttl = 4f + .1f * sLevel;
                 aoe.m_hitInterval = .5f;
                 Projectile P_Bomb = GO_Bomb.GetComponent<Projectile>();
@@ -67,6 +67,7 @@ namespace ValheimLegends
                 Vector3 target = (!Physics.Raycast(vector, player.GetLookDir(), out hitInfo, float.PositiveInfinity, ScriptChar_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
                 HitData hitData = new HitData();
                 hitData.m_skill = ValheimLegends.AlterationSkill;
+                hitData.SetAttacker(player);
                 Vector3 a = Vector3.MoveTowards(GO_Bomb.transform.position, target, 1f);
                 P_Bomb.Setup(player, (a - GO_Bomb.transform.position) * 25f, -1f, hitData, null);
                 Traverse.Create(root: P_Bomb).Field("m_skill").SetValue(ValheimLegends.AlterationSkill);
@@ -91,8 +92,9 @@ namespace ValheimLegends
                 Vector3 position = player.transform.position;
                 Vector3 target = (!Physics.Raycast(vector, player.GetLookDir(), out hitInfo, float.PositiveInfinity, ScriptChar_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
                 HitData hitData = new HitData();
-                hitData.m_damage.m_pierce = UnityEngine.Random.Range(5f + sLevel, 10f + 2f * sLevel);
+                hitData.m_damage.m_pierce = UnityEngine.Random.Range(5f + sLevel, 10f + 2f * sLevel) * VL_GlobalConfigs.c_rogueBonusThrowingDagger;
                 hitData.m_skill = ValheimLegends.DisciplineSkill;
+                hitData.SetAttacker(player);
                 Vector3 a = Vector3.MoveTowards(GO_ThrowingKnife.transform.position, target, 1f);
                 P_ThrowingKnife.Setup(player, (a - GO_ThrowingKnife.transform.position) * 30f, -1f, hitData, null);
                 Traverse.Create(root: P_ThrowingKnife).Field("m_skill").SetValue(ValheimLegends.AlterationSkill);
@@ -109,12 +111,12 @@ namespace ValheimLegends
                 if (!player.IsOnGround() && canDoubleJump && se_r != null && se_r.hitCount > 0)
                 {
                     Vector3 velVec = player.GetVelocity();
-                    velVec.y = 0f;
-                    ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("jump");
+                    velVec.y = 0f;                    
                     playerBody.velocity = (velVec * 2f) + new Vector3(0, 8f, 0f);
                     se_r.hitCount--;
                     canDoubleJump = false;
                     altitude = 0;
+                    ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("jump");
                 }
                 else if (player.IsOnGround())
                 {
@@ -149,24 +151,27 @@ namespace ValheimLegends
             {
                 RaycastHit hitInfo = default(RaycastHit);
                 Vector3 position = player.transform.position;
-                Vector3 target = (!Physics.Raycast(player.GetEyePoint(), player.GetLookDir(), out hitInfo, float.PositiveInfinity, ScriptChar_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
-                Physics.SphereCast(player.GetEyePoint(), 0.1f, player.GetLookDir(), out hitInfo, 150f, ScriptChar_Layermask);
+                //Vector3 target = (!Physics.Raycast(player.GetEyePoint(), player.GetLookDir(), out hitInfoRay, float.PositiveInfinity, ScriptChar_Layermask) || !(bool)hitInfoRay.collider) ? (position + player.GetLookDir() * 1000f) : hitInfoRay.point;
+                Physics.SphereCast(player.GetEyePoint(), 0.2f, player.GetLookDir(), out hitInfo, 150f, ScriptChar_Layermask);
+                VL_Utility.SetTimer();
                 if (hitInfo.collider != null && hitInfo.collider.gameObject != null)
                 {
                     Character ch = null;
                     hitInfo.collider.gameObject.TryGetComponent<Character>(out ch);
                     bool flag = ch != null;
-                    if(ch == null)
+                    List<Component> comps = new List<Component>();
+                    comps.Clear();
+                    hitInfo.collider.gameObject.GetComponents<Component>(comps);
+                    if (ch == null)
                     {
                         ch = (Character)hitInfo.collider.GetComponentInParent(typeof(Character));
                         flag = ch != null;
                         if(ch == null)
-                        {
+                        {                            
                             ch = (Character)hitInfo.collider.GetComponentInChildren<Character>();
                             flag = ch != null;
                         }
                     }
-
                     if (flag && !ch.IsPlayer())
                     {
                         //ZLog.Log("collider " + ch.m_name);
@@ -213,7 +218,7 @@ namespace ValheimLegends
                                     Vector3 direction = (ch.transform.position - player.transform.position);
                                     HitData hitData = new HitData();
                                     hitData.m_damage = player.GetCurrentWeapon().GetDamage();
-                                    hitData.m_damage.Modify(UnityEngine.Random.Range(.6f, .8f) * (1f + .005f * sLevel));
+                                    hitData.m_damage.Modify(UnityEngine.Random.Range(.6f, .8f) * (1f + .005f * sLevel) * VL_GlobalConfigs.c_rogueBackstab);
                                     hitData.m_pushForce = 10f + .1f * sLevel;
                                     hitData.m_point = ch.GetEyePoint();
                                     hitData.m_dir = direction;
@@ -254,7 +259,7 @@ namespace ValheimLegends
                     {
                         //Ability Cooldown
                         StatusEffect se_cd = (SE_Ability2_CD)ScriptableObject.CreateInstance(typeof(SE_Ability2_CD));
-                        se_cd.m_ttl = VL_Utility.GetFadeCooldownTime;
+                        se_cd.m_ttl = VL_Utility.GetFadeCooldownTime * VL_GlobalConfigs.c_rogueFadeCooldown;
                         player.GetSEMan().AddStatusEffect(se_cd);
 
                         //Ability Cost

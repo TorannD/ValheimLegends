@@ -15,7 +15,7 @@ namespace ValheimLegends
     public class Class_Mage
     {
         private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock");
-        private static int ScriptChar_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "character");
+        private static int ScriptChar_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "character", "character_net", "character_ghost");
 
         private static GameObject GO_CastFX;
 
@@ -58,7 +58,7 @@ namespace ValheimLegends
                     {
                         Vector3 direction = (ch.transform.position - player.transform.position);
                         HitData hitData = new HitData();
-                        hitData.m_damage.m_fire = UnityEngine.Random.Range(5 + (2.75f * sLevel), 10 + (3.5f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                        hitData.m_damage.m_fire = UnityEngine.Random.Range(5 + (2.75f * sLevel), 10 + (3.5f * sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_mageInferno;
                         hitData.m_pushForce = 0f;
                         hitData.m_point = ch.GetEyePoint();
                         hitData.m_dir = direction;
@@ -91,9 +91,10 @@ namespace ValheimLegends
                 Vector3 position = player.transform.position;
                 Vector3 target = (!Physics.Raycast(vector, player.GetLookDir(), out hitInfo, float.PositiveInfinity, ScriptChar_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
                 HitData hitData = new HitData();
-                hitData.m_damage.m_pierce = UnityEngine.Random.Range(2f + (.25f *sLevel), 5f + (.75f * sLevel));
-                hitData.m_damage.m_frost = UnityEngine.Random.Range((.5f * sLevel), 2f + (1f * sLevel));
+                hitData.m_damage.m_pierce = UnityEngine.Random.Range(2f + (.25f *sLevel), 5f + (.75f * sLevel)) * VL_GlobalConfigs.c_mageFrostDagger * VL_GlobalConfigs.g_DamageModifer;
+                hitData.m_damage.m_frost = UnityEngine.Random.Range((.5f * sLevel), 2f + (1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_mageFrostDagger;
                 hitData.m_skill = ValheimLegends.EvocationSkill;
+                hitData.SetAttacker(player);
                 Vector3 a = Vector3.MoveTowards(GO_IceDagger.transform.position, target, 1f);
                 P_IceDagger.Setup(player, (a - GO_IceDagger.transform.position) * 55f, -1f, hitData, null);
                 Traverse.Create(root: P_IceDagger).Field("m_skill").SetValue(ValheimLegends.EvocationSkill);
@@ -186,7 +187,7 @@ namespace ValheimLegends
                     P_Meteor.name = "Meteor"+i;
                     P_Meteor.m_respawnItemOnHit = false;
                     P_Meteor.m_spawnOnHit = null;
-                    P_Meteor.m_ttl = 60f;
+                    P_Meteor.m_ttl = 6f;
                     P_Meteor.m_gravity = 0f;
                     P_Meteor.m_rayRadius = .1f;
                     P_Meteor.m_aoe = 8f + (.04f * sLevel);     
@@ -199,10 +200,11 @@ namespace ValheimLegends
                     target.y += rnd.Next(-8, 8);
                     target.z += rnd.Next(-8, 8);
                     HitData hitData = new HitData();
-                    hitData.m_damage.m_fire = UnityEngine.Random.Range(30 + (.5f * sLevel), 50 + sLevel) * VL_GlobalConfigs.g_DamageModifer;
-                    hitData.m_damage.m_blunt = UnityEngine.Random.Range(15 + (.25f * sLevel), 30 + (.5f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                    hitData.m_damage.m_fire = UnityEngine.Random.Range(30 + (.5f * sLevel), 50 + sLevel) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_mageMeteor;
+                    hitData.m_damage.m_blunt = UnityEngine.Random.Range(15 + (.25f * sLevel), 30 + (.5f * sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_mageMeteor;
                     hitData.m_pushForce = 10f;
-                    
+                    hitData.SetAttacker(player);
+
                     hitData.m_skill = ValheimLegends.EvocationSkill;
                     Vector3 a = Vector3.MoveTowards(GO_Meteor.transform.position, target, 1f);
                     P_Meteor.Setup(player, (a - GO_Meteor.transform.position) * UnityEngine.Random.Range(78f, 86f), -1f, hitData, null);
@@ -285,7 +287,7 @@ namespace ValheimLegends
                             {
                                 Vector3 direction = (ch.transform.position - player.transform.position);
                                 HitData hitData = new HitData();
-                                hitData.m_damage.m_frost = UnityEngine.Random.Range(10 + (.5f * sLevel), 20 + sLevel) * VL_GlobalConfigs.g_DamageModifer;
+                                hitData.m_damage.m_frost = UnityEngine.Random.Range(10 + (.5f * sLevel), 20 + sLevel) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_mageFrostNova;
                                 hitData.m_pushForce = 20f;
                                 hitData.m_point = ch.GetEyePoint();
                                 hitData.m_dir = direction;
@@ -383,10 +385,11 @@ namespace ValheimLegends
                         Vector3 position = player.transform.position;
                         Vector3 target = (!Physics.Raycast(vector, player.GetLookDir(), out hitInfo, float.PositiveInfinity, Script_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
                         HitData hitData = new HitData();
-                        hitData.m_damage.m_fire = UnityEngine.Random.Range(5f + (1.6f *sLevel), 10f + (1.8f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
-                        hitData.m_damage.m_blunt = UnityEngine.Random.Range(5f + (.9f *sLevel), 10f + (1.1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer;
+                        hitData.m_damage.m_fire = UnityEngine.Random.Range(5f + (1.6f *sLevel), 10f + (1.8f * sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_mageFireball;
+                        hitData.m_damage.m_blunt = UnityEngine.Random.Range(5f + (.9f *sLevel), 10f + (1.1f * sLevel)) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_mageFireball;
                         hitData.m_pushForce = 2f;
                         hitData.m_skill = ValheimLegends.EvocationSkill;
+                        hitData.SetAttacker(player);
                         Vector3 a = Vector3.MoveTowards(GO_Fireball.transform.position, target, 1f);
                         P_Fireball.Setup(player, (a - GO_Fireball.transform.position) * 25f, -1f, hitData, null);
                         Traverse.Create(root: P_Fireball).Field("m_skill").SetValue(ValheimLegends.EvocationSkill);

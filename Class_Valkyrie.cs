@@ -14,7 +14,7 @@ namespace ValheimLegends
     public class Class_Valkyrie
     {
         private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock");
-        private static int ScriptChar_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "piece", "terrain", "vehicle", "viewblock", "character", "character_noenv", "character_trigger", "Water");
+        private static int ScriptChar_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "piece", "terrain", "vehicle", "viewblock", "character", "character_noenv", "character_trigger", "character_net", "character_ghost", "Water");
 
 
         private static GameObject GO_CastFX;
@@ -75,7 +75,7 @@ namespace ValheimLegends
                         }
                     }
 
-                    if (flag && !colliderChar.IsPlayer() && !allCharacters.Contains(colliderChar))
+                    if (flag && BaseAI.IsEnemy(colliderChar, player) && !allCharacters.Contains(colliderChar))
                     {
                         allCharacters.Add(colliderChar);
                     }
@@ -87,8 +87,8 @@ namespace ValheimLegends
                     {
                         Vector3 direction = (ch.transform.position - player.transform.position);
                         HitData hitData = new HitData();
-                        hitData.m_damage.m_spirit = UnityEngine.Random.Range(se_v.hitCount * (1f + (.02f * sLevel)), se_v.hitCount * (2f + (.015f * sLevel))) * VL_GlobalConfigs.g_DamageModifer;
-                        hitData.m_damage.m_frost = UnityEngine.Random.Range(se_v.hitCount * (1f + (.02f * sLevel)), se_v.hitCount * (2f + (.015f * sLevel))) * VL_GlobalConfigs.g_DamageModifer;
+                        hitData.m_damage.m_spirit = UnityEngine.Random.Range(se_v.hitCount * (1f + (.02f * sLevel)), se_v.hitCount * (2f + (.015f * sLevel))) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_valkyrieBonusChillWave;
+                        hitData.m_damage.m_frost = UnityEngine.Random.Range(se_v.hitCount * (1f + (.02f * sLevel)), se_v.hitCount * (2f + (.015f * sLevel))) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_valkyrieBonusChillWave;
                         hitData.m_point = ch.GetEyePoint();
                         hitData.m_dir = direction;
                         hitData.m_skill = ValheimLegends.AbjurationSkill;
@@ -120,8 +120,9 @@ namespace ValheimLegends
                 //hitData.m_pushForce = 1f;
                 hitData.m_skill = ValheimLegends.DisciplineSkill;
                 hitData.m_dir = player.GetLookDir() * -1f;
-                hitData.m_damage.m_frost = UnityEngine.Random.Range((1f + (.2f * sLevel)), (2f + (.3f * sLevel))) * VL_GlobalConfigs.g_DamageModifer;
-                hitData.m_damage.m_spirit= UnityEngine.Random.Range((1f + (.2f * sLevel)), (2f + (.3f * sLevel))) * VL_GlobalConfigs.g_DamageModifer;
+                hitData.m_damage.m_frost = UnityEngine.Random.Range((1f + (.2f * sLevel)), (2f + (.3f * sLevel))) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_valkyrieBonusIceLance;
+                hitData.m_damage.m_spirit= UnityEngine.Random.Range((1f + (.2f * sLevel)), (2f + (.3f * sLevel))) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_valkyrieBonusIceLance;
+                hitData.SetAttacker(player);
                 Vector3 a = Vector3.MoveTowards(GO_Harpoon.transform.position, target, 1f);
                 P_Harpoon.Setup(player, (a - GO_Harpoon.transform.position) * 40f, -1f, hitData, null);
                 Traverse.Create(root: P_Harpoon).Field("m_skill").SetValue(ValheimLegends.DisciplineSkill);
@@ -161,8 +162,8 @@ namespace ValheimLegends
                 {
                     Vector3 direction = (ch.transform.position - player.transform.position);
                     HitData hitData = new HitData();
-                    hitData.m_damage.m_blunt = 5 + (3f * altitude) + UnityEngine.Random.Range(1.5f * sLevel, 2.5f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
-                    hitData.m_pushForce = 20f * VL_GlobalConfigs.g_DamageModifer;
+                    hitData.m_damage.m_blunt = 5 + (3f * altitude) + UnityEngine.Random.Range(1.5f * sLevel, 2.5f * sLevel) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_valkyrieLeap;
+                    hitData.m_pushForce = 20f * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_valkyrieLeap;
                     hitData.m_point = ch.GetEyePoint();
                     hitData.m_dir = direction;
                     hitData.m_skill = ValheimLegends.DisciplineSkill;
@@ -273,7 +274,7 @@ namespace ValheimLegends
                     {
                         //Ability Cooldown
                         StatusEffect se_cd = (SE_Ability2_CD)ScriptableObject.CreateInstance(typeof(SE_Ability2_CD));
-                        se_cd.m_ttl = VL_Utility.GetStaggerCooldownTime;
+                        se_cd.m_ttl = VL_Utility.GetStaggerCooldownTime * VL_GlobalConfigs.c_valkyrieStaggerCooldown;
                         player.GetSEMan().AddStatusEffect(se_cd);
 
                         //Ability Cost

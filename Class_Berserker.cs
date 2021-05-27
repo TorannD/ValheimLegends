@@ -26,7 +26,7 @@ namespace ValheimLegends
             UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_stonegolem_attack_hit"), player.transform.position, Quaternion.identity);
 
             float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
-            float sDamageMultiplier = .6f + (sLevel * .005f) * VL_GlobalConfigs.g_DamageModifer;
+            float sDamageMultiplier = .6f + (sLevel * .005f) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_berserkerDash;
             if(player.GetSEMan().HaveStatusEffect("SE_VL_Berserk") || player.GetSEMan().HaveStatusEffect("SE_VL_Execute"))
             {
                 SE_Berserk se_zerk = (SE_Berserk)player.GetSEMan().GetStatusEffect("SE_VL_Berserk");
@@ -94,7 +94,7 @@ namespace ValheimLegends
                     hitData.m_dir = (ch.transform.position - moveVec);
                     hitData.m_skill = ValheimLegends.DisciplineSkill;                    
                     float num = Vector3.Distance(ch.transform.position, moveVec);
-                    if (!ch.IsPlayer() && num <= 3f && !list.Contains(ch.GetInstanceID()))
+                    if (BaseAI.IsEnemy(ch, player) && num <= 3f && !list.Contains(ch.GetInstanceID()))
                     {
                         SE_Execute se_exec = (SE_Execute)player.GetSEMan().GetStatusEffect("SE_VL_Execute");
                         if (se_exec != null)
@@ -106,7 +106,7 @@ namespace ValheimLegends
                                 player.GetSEMan().RemoveStatusEffect(se_exec);
                             }
                         }
-                        hitCount++;
+                        hitCount += .6f;
                         ch.Damage(hitData);
                         UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_crit"), ch.GetCenterPoint(), Quaternion.identity);
                         list.Add(ch.GetInstanceID());
@@ -195,7 +195,7 @@ namespace ValheimLegends
                         SE_Berserk se_berserk = (SE_Berserk)ScriptableObject.CreateInstance(typeof(SE_Berserk));
                         se_berserk.m_ttl = SE_Berserk.m_baseTTL;
                         se_berserk.speedModifier = 1.2f + (.006f * sLevel);
-                        se_berserk.damageModifier = 1.2f + (.006f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
+                        se_berserk.damageModifier = 1.2f + (.006f * sLevel) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_berserkerBerserk;
                         se_berserk.healthAbsorbPercent = .2f + (.002f * sLevel);
 
                         //Apply effects
@@ -239,7 +239,7 @@ namespace ValheimLegends
                         float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
                         SE_Execute se_execute = (SE_Execute)ScriptableObject.CreateInstance(typeof(SE_Execute));
                         se_execute.hitCount = Mathf.RoundToInt(3f + (.04f * sLevel));
-                        se_execute.damageBonus = 1.4f + (.005f * sLevel) * VL_GlobalConfigs.g_DamageModifer;
+                        se_execute.damageBonus = 1.4f + (.005f * sLevel) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_berserkerExecute;
                         se_execute.staggerForce = 1.5f + (.005f * sLevel);
 
                         //Apply effects
