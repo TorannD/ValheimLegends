@@ -14,13 +14,13 @@ using UnityEngine.UI;
 
 namespace ValheimLegends
 {
-    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.3.6")]
+    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.3.7")]
     public class ValheimLegends : BaseUnityPlugin
     {
         public static Harmony _Harmony;
 
-        public const string Version = "0.3.6";
-        public const float VersionF = 0.36f;
+        public const string Version = "0.3.7";
+        public const float VersionF = 0.37f;
         public const string ModName = "Valheim Legends";
         public static bool playerEnabled = true;
 
@@ -303,12 +303,13 @@ namespace ValheimLegends
         //}
 
         [HarmonyPatch(typeof(PlayerProfile), "SavePlayerToDisk", null)]
-        public class SaveVLPlayer_Patch
+        public static class SaveVLPlayer_Patch
         {
             public static void Postfix(PlayerProfile __instance, string ___m_filename, string ___m_playerName)
             {
                 try
                 {
+                    //ZLog.Log("filename: " + ___m_filename);
                     Directory.CreateDirectory(Utils.GetSaveDataPath() + "/characters/VL");
                     string text = Utils.GetSaveDataPath() + "/characters/VL/" + ___m_filename + "_vl.fch";
                     string text3 = Utils.GetSaveDataPath() + "/characters/VL/" + ___m_filename + "_vl.fch.new";
@@ -1974,7 +1975,7 @@ namespace ValheimLegends
             {
                 //if (vl_player == null || vl_player.vl_name != __instance.GetPlayerName())
                 //{
-                    SetVLPlayer(__instance);
+                SetVLPlayer(__instance);
                 //}
             }
         }
@@ -2853,6 +2854,7 @@ namespace ValheimLegends
                 if(p.GetPlayerName() == player.vl_name)
                 {
                     player.vl_class = vl_player.vl_class;
+                    SaveVLPlayer_Patch.Postfix(Game.instance.GetPlayerProfile(), Game.instance.GetPlayerProfile().GetFilename(), Game.instance.GetPlayerProfile().GetName());
                 }
             }
         }
