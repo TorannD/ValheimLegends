@@ -17,6 +17,7 @@ namespace ValheimLegends
         public static string ModID;
         public static string Folder;
         private static int m_interactMask = LayerMask.GetMask("item", "piece", "piece_nonsolid", "Default", "static_solid", "Default_small", "character", "character_net", "terrain", "vehicle");
+        private static int m_LOSMask = LayerMask.GetMask("piece", "piece_nonsolid", "Default", "static_solid", "Default_small", "terrain", "vehicle");
 
         public static string GetModDataPath(this PlayerProfile profile)
         {
@@ -110,6 +111,118 @@ namespace ValheimLegends
             Vector3 lookVec = p.GetLookDir();
             lookVec.y = 0f;
             p.transform.rotation = Quaternion.LookRotation(lookVec);
+        }
+
+        public static bool LOS_IsValid (Character hit_char, Vector3 splash_center, Vector3 splash_alternate = default(Vector3))
+        {
+            bool los = false;
+            if(VL_GlobalConfigs.ConfigStrings["vl_svr_aoeRequiresLoS"] == 0)
+            {
+                return true;
+            }
+            if(splash_alternate == default(Vector3))
+            {
+                splash_alternate = splash_center + new Vector3(0f, .2f, 0f);
+            }
+            if(hit_char != null)
+            {
+                //float distanceToBlast = (hit_char.GetCenterPoint() - splash_center).magnitude;
+                //Collider char_col = hit_char.GetCollider();
+                //ZLog.Log("checking los to " + hit_char.m_name);
+                //Vector3 col_pos = char_col.ClosestPoint(splash_center);
+                RaycastHit hitInfo = default(RaycastHit);
+                var rayDirection = hit_char.GetCenterPoint() - splash_center;
+                if(Physics.Raycast(splash_center, rayDirection, out hitInfo))
+                {
+                    if(CollidedWithTarget(hit_char, hit_char.GetCollider(), hitInfo))
+                    {
+                        //UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_ice_hit"), hitInfo.point, Quaternion.identity);
+                        //ZLog.Log("has direct line of sight to splash");
+                        los = true;
+                    }
+                    else
+                    {
+                        for(int i = 0; i < 8; i++)
+                        {
+                            Vector3 char_col_size = hit_char.GetCollider().bounds.size;
+                            //ZLog.Log("character collider size is " + char_col_size);
+                            var rayDirectionMod = (hit_char.GetCenterPoint() + new Vector3(char_col_size.x * (UnityEngine.Random.Range(-i, i) / 6f), char_col_size.y * (UnityEngine.Random.Range(-i, i) / 4f), char_col_size.z * (UnityEngine.Random.Range(-i, i) / 6f))) - splash_center;
+                            if (Physics.Raycast(splash_center, rayDirectionMod, out hitInfo))
+                            {
+                                //UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_ice_hit"), hitInfo.point, Quaternion.identity);
+                                if (CollidedWithTarget(hit_char, hit_char.GetCollider(), hitInfo))
+                                {
+                                    //ZLog.Log("has mod line of sight to splash center, iteration " + i);
+                                    los = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                if(!los && splash_alternate != default(Vector3) && splash_alternate != splash_center)
+                {
+                    var rayDirectionAlt = hit_char.GetCenterPoint() - splash_alternate;
+                    if (Physics.Raycast(splash_alternate, rayDirectionAlt, out hitInfo))
+                    {
+                        if (CollidedWithTarget(hit_char, hit_char.GetCollider(), hitInfo))
+                        {
+                            //UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_ice_hit"), hitInfo.point, Quaternion.identity);
+                            //ZLog.Log("has direct line of sight to splash alternate");
+                            los = true;
+                        }
+                        else
+                        {
+                            for (int i = 0; i < 8; i++)
+                            {
+                                Vector3 char_col_size = hit_char.GetCollider().bounds.size;
+                                var rayDirectionMod = (hit_char.GetCenterPoint() + new Vector3(char_col_size.x * (UnityEngine.Random.Range(-i, i) / 6f), char_col_size.y * (UnityEngine.Random.Range(-i, i) / 4f), char_col_size.z * (UnityEngine.Random.Range(-i, i) / 6f))) - splash_alternate;
+                                if (Physics.Raycast(splash_alternate, rayDirectionMod, out hitInfo))
+                                {
+                                    if (CollidedWithTarget(hit_char, hit_char.GetCollider(), hitInfo))
+                                    {
+                                        //ZLog.Log("has mod line of sight to splash alternate, iteration " + i);
+                                        los = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return los;
+        }
+
+        private static bool CollidedWithTarget(Character chr, Collider col, RaycastHit hit)
+        {
+            if (hit.collider == chr.GetCollider())
+            {
+                //ZLog.Log("returning collider direct");
+                return true;
+            }
+            Character ch = null;
+            hit.collider.gameObject.TryGetComponent<Character>(out ch);
+            bool flag = ch != null;
+            List<Component> comps = new List<Component>();
+            comps.Clear();
+            hit.collider.gameObject.GetComponents<Component>(comps);
+            if (ch == null)
+            {
+                ch = (Character)hit.collider.GetComponentInParent(typeof(Character));
+                flag = ch != null;
+                if (ch == null)
+                {
+                    ch = (Character)hit.collider.GetComponentInChildren<Character>();
+                    flag = ch != null;
+                }
+            }
+            if(flag && ch == chr)
+            {
+                //ZLog.Log("returning collider as same char");
+                return true;
+            }
+            return false;
         }
 
         public static void FindCrosshairObject(Player p, Vector3 originEyePoint, float maxDistance, out GameObject hover, out Character hoverCreature)

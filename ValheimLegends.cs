@@ -14,13 +14,14 @@ using UnityEngine.UI;
 
 namespace ValheimLegends
 {
-    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.3.7")]
+    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.3.9")]
     public class ValheimLegends : BaseUnityPlugin
     {
+
         public static Harmony _Harmony;
 
-        public const string Version = "0.3.7";
-        public const float VersionF = 0.37f;
+        public const string Version = "0.3.9";
+        public const float VersionF = 0.39f;
         public const string ModName = "Valheim Legends";
         public static bool playerEnabled = true;
 
@@ -87,6 +88,7 @@ namespace ValheimLegends
 
         public static ConfigEntry<string> chosenClass;
         public static ConfigEntry<bool> vl_svr_enforceConfigClass;
+        public static ConfigEntry<bool> vl_svr_aoeRequiresLoS;
         public static readonly Color abilityCooldownColor = new Color(1f, .3f, .3f, .5f);
 
         //Class configs
@@ -634,6 +636,52 @@ namespace ValheimLegends
         //mod patches
         //
 
+        [HarmonyPatch(typeof(Aoe), "OnHit")]
+        public static class Aoe_LOSCheck_Prefix
+        {
+            private static bool Prefix(Aoe __instance, Collider collider, Vector3 hitPoint, List<GameObject> ___m_hitList, ref bool __result)
+            {
+                GameObject gameObject = Projectile.FindHitObject(collider);
+                if (___m_hitList.Contains(gameObject))
+                {
+                    __result = false;
+                    return false;
+                }
+                IDestructible component = gameObject.GetComponent<IDestructible>();
+                if (component != null)
+                {
+                    Character character = component as Character;
+                    if ((bool)character)
+                    {
+                        if(!VL_Utility.LOS_IsValid(character, __instance.transform.position))
+                        {
+                            __result = false;
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+        }
+
+        [HarmonyPatch(typeof(Projectile), "IsValidTarget")]
+        public static class Projectile_AoE_LOSCheck_Prefix
+        {
+            private static bool Prefix(Projectile __instance, IDestructible destr, ref bool hitCharacter, ref bool __result)
+            {
+                Character character = destr as Character;
+                if ((bool)character)
+                {                    
+                    if (!VL_Utility.LOS_IsValid(character, __instance.transform.position, __instance.transform.position + __instance.GetVelocity() * -1.5f))
+                    {
+                        __result = false;
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+
         [HarmonyPatch(typeof(Humanoid), "GetCurrentWeapon")]
         public static class UnarmedDamage
         {
@@ -837,11 +885,16 @@ namespace ValheimLegends
                         SE_Companion se_c = ch.GetSEMan().GetStatusEffect("SE_VL_Companion") as SE_Companion;
                         if (se_c.summoner == Player.m_localPlayer)
                         {
+                            MonsterAI ai = ch.GetComponent<MonsterAI>();
+                            if(ai != null)
+                            {
+                                ai.SetFollowTarget(null);
+                            }
                             ch.m_faction = Character.Faction.MountainMonsters;
                             HitData hit = new HitData();
                             hit.m_damage.m_slash = 9999f;
                             ch.Damage(hit);
-                            UnityEngine.GameObject.Destroy(ch.gameObject);
+                            //UnityEngine.GameObject.Destroy(ch.gameObject);
                         }
                     }
                     else if(ch.GetSEMan().HaveStatusEffect("SE_VL_Charm"))
@@ -1151,10 +1204,11 @@ namespace ValheimLegends
                 return true;
             }
         }
-
-        [HarmonyPatch(typeof(Player), "TeleportTo", null)]
-        public class DestroySummonedWhenTeleporting_Patch
+        
+        [HarmonyPatch(typeof(Player), "TeleportTo", null)]        
+        public static class DestroySummonedWhenTeleporting_Patch
         {
+            [HarmonyPriority(Priority.First)]
             public static bool Prefix(Player __instance)
             {
                 RemoveSummonedWolf();
@@ -2468,6 +2522,7 @@ namespace ValheimLegends
             //chosenClass = ConfigManager.RegisterModConfigVariable<string>(ModName, "chosenClass", "None", "General", "Assigns a class to the player if no class is assigned.\nThis will not overwrite an existing class selection.\nA value of None will not attempt to assign any class.", true);
             vl_svr_enforceConfigClass = this.Config.Bind<bool>("General", "vl_svr_enforceConfigClass", false, "True - always sets the player class to this value when the player logs in. False - uses player profile to determine class\nDoes not apply if the chosen class is None.");
             //vl_mce_enforceConfigurationClass = ConfigManager.RegisterModConfigVariable<bool>(ModName, "vl_mce_enforceConfigurationClass", false, "General", "True - always sets the player class to this value when the player logs in. False - uses player profile to determine class\nDoes not apply if the chosen class is None.", false);
+            vl_svr_aoeRequiresLoS = this.Config.Bind<bool>("General", "vl_svr_aoeRequiresLoS", true, "True - all AoE attacks require Line of Sight to the impact point.\nFalse - uses default game behavior for AoE attacks.");
             //showAbilityIcons = ConfigManager.RegisterModConfigVariable<bool>(ModName, "showAbilityIcons", true, "Display", "Displays Icons on Hud for each ability", true);
             showAbilityIcons = this.Config.Bind<bool>("Display", "showAbilityIcons", true, "Displays Icons on Hud for each ability");
             //iconAlignment = ConfigManager.RegisterModConfigVariable<string>(ModName, "iconAlignment", "horizontal", "Display", "Aligns icons horizontally or vertically off the guardian power icon; options are horizontal or vertical", true);
@@ -2654,6 +2709,7 @@ namespace ValheimLegends
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_valkyrieBonusIceLance", vl_svr_valkyrieBonusIceLance.Value);
 
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_enforceConfigClass", vl_svr_enforceConfigClass.Value ? 1f : 0f);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_aoeRequiresLoS", vl_svr_aoeRequiresLoS.Value ? 1f : 0f);
             //VL_GlobalConfigs.ConfigStrings.Add("vl_svr_version", Version);
 
             //assets

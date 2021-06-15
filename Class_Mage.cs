@@ -54,7 +54,7 @@ namespace ValheimLegends
                 List<Character> allCharacters = Character.GetAllCharacters();
                 foreach (Character ch in allCharacters)
                 {
-                    if (BaseAI.IsEnemy(player, ch) && ((ch.transform.position - player.transform.position).magnitude <= (8f + (.1f * sLevel))))
+                    if (BaseAI.IsEnemy(player, ch) && ((ch.transform.position - player.transform.position).magnitude <= (8f + (.1f * sLevel))) && VL_Utility.LOS_IsValid(ch, player.GetCenterPoint(), player.transform.position + player.transform.up * .2f))
                     {
                         Vector3 direction = (ch.transform.position - player.transform.position);
                         HitData hitData = new HitData();
@@ -283,7 +283,7 @@ namespace ValheimLegends
                         List<Character> allCharacters = Character.GetAllCharacters();                        
                         foreach (Character ch in allCharacters)
                         {
-                            if (BaseAI.IsEnemy(player, ch) && ((ch.transform.position - player.transform.position).magnitude <= (10f + (.1f * sLevel))))
+                            if (BaseAI.IsEnemy(player, ch) && ((ch.transform.position - player.transform.position).magnitude <= (10f + (.1f * sLevel))) && VL_Utility.LOS_IsValid(ch, player.GetCenterPoint(), player.transform.position + player.transform.up * .15f))
                             {
                                 Vector3 direction = (ch.transform.position - player.transform.position);
                                 HitData hitData = new HitData();
@@ -367,9 +367,9 @@ namespace ValheimLegends
 
                         //Apply effects
 
-                        Vector3 vector = player.transform.position + player.transform.up * 1.25f + player.GetLookDir() * 2f;
+                        Vector3 vector = player.transform.position + player.transform.up * 2.5f + player.GetLookDir() * .5f;//player.transform.position + player.transform.up * 1.25f + player.GetLookDir() * 2f;
                         GameObject prefab = ZNetScene.instance.GetPrefab("Imp_fireball_projectile");
-                        GO_Fireball = UnityEngine.Object.Instantiate(prefab, new Vector3(vector.x, vector.y + 2f, vector.z), Quaternion.identity);
+                        GO_Fireball = UnityEngine.Object.Instantiate(prefab, new Vector3(vector.x, vector.y, vector.z), Quaternion.identity);
                         P_Fireball = GO_Fireball.GetComponent<Projectile>();
                         P_Fireball.name = "Fireball";
                         P_Fireball.m_respawnItemOnHit = false;

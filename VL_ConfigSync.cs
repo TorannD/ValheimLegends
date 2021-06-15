@@ -106,7 +106,11 @@ namespace ValheimLegends
                             val = val.Trim(trm);
                             if (key == "vl_svr_enforceConfigClass")
                             {
-                                val = val.ToString() == "true" ? "1" : "0";
+                                val = val.ToLower().ToString() == "true" ? "1" : "0";
+                            }
+                            else if(key == "vl_svr_aoeRequiresLoS")
+                            {
+                                val = val.ToLower().ToString() == "true" ? "1" : "0";
                             }
                             //ZLog.Log("value is: " + val + " parsed to " + float.Parse(val));
                             float val2 = 1f;

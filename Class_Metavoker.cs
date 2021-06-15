@@ -83,7 +83,7 @@ namespace ValheimLegends
                 }
                 foreach (Character ch in allCharacters)
                 {
-                    if (BaseAI.IsEnemy(player, ch))
+                    if (BaseAI.IsEnemy(player, ch) && VL_Utility.LOS_IsValid(ch, player.GetCenterPoint(), player.transform.position))
                     {
                         Vector3 direction = (ch.transform.position - player.transform.position);
                         float distanceFromPlayer = direction.magnitude;
@@ -321,7 +321,7 @@ namespace ValheimLegends
                     bool anyHitFlag = false;
                     foreach (Character ch in allCharacters)
                     {
-                        if (BaseAI.IsEnemy(player, ch))
+                        if (BaseAI.IsEnemy(player, ch) && VL_Utility.LOS_IsValid(ch, player.transform.position))
                         {
                             Vector3 direction = (ch.transform.position - player.transform.position);
                             HitData hitData = new HitData();

@@ -185,7 +185,7 @@ namespace ValheimLegends
                         Character.GetCharactersInRange(player.transform.position, 20f + (.2f * sPurgeLevel), allCharacters);
                         foreach (Character ch in allCharacters)
                         {
-                            if (BaseAI.IsEnemy(player, ch))
+                            if (BaseAI.IsEnemy(player, ch) && VL_Utility.LOS_IsValid(ch, player.GetCenterPoint(), player.transform.position))
                             {
                                 Vector3 direction = (ch.transform.position - player.transform.position);
                                 HitData hitData = new HitData();

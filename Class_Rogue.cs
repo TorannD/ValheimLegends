@@ -289,15 +289,22 @@ namespace ValheimLegends
                 }
                 else if(player.GetSEMan().HaveStatusEffect("SE_VL_Ability2_CD"))
                 {
-                    GameObject effect = ZNetScene.instance.GetPrefab("vfx_odin_despawn");
-                    UnityEngine.Object.Instantiate(effect, player.GetCenterPoint(), Quaternion.identity);
-                    UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("sfx_wraith_death"), player.transform.position, Quaternion.identity);
-                    player.transform.position = fadePoint;
-                    if (canGainTrick)
+                    if ((fadePoint - player.transform.position).magnitude < 100f)
                     {
-                        SE_Rogue se_r = (SE_Rogue)player.GetSEMan().GetStatusEffect("SE_VL_Rogue");
-                        se_r.hitCount++;
-                        canGainTrick = false;
+                        GameObject effect = ZNetScene.instance.GetPrefab("vfx_odin_despawn");
+                        UnityEngine.Object.Instantiate(effect, player.GetCenterPoint(), Quaternion.identity);
+                        UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("sfx_wraith_death"), player.transform.position, Quaternion.identity);
+                        player.transform.position = fadePoint;
+                        if (canGainTrick)
+                        {
+                            SE_Rogue se_r = (SE_Rogue)player.GetSEMan().GetStatusEffect("SE_VL_Rogue");
+                            se_r.hitCount++;
+                            canGainTrick = false;
+                        }
+                    }
+                    else
+                    {
+                        player.Message(MessageHud.MessageType.TopLeft, "Cannot fade at this distance.");
                     }
                 }
                 else

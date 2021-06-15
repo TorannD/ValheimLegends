@@ -158,7 +158,7 @@ namespace ValheimLegends
             foreach (Character ch in allCharacters)
             {
                 float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
-                if (BaseAI.IsEnemy(player, ch) && (ch.transform.position - player.transform.position).magnitude <= (6f + (.03f * sLevel)))
+                if (BaseAI.IsEnemy(player, ch) && (ch.transform.position - player.transform.position).magnitude <= (6f + (.03f * sLevel)) && VL_Utility.LOS_IsValid(ch, player.transform.position, player.GetCenterPoint()))
                 {
                     Vector3 direction = (ch.transform.position - player.transform.position);
                     HitData hitData = new HitData();
@@ -291,7 +291,7 @@ namespace ValheimLegends
                         List<Character> allCharacters = Character.GetAllCharacters();
                         foreach (Character ch in allCharacters)
                         {
-                            if ((BaseAI.IsEnemy(player, ch) && (ch.transform.position - player.transform.position).magnitude <= 6f))
+                            if ((BaseAI.IsEnemy(player, ch) && (ch.transform.position - player.transform.position).magnitude <= 6f) && VL_Utility.LOS_IsValid(ch, player.transform.position, player.GetCenterPoint()))
                             {
                                 Vector3 direction = (ch.transform.position - player.transform.position);
                                 ch.Stagger(direction);

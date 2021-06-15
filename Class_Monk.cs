@@ -62,7 +62,7 @@ namespace ValheimLegends
             foreach (Character ch in allCharacters)
             {
                 float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
-                if (BaseAI.IsEnemy(player, ch) && (ch.transform.position - player.transform.position).magnitude <= 6f + (.03f * sLevel))
+                if (BaseAI.IsEnemy(player, ch) && (ch.transform.position - player.transform.position).magnitude <= 6f + (.03f * sLevel) && VL_Utility.LOS_IsValid(ch, player.transform.position))
                 {
                     Vector3 direction = (ch.transform.position - player.transform.position);
                     HitData hitData = new HitData();

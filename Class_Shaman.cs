@@ -13,7 +13,8 @@ namespace ValheimLegends
 {
     public class Class_Shaman
     {
-        private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock");        
+        private static int Script_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock");
+        private static int ObjectBlock_Layermask = LayerMask.GetMask("Default", "static_solid", "Default_small", "piece_nonsolid", "terrain", "vehicle", "piece", "viewblock", "item");
 
         private static GameObject GO_CastFX;
         public static bool isWaterWalking = false;
@@ -45,8 +46,17 @@ namespace ValheimLegends
                             player.UseStamina(.3f * VL_GlobalConfigs.c_shamanBonusWaterGlideCost);
                             VL_Utility.RotatePlayerToTarget(player);
                             ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).StopAllCoroutines();
-
-                            Vector3 newPos = new Vector3(player.transform.position.x + (player.GetLookDir().x * .3f), waterLevel + .3f, player.transform.position.z + (player.GetLookDir().z *.3f));
+                            RaycastHit hitInfo = default(RaycastHit);
+                            Vector3 position = player.transform.position + (player.transform.up * .15f);
+                            Vector3 vector = player.GetLookDir();
+                            vector.y = 0f;
+                            Physics.SphereCast(position, .1f, vector, out hitInfo, 10f, ObjectBlock_Layermask);
+                            //Vector3 target = (!Physics.Raycast(position, player.GetLookDir(), out hitInfo, float.PositiveInfinity, ObjectBlock_Layermask) || !(bool)hitInfo.collider) ? (position + player.GetLookDir() * 1000f) : hitInfo.point;
+                            Vector3 newPos = new Vector3(player.transform.position.x + (player.GetLookDir().x * .3f), waterLevel + .3f, player.transform.position.z + (player.GetLookDir().z * .3f));
+                            if ((Vector3.Distance(position, newPos)+.25f) > (Vector3.Distance(position, hitInfo.point)))
+                            {
+                                newPos = new Vector3(player.transform.position.x, waterLevel + .3f, player.transform.position.z);
+                            }
                             playerBody.position = newPos;
                             playerBody.velocity = Vector3.zero;
                             ValheimLegends.isChanneling = true;
@@ -97,7 +107,7 @@ namespace ValheimLegends
                         List<Character> allCharacters = Character.GetAllCharacters();
                         foreach (Character ch in allCharacters)
                         {
-                            if ((BaseAI.IsEnemy(player, ch) && (ch.transform.position - player.transform.position).magnitude <= 11f + (.05f * sLevel)))
+                            if ((BaseAI.IsEnemy(player, ch) && (ch.transform.position - player.transform.position).magnitude <= 11f + (.05f * sLevel)) && VL_Utility.LOS_IsValid(ch, player.GetCenterPoint(), player.transform.position))
                             {
                                 Vector3 direction = (ch.transform.position - player.transform.position);
                                 HitData hitData = new HitData();
