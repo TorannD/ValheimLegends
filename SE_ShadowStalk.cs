@@ -31,7 +31,7 @@ namespace ValheimLegends
             m_raiseSkillModifier = 2f;
         }
 
-        public override void ModifySpeed(ref float speed)
+        public override void ModifySpeed(float baseSpeed, ref float speed)
         {
             if(m_character.IsSneaking())
             {
@@ -41,7 +41,7 @@ namespace ValheimLegends
             {
                 speed *= speedAmount;
             }
-            base.ModifySpeed(ref speed);
+            base.ModifySpeed(baseSpeed, ref speed);
         }
 
         public override void UpdateStatusEffect(float dt)

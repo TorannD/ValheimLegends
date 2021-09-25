@@ -31,14 +31,14 @@ namespace ValheimLegends
             m_ttl = m_baseTTL;
         }
 
-        public override void ModifySpeed(ref float speed)
+        public override void ModifySpeed(float baseSpeed, ref float speed)
         {
             if(surging)
             {
                 float sLevel = m_character.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
                 speed *= 1.2f + (.003f * sLevel);
             }
-            base.ModifySpeed(ref speed);
+            base.ModifySpeed(baseSpeed, ref speed);
         }
 
         public override void UpdateStatusEffect(float dt)

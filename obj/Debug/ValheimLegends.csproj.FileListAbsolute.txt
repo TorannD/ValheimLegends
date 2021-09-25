@@ -11,3 +11,4 @@ E:\Programs\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimLegends\Valhei
 E:\Programs\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimLegends\ValheimLegends\obj\Debug\ValheimLegends.pdb
 E:\Programs\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimLegends.dll
 E:\Programs\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimLegends.pdb
+E:\Programs\Steam\steamapps\common\Valheim\BepInEx\plugins\ValheimLegends\ValheimLegends\obj\Debug\ValheimLegends.csprojAssemblyReference.cache

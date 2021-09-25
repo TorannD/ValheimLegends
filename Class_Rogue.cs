@@ -127,7 +127,7 @@ namespace ValheimLegends
             if (player.IsBlocking() && ZInput.GetButtonDown("Attack"))
             {
                 SE_Rogue se_r = (SE_Rogue)player.GetSEMan().GetStatusEffect("SE_VL_Rogue");
-                if (player.GetStamina() >= VL_Utility.GetPoisonBombCost && se_r != null && se_r.hitCount > 0)
+                if (se_r != null && se_r.hitCount > 0)
                 {
                     se_r.hitCount--;
 

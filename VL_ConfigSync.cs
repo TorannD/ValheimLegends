@@ -112,6 +112,10 @@ namespace ValheimLegends
                             {
                                 val = val.ToLower().ToString() == "true" ? "1" : "0";
                             }
+                            else if (key == "vl_svr_allowAltarClassChange")
+                            {
+                                val = val.ToLower().ToString() == "true" ? "1" : "0";
+                            }
                             //ZLog.Log("value is: " + val + " parsed to " + float.Parse(val));
                             float val2 = 1f;
                             try

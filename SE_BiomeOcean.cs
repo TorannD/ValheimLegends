@@ -28,13 +28,13 @@ namespace ValheimLegends
             doOnce = true;
         }
 
-        public override void ModifySpeed(ref float speed)
+        public override void ModifySpeed(float baseSpeed, ref float speed)
         {
             if (m_character.IsSwiming())
             {
                 speed *= swimSpeed;
             }
-            base.ModifySpeed(ref speed);
+            base.ModifySpeed(baseSpeed, ref speed);
         }
 
         public override void UpdateStatusEffect(float dt)

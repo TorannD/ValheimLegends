@@ -27,10 +27,10 @@ namespace ValheimLegends
             m_ttl = m_baseTTL;
         }
 
-        public override void ModifySpeed(ref float speed)
+        public override void ModifySpeed(float baseSpeed, ref float speed)
         {
             speed *= speedAmount;
-            base.ModifySpeed(ref speed);
+            base.ModifySpeed(baseSpeed, ref speed);
         }
 
         public override bool CanAdd(Character character)

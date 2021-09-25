@@ -11,6 +11,7 @@ using UnityEngine;
 using System.Reflection;
 using System.IO;
 using UnityEngine.UI;
+using System.Threading;
 
 namespace ValheimLegends
 {
@@ -20,8 +21,8 @@ namespace ValheimLegends
 
         public static Harmony _Harmony;
 
-        public const string Version = "0.3.9";
-        public const float VersionF = 0.39f;
+        public const string Version = "0.4.0";
+        public const float VersionF = 0.40f;
         public const string ModName = "Valheim Legends";
         public static bool playerEnabled = true;
 
@@ -87,6 +88,7 @@ namespace ValheimLegends
         public static ConfigEntry<string> iconAlignment;
 
         public static ConfigEntry<string> chosenClass;
+        public static ConfigEntry<bool> vl_svr_allowAltarClassChange;
         public static ConfigEntry<bool> vl_svr_enforceConfigClass;
         public static ConfigEntry<bool> vl_svr_aoeRequiresLoS;
         public static readonly Color abilityCooldownColor = new Color(1f, .3f, .3f, .5f);
@@ -611,7 +613,7 @@ namespace ValheimLegends
             }
         }
 
-        [HarmonyPatch(typeof(Console), "InputText", null)]
+        [HarmonyPatch(typeof(Terminal), "InputText", null)]
         public class Cheats_VL_Patch
         {
             public static void Postfix(Console __instance, InputField ___m_input)
@@ -989,7 +991,7 @@ namespace ValheimLegends
                 Player player = __instance as Player;
                 if (player != null && vl_player != null && player.GetPlayerName() == vl_player.vl_name && vl_player.vl_class == PlayerClass.Druid)
                 {
-                    if (name.Contains("$item_pinecone") || name.Contains("$item_beechseeds") || name.Contains("$item_fircone") || name.Contains("$item_ancientseed"))
+                    if (name.Contains("$item_pinecone") || name.Contains("$item_beechseeds") || name.Contains("$item_fircone") || name.Contains("$item_ancientseed") || name.Contains("$item_birchseeds"))
                     {
                         if (inventory == null)
                         {
@@ -1019,6 +1021,10 @@ namespace ValheimLegends
                         else if (name.Contains("$item_fircone"))
                         {
                             se_regen.m_HealAmount = 7f;
+                        }
+                        else if (name.Contains("$item_birchseeds"))
+                        {
+                            se_regen.m_HealAmount = 12f;
                         }
                         else
                         {
@@ -1051,7 +1057,7 @@ namespace ValheimLegends
             }
         }
 
-        [HarmonyPatch(typeof(Attack), "GetStaminaUsage", null)]
+        [HarmonyPatch(typeof(Attack), "GetAttackStamina", null)]
         public class AttackStaminaReduction_Patch
         {
             public static void Postfix(Attack __instance, ItemDrop.ItemData ___m_weapon, ref float __result)
@@ -1886,112 +1892,115 @@ namespace ValheimLegends
         {
             public static bool Prefix(OfferingBowl __instance, Humanoid user, ItemDrop.ItemData item, Transform ___m_itemSpawnPoint, EffectList ___m_fuelAddedEffects, ref bool __result)
             {
-                //ZLog.Log("offered item is " + item.m_shared.m_name + " to string " + item.ToString());
-                int num = user.GetInventory().CountItems(item.m_shared.m_name);
-                bool flag = false;
-                if (item.m_shared.m_name.Contains("item_greydwarfeye") && vl_player.vl_class != PlayerClass.Shaman)
+                if (VL_GlobalConfigs.ConfigStrings["vl_svr_allowAltarClassChange"] != 0)
                 {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Shaman");
-                    vl_player.vl_class = PlayerClass.Shaman;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_meat_raw") && vl_player.vl_class != PlayerClass.Ranger)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Ranger");
-                    vl_player.vl_class = PlayerClass.Ranger;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_coal") && vl_player.vl_class != PlayerClass.Mage)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Mage");
-                    vl_player.vl_class = PlayerClass.Mage;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_flint") && vl_player.vl_class != PlayerClass.Valkyrie)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Valkyrie");
-                    vl_player.vl_class = PlayerClass.Valkyrie;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_dandelion") && vl_player.vl_class != PlayerClass.Druid)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Druid");
-                    vl_player.vl_class = PlayerClass.Druid;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_bonefragments") && vl_player.vl_class != PlayerClass.Berserker)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Berserker");
-                    vl_player.vl_class = PlayerClass.Berserker;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_raspberries") && vl_player.vl_class != PlayerClass.Metavoker)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Metavoker");
-                    vl_player.vl_class = PlayerClass.Metavoker;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_stone") && vl_player.vl_class != PlayerClass.Priest)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Priest");
-                    vl_player.vl_class = PlayerClass.Priest;
-                    flag = true;
-                }
-                //else if (item.m_shared.m_name.Contains("item_trophy_skeleton") && vl_player.vl_class != PlayerClass.Necromancer)
-                //{
-                //    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Necromancer");
-                //    vl_player.vl_class = PlayerClass.Necromancer;
-                //    flag = true;
-                //}
-                else if (item.m_shared.m_name.Contains("item_wood") && vl_player.vl_class != PlayerClass.Monk)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Monk");
-                    vl_player.vl_class = PlayerClass.Monk;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_thistle") && vl_player.vl_class != PlayerClass.Duelist)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Duelist");
-                    vl_player.vl_class = PlayerClass.Duelist;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_resin") && vl_player.vl_class != PlayerClass.Enchanter)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Enchanter");
-                    vl_player.vl_class = PlayerClass.Enchanter;
-                    flag = true;
-                }
-                else if (item.m_shared.m_name.Contains("item_honey") && vl_player.vl_class != PlayerClass.Rogue)
-                {
-                    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Rogue");
-                    vl_player.vl_class = PlayerClass.Rogue;
-                    flag = true;
-                }
-                if (flag)
-                {
-                    user.GetInventory().RemoveItem(item.m_shared.m_name, 1);
-                    user.ShowRemovedMessage(item, 1);
-                    UpdateVLPlayer(Player.m_localPlayer);
-                    NameCooldowns();
-                    if ((bool)___m_itemSpawnPoint && ___m_fuelAddedEffects != null)
+                    //ZLog.Log("offered item is " + item.m_shared.m_name + " to string " + item.ToString());
+                    int num = user.GetInventory().CountItems(item.m_shared.m_name);
+                    bool flag = false;
+                    if (item.m_shared.m_name.Contains("item_greydwarfeye") && vl_player.vl_class != PlayerClass.Shaman)
                     {
-                        ___m_fuelAddedEffects.Create(___m_itemSpawnPoint.position, __instance.transform.rotation);
+                        user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Shaman");
+                        vl_player.vl_class = PlayerClass.Shaman;
+                        flag = true;
                     }
-                    UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_GP_Activation"), user.GetCenterPoint(), Quaternion.identity);
-
-                    if (ValheimLegends.abilitiesStatus != null)
+                    else if (item.m_shared.m_name.Contains("item_boar_meat") && vl_player.vl_class != PlayerClass.Ranger)
                     {
-                        foreach (RectTransform ability in ValheimLegends.abilitiesStatus)
+                        user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Ranger");
+                        vl_player.vl_class = PlayerClass.Ranger;
+                        flag = true;
+                    }
+                    else if (item.m_shared.m_name.Contains("item_coal") && vl_player.vl_class != PlayerClass.Mage)
+                    {
+                        user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Mage");
+                        vl_player.vl_class = PlayerClass.Mage;
+                        flag = true;
+                    }
+                    else if (item.m_shared.m_name.Contains("item_flint") && vl_player.vl_class != PlayerClass.Valkyrie)
+                    {
+                        user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Valkyrie");
+                        vl_player.vl_class = PlayerClass.Valkyrie;
+                        flag = true;
+                    }
+                    else if (item.m_shared.m_name.Contains("item_dandelion") && vl_player.vl_class != PlayerClass.Druid)
+                    {
+                        user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Druid");
+                        vl_player.vl_class = PlayerClass.Druid;
+                        flag = true;
+                    }
+                    else if (item.m_shared.m_name.Contains("item_bonefragments") && vl_player.vl_class != PlayerClass.Berserker)
+                    {
+                        user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Berserker");
+                        vl_player.vl_class = PlayerClass.Berserker;
+                        flag = true;
+                    }
+                    else if (item.m_shared.m_name.Contains("item_raspberries") && vl_player.vl_class != PlayerClass.Metavoker)
+                    {
+                        user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Metavoker");
+                        vl_player.vl_class = PlayerClass.Metavoker;
+                        flag = true;
+                    }
+                    else if (item.m_shared.m_name.Contains("item_stone") && vl_player.vl_class != PlayerClass.Priest)
+                    {
+                        user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Priest");
+                        vl_player.vl_class = PlayerClass.Priest;
+                        flag = true;
+                    }
+                    //else if (item.m_shared.m_name.Contains("item_trophy_skeleton") && vl_player.vl_class != PlayerClass.Necromancer)
+                    //{
+                    //    user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Necromancer");
+                    //    vl_player.vl_class = PlayerClass.Necromancer;
+                    //    flag = true;
+                    //}
+                    else if (item.m_shared.m_name.Contains("item_wood") && vl_player.vl_class != PlayerClass.Monk)
+                    {
+                        user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Monk");
+                        vl_player.vl_class = PlayerClass.Monk;
+                        flag = true;
+                    }
+                    else if (item.m_shared.m_name.Contains("item_thistle") && vl_player.vl_class != PlayerClass.Duelist)
+                    {
+                        user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Duelist");
+                        vl_player.vl_class = PlayerClass.Duelist;
+                        flag = true;
+                    }
+                    else if (item.m_shared.m_name.Contains("item_resin") && vl_player.vl_class != PlayerClass.Enchanter)
+                    {
+                        user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Enchanter");
+                        vl_player.vl_class = PlayerClass.Enchanter;
+                        flag = true;
+                    }
+                    else if (item.m_shared.m_name.Contains("item_honey") && vl_player.vl_class != PlayerClass.Rogue)
+                    {
+                        user.Message(MessageHud.MessageType.Center, "Acquired the powers of a Rogue");
+                        vl_player.vl_class = PlayerClass.Rogue;
+                        flag = true;
+                    }
+                    if (flag)
+                    {
+                        user.GetInventory().RemoveItem(item.m_shared.m_name, 1);
+                        user.ShowRemovedMessage(item, 1);
+                        UpdateVLPlayer(Player.m_localPlayer);
+                        NameCooldowns();
+                        if ((bool)___m_itemSpawnPoint && ___m_fuelAddedEffects != null)
                         {
-                            if (ability.gameObject != null)
-                            {
-                                UnityEngine.Object.Destroy(ability.gameObject);
-                            }
+                            ___m_fuelAddedEffects.Create(___m_itemSpawnPoint.position, __instance.transform.rotation);
                         }
-                        ValheimLegends.abilitiesStatus.Clear();
+                        UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_GP_Activation"), user.GetCenterPoint(), Quaternion.identity);
+
+                        if (ValheimLegends.abilitiesStatus != null)
+                        {
+                            foreach (RectTransform ability in ValheimLegends.abilitiesStatus)
+                            {
+                                if (ability.gameObject != null)
+                                {
+                                    UnityEngine.Object.Destroy(ability.gameObject);
+                                }
+                            }
+                            ValheimLegends.abilitiesStatus.Clear();
+                        }
+                        __result = true;
+                        return false;
                     }
-                    __result = true;
-                    return false;
                 }
                 return true;
             }
@@ -2056,7 +2065,7 @@ namespace ValheimLegends
                         if (VL_Utility.TakeInput(localPlayer) && !localPlayer.InPlaceMode())
                         {
                             if (vl_player.vl_class == PlayerClass.Mage)
-                            {
+                            {                                
                                 Class_Mage.Process_Input(localPlayer, ___m_maxAirAltitude);
                             }
                             else if (vl_player.vl_class == PlayerClass.Druid)
@@ -2216,7 +2225,7 @@ namespace ValheimLegends
                     m_label = "Legends Offerings",
                     m_name = "VL_Offerings",
                     m_text = "You can inherit legendary powers by placing token on the altar:\nBerserker - Bone fragments\nDruid - Dandelion\nDuelist - Thistle\nEnchanter - Resin\nMage - Coal\nMetavoker - Raspberry\n" +
-                    "Monk - Wood\nPriest - Stone\nRanger - Raw Meat\nRogue - Honey\nShaman - Greydwarf Eye\nValkyrie - Flint",
+                    "Monk - Wood\nPriest - Stone\nRanger - Raw Boar Meat\nRogue - Honey\nShaman - Greydwarf Eye\nValkyrie - Flint",
                     m_topic = "Token Offering"
                 };
                 if (!Tutorial.instance.m_texts.Contains(vl2))
@@ -2270,7 +2279,7 @@ namespace ValheimLegends
                     "Regeneration: applies a heal over time to the caster and all nearby allies.\nHealing:\n Self - 0.5 + 0.4*Alteration\n Other - 2 + 0.25*Average Skill Level\nDuration: Heals every 2s for 20s\nCooldown: 60s\nEnergy: 60\n\n"
                     + "Nature's Defense: calls upon nature to defend an area.\nSummon:\n Duration - 24s + 0.3s*Conjuration\n 3x Root defenders\n 2x + 0.05*Conjuration Drusquitos\nCooldown: 120s\nEnergy: 80\n*Defender's health and attack power increase with Conjuration\n**Each Root defender restores stamina to the caster as long as the caster remains near the point Nature's Defense was activated\n\n"
                     + "Vines: create vines that grow at an alarming speed.\nDamage:\n Piercing - 10 + 0.6*Conjuration -> 15 + 1.2*Conjuration per vine\nCooldown: 20s\nEnergy: 30 initial + 9 every .5s\n*Vines are a channeled ability, press and hold the ability button to continuously project vines\n\n" 
-                    + "Bonus skills:\n - Natures Restoration - consume ancient seeds, pine cones, fir cones, or beech seeds to quickly restore stamina; seeds may be consumed similar to any food item",
+                    + "Bonus skills:\n - Natures Restoration - consume ancient seeds, pine cones, fir cones, beech seeds or birch seeds to quickly restore stamina; seeds may be consumed similar to any food item",
                     m_topic = "Legend Druid"
                 };
                 if (!Tutorial.instance.m_texts.Contains(vl_druid))
@@ -2520,6 +2529,7 @@ namespace ValheimLegends
             //modEnabled = this.Config.Bind<bool>("General", "modEnabled", true, "Enable/Disable mod");
             chosenClass = this.Config.Bind<string>("General", "chosenClass", "None", "Assigns a class to the player if no class is assigned.\nThis will not overwrite an existing class selection.\nA value of None will not attempt to assign any class.");
             //chosenClass = ConfigManager.RegisterModConfigVariable<string>(ModName, "chosenClass", "None", "General", "Assigns a class to the player if no class is assigned.\nThis will not overwrite an existing class selection.\nA value of None will not attempt to assign any class.", true);
+            vl_svr_allowAltarClassChange = this.Config.Bind<bool>("General", "vl_svr_allowAltarClassChange", true, "Allows class changing at the altar; if disable, the only way to change class will be via console or the mod configs.");
             vl_svr_enforceConfigClass = this.Config.Bind<bool>("General", "vl_svr_enforceConfigClass", false, "True - always sets the player class to this value when the player logs in. False - uses player profile to determine class\nDoes not apply if the chosen class is None.");
             //vl_mce_enforceConfigurationClass = ConfigManager.RegisterModConfigVariable<bool>(ModName, "vl_mce_enforceConfigurationClass", false, "General", "True - always sets the player class to this value when the player logs in. False - uses player profile to determine class\nDoes not apply if the chosen class is None.", false);
             vl_svr_aoeRequiresLoS = this.Config.Bind<bool>("General", "vl_svr_aoeRequiresLoS", true, "True - all AoE attacks require Line of Sight to the impact point.\nFalse - uses default game behavior for AoE attacks.");
@@ -2710,6 +2720,7 @@ namespace ValheimLegends
 
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_enforceConfigClass", vl_svr_enforceConfigClass.Value ? 1f : 0f);
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_aoeRequiresLoS", vl_svr_aoeRequiresLoS.Value ? 1f : 0f);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_allowAltarClassChange", vl_svr_aoeRequiresLoS.Value ? 1f : 0f);
             //VL_GlobalConfigs.ConfigStrings.Add("vl_svr_version", Version);
 
             //assets

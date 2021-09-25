@@ -8,6 +8,7 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using System.Reflection;
+using System.Threading;
 
 namespace ValheimLegends
 {
