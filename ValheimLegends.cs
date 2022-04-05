@@ -1842,7 +1842,7 @@ namespace ValheimLegends
         {
             public static bool Prefix(Player __instance)
             {
-                if (ZInput.GetButtonDown("GPower") || ZInput.GetButtonDown("JoyGPower"))
+                if (ZInput.GetButtonDown("GP") || ZInput.GetButtonDown("JoyGP"))
                 {
                     ValheimLegends.shouldUseGuardianPower = true;
                 }
