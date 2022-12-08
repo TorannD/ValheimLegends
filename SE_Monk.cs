@@ -47,7 +47,7 @@ namespace ValheimLegends
             if (m_timer <= 0f)
             {
                 maxHitCount = 10 + Mathf.RoundToInt(m_character.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level * .2f);
-                m_timer = m_interval;
+                m_timer = m_interval * VL_GlobalConfigs.c_monkChiDuration;
                 hitCount--;
                 hitCount = Mathf.Clamp(hitCount, 0, maxHitCount);
             }

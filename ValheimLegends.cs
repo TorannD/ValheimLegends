@@ -15,14 +15,14 @@ using System.Threading;
 
 namespace ValheimLegends
 {
-    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.3.9")]
+    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.4.7")]
     public class ValheimLegends : BaseUnityPlugin
     {
 
         public static Harmony _Harmony;
 
-        public const string Version = "0.4.0";
-        public const float VersionF = 0.40f;
+        public const string Version = "0.4.7";
+        public const float VersionF = 0.47f;
         public const string ModName = "Valheim Legends";
         public static bool playerEnabled = true;
 
@@ -136,6 +136,7 @@ namespace ValheimLegends
         public static ConfigEntry<float> vl_svr_monkFlyingKick;
         public static ConfigEntry<float> vl_svr_monkBonusBlock;
         public static ConfigEntry<float> vl_svr_monkSurge;
+        public static ConfigEntry<float> vl_svr_monkChiDuration;
 
         public static ConfigEntry<float> vl_svr_priestHeal;
         public static ConfigEntry<float> vl_svr_priestPurgeHeal;
@@ -153,6 +154,7 @@ namespace ValheimLegends
         public static ConfigEntry<float> vl_svr_rogueFadeCooldown;
         public static ConfigEntry<float> vl_svr_roguePoisonBomb;
         public static ConfigEntry<float> vl_svr_rogueBonusThrowingDagger;
+        public static ConfigEntry<float> vl_svr_rogueTrickCharge;
 
         public static ConfigEntry<float> vl_svr_shamanSpiritShock;
         public static ConfigEntry<float> vl_svr_shamanEnrage;
@@ -165,6 +167,7 @@ namespace ValheimLegends
         public static ConfigEntry<float> vl_svr_valkyrieBulwark;
         public static ConfigEntry<float> vl_svr_valkyrieBonusChillWave;
         public static ConfigEntry<float> vl_svr_valkyrieBonusIceLance;
+        public static ConfigEntry<float> vl_svr_valkyrieChargeDuration;
 
         //Save and load data
 
@@ -314,9 +317,9 @@ namespace ValheimLegends
                 try
                 {
                     //ZLog.Log("filename: " + ___m_filename);
-                    Directory.CreateDirectory(Utils.GetSaveDataPath() + "/characters/VL");
-                    string text = Utils.GetSaveDataPath() + "/characters/VL/" + ___m_filename + "_vl.fch";
-                    string text3 = Utils.GetSaveDataPath() + "/characters/VL/" + ___m_filename + "_vl.fch.new";
+                    Directory.CreateDirectory(Utils.GetSaveDataPath(FileHelpers.FileSource.Local) + "/characters/VL");
+                    string text = Utils.GetSaveDataPath(FileHelpers.FileSource.Local) + "/characters/VL/" + ___m_filename + "_vl.fch";
+                    string text3 = Utils.GetSaveDataPath(FileHelpers.FileSource.Local) + "/characters/VL/" + ___m_filename + "_vl.fch.new";
                     ZPackage zPackage = new ZPackage();
                     zPackage.Write(GetPlayerClassNum);
                     byte[] array = zPackage.GenerateHash();
@@ -379,7 +382,7 @@ namespace ValheimLegends
 
             private static ZPackage LoadPlayerDataFromDisk(string m_filename)
             {
-                string text = Utils.GetSaveDataPath() + "/characters/VL/" + m_filename + "_vl.fch";
+                string text = Utils.GetSaveDataPath(FileHelpers.FileSource.Local) + "/characters/VL/" + m_filename + "_vl.fch";
                 //ZLog.Log("Player load file is : (" + text + ")");
                 FileStream fileStream;
                 try
@@ -655,7 +658,7 @@ namespace ValheimLegends
                     Character character = component as Character;
                     if ((bool)character)
                     {
-                        if(!VL_Utility.LOS_IsValid(character, __instance.transform.position))
+                        if (!VL_Utility.LOS_IsValid(character, __instance.transform.position))
                         {
                             __result = false;
                             return false;
@@ -666,23 +669,23 @@ namespace ValheimLegends
             }
         }
 
-        [HarmonyPatch(typeof(Projectile), "IsValidTarget")]
-        public static class Projectile_AoE_LOSCheck_Prefix
-        {
-            private static bool Prefix(Projectile __instance, IDestructible destr, ref bool hitCharacter, ref bool __result)
-            {
-                Character character = destr as Character;
-                if ((bool)character)
-                {                    
-                    if (!VL_Utility.LOS_IsValid(character, __instance.transform.position, __instance.transform.position + __instance.GetVelocity() * -1.5f))
-                    {
-                        __result = false;
-                        return false;
-                    }
-                }
-                return true;
-            }
-        }
+        //[HarmonyPatch(typeof(Projectile), "IsValidTarget")]
+        //public static class Projectile_AoE_LOSCheck_Prefix
+        //{
+        //    private static bool Prefix(Projectile __instance, IDestructible destr, ref bool __result)
+        //    {
+        //        Character character = destr as Character;
+        //        if ((bool)character)
+        //        {                    
+        //            if (!VL_Utility.LOS_IsValid(character, __instance.transform.position, __instance.transform.position + __instance.GetVelocity() * -1.5f))
+        //            {
+        //                __result = false;
+        //                return false;
+        //            }
+        //        }
+        //        return true;
+        //    }
+        //}
 
         [HarmonyPatch(typeof(Humanoid), "GetCurrentWeapon")]
         public static class UnarmedDamage
@@ -1842,7 +1845,7 @@ namespace ValheimLegends
         {
             public static bool Prefix(Player __instance)
             {
-                if (ZInput.GetButtonDown("GPower") || ZInput.GetButtonDown("JoyGPower"))
+                if (ZInput.GetButtonDown("GP") || ZInput.GetButtonDown("JoyGP"))
                 {
                     ValheimLegends.shouldUseGuardianPower = true;
                 }
@@ -2386,7 +2389,7 @@ namespace ValheimLegends
                     "Sacrifice: wood\n\n" +
                     "Chi strike: attack with a blow so powerful it creates a shockwave.\nDamage:\n Blunt - 12 + 0.5*Discipline -> 24 + Discipline\nCooldown: 1s\nEnergy: 3 chi\n*Uses chi instead of stamina; build chi through unarmed combat\n**Activate while on the ground to create a powerful frontal attack; use from sufficient height to propel the monk to the ground, creating a powerful AoE attack\n\n"
                     + "Flying Kick: launches into a flying whirlwind kick.\nDamage:\n Blunt - 80% + 0.5% of unarmed damage per hit\nCooldown: 6s\nEnergy: 50\n*Can strike multiple times - attack past or above targets to land multiple hits\n**Attack directly at the target for an assured strike that will rebound the monk into the air (hint: combo with Chi Strike)\n\n"
-                    + "Chi Bolt: projects condensed energy that detonates on impact.\nDamage:\n Blunt - 10 + Discipline -> 40 + 2*Discipline\n Spirit - 10 + Discipline + 20 + Discipline\nAoE - 3m\nCooldown: 1s\nEnergy: 5 chi\n\n"
+                    + "Chi Bolt: projects condensed energy that detonates on impact.\nDamage:\n Blunt - (10 + Discipline) -> (40 + 2*Discipline)\n Spirit - (10 -> 20) + Discipline\nAoE - 3m\nCooldown: 1s\nEnergy: 5 chi\n\n"
                     + "Bonus Skills:\n - Chi - each unarmed attack that hits and each fully blocked attack generates a charge of chi\n - Living Weapon - unarmed attacks deal 25% more damage\n - Strong Body - unarmed block amount is increased by 1 for each level in Discipline and monks can fall from over double the height before taking damage\n\n",
                     m_topic = "Legend Monk"
                 };
@@ -2529,7 +2532,7 @@ namespace ValheimLegends
             //modEnabled = this.Config.Bind<bool>("General", "modEnabled", true, "Enable/Disable mod");
             chosenClass = this.Config.Bind<string>("General", "chosenClass", "None", "Assigns a class to the player if no class is assigned.\nThis will not overwrite an existing class selection.\nA value of None will not attempt to assign any class.");
             //chosenClass = ConfigManager.RegisterModConfigVariable<string>(ModName, "chosenClass", "None", "General", "Assigns a class to the player if no class is assigned.\nThis will not overwrite an existing class selection.\nA value of None will not attempt to assign any class.", true);
-            vl_svr_allowAltarClassChange = this.Config.Bind<bool>("General", "vl_svr_allowAltarClassChange", true, "Allows class changing at the altar; if disable, the only way to change class will be via console or the mod configs.");
+            vl_svr_allowAltarClassChange = this.Config.Bind<bool>("General", "vl_svr_allowAltarClassChange", true, "Allows class changing at the altar; if disabled, the only way to change class will be via console or the mod configs.");
             vl_svr_enforceConfigClass = this.Config.Bind<bool>("General", "vl_svr_enforceConfigClass", false, "True - always sets the player class to this value when the player logs in. False - uses player profile to determine class\nDoes not apply if the chosen class is None.");
             //vl_mce_enforceConfigurationClass = ConfigManager.RegisterModConfigVariable<bool>(ModName, "vl_mce_enforceConfigurationClass", false, "General", "True - always sets the player class to this value when the player logs in. False - uses player profile to determine class\nDoes not apply if the chosen class is None.", false);
             vl_svr_aoeRequiresLoS = this.Config.Bind<bool>("General", "vl_svr_aoeRequiresLoS", true, "True - all AoE attacks require Line of Sight to the impact point.\nFalse - uses default game behavior for AoE attacks.");
@@ -2554,87 +2557,90 @@ namespace ValheimLegends
             //Ability3_Hotkey_Combo = ConfigManager.RegisterModConfigVariable<string>(ModName, "Ability3_Hotkey_Combo", "", "Keybinds", "Ability 3 Combination Key", true);
             Ability3_Hotkey_Combo = this.Config.Bind<string>("Keybinds", "Ability3_Hotkey_Combo", "", "Ability 3 Combination Key");
             //vl_mce_energyCostMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "vl_mce_energyCostMultiplier", 1f, "Modifiers", "This value multiplied on overall ability use energy cost", false);
-            vl_svr_energyCostMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_energyCostMultiplier", 1f, "Ability modifiers are always enforced by the server host\nThis value multiplied on overall ability use energy cost");
+            vl_svr_energyCostMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_energyCostMultiplier", 100f, "Ability modifiers are always enforced by the server host\nThis value multiplied on overall ability use energy cost");
             //vl_mce_cooldownMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "vl_mce_cooldownMultiplier", 1f, "Modifiers", "This value multiplied on overall cooldown time of abilities", false);
-            vl_svr_cooldownMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_cooldownMultiplier", 1f, "This value multiplied on overall cooldown time of abilities");
+            vl_svr_cooldownMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_cooldownMultiplier", 100f, "This value multiplied on overall cooldown time of abilities");
             //vl_mce_abilityDamageMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "vl_mce_abilityDamageMultiplier", 1f, "Modifiers", "This value multiplied on overall ability power", false);
-            vl_svr_abilityDamageMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_abilityDamageMultiplier", 1f, "This value multiplied on overall ability power");
+            vl_svr_abilityDamageMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_abilityDamageMultiplier", 100f, "This value multiplied on overall ability power");
             //vl_mce_skillGainMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "vl_mce_skillGainMultiplier", 1f, "Modifiers", "This value modifies the amount of skill experience gained after using an ability", false);
-            vl_svr_skillGainMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_skillGainMultiplier", 1f, "This value modifies the amount of skill experience gained after using an ability");
+            vl_svr_skillGainMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_skillGainMultiplier", 100f, "This value modifies the amount of skill experience gained after using an ability");
             //vl_mce_cooldownMultiplier = ConfigManager.RegisterModConfigVariable<float>(ModName, "vl_mce_cooldownMultiplier", 1f, "Modifiers", "This value multiplied on overall cooldown time of abilities", false);
-            vl_svr_unarmedDamageMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_unarmedDamageMultiplier", 1f, "This value modifies unarmed damage increased by unarmed skill\nOnly use unarmed damage modifiers from a single mod");
+            vl_svr_unarmedDamageMultiplier = this.Config.Bind<float>("Modifiers", "vl_svr_unarmedDamageMultiplier", 100f, "This value modifies unarmed damage increased by unarmed skill\nOnly use unarmed damage modifiers from a single mod");
 
-            vl_svr_berserkerDash = this.Config.Bind<float>("Class Modifiers", "vl_svr_berserkerDash", 1f, "Modifies the damage dealt by Dash"); 
-            vl_svr_berserkerBerserk = this.Config.Bind<float>("Class Modifiers", "vl_svr_berserkerBerserk", 1f, "Modifies the damage bonus from Berserk"); 
-            vl_svr_berserkerExecute = this.Config.Bind<float>("Class Modifiers", "vl_svr_berserkerExecute", 1f, "Modifies the damage bonus from Execute"); 
-            vl_svr_berserkerBonusDamage = this.Config.Bind<float>("Class Modifiers", "vl_svr_berserkerBonusDamage", 1f, "Modifies the damage Bonus gained from missing health"); 
-            vl_svr_berserkerBonus2h = this.Config.Bind<float>("Class Modifiers", "vl_svr_berserkerBonus2h", 1f, "Decreases the stamina cost when using 2h weapons"); 
+            vl_svr_berserkerDash = this.Config.Bind<float>("Class Modifiers", "vl_svr_berserkerDash", 100f, "Modifies the damage dealt by Dash"); 
+            vl_svr_berserkerBerserk = this.Config.Bind<float>("Class Modifiers", "vl_svr_berserkerBerserk", 100f, "Modifies the damage bonus from Berserk"); 
+            vl_svr_berserkerExecute = this.Config.Bind<float>("Class Modifiers", "vl_svr_berserkerExecute", 100f, "Modifies the damage bonus from Execute"); 
+            vl_svr_berserkerBonusDamage = this.Config.Bind<float>("Class Modifiers", "vl_svr_berserkerBonusDamage", 100f, "Modifies the damage Bonus gained from missing health"); 
+            vl_svr_berserkerBonus2h = this.Config.Bind<float>("Class Modifiers", "vl_svr_berserkerBonus2h", 100f, "Decreases the stamina cost when using 2h weapons"); 
 
-            vl_svr_druidVines = this.Config.Bind<float>("Class Modifiers", "vl_svr_druidVines", 1f, "Modifies the damage of Vines"); 
-            vl_svr_druidRegen = this.Config.Bind<float>("Class Modifiers", "vl_svr_druidRegen", 1f, "Modifies the amount healed by Regenerate"); 
-            vl_svr_druidDefenders = this.Config.Bind<float>("Class Modifiers", "vl_svr_druidDefenders", 1f, "Modifies the damage of summoned Defenders"); 
-            vl_svr_druidBonusSeeds = this.Config.Bind<float>("Class Modifiers", "vl_svr_druidBonusSeeds", 1f, "Modifies the stamina regeneration from consuming seeds"); 
+            vl_svr_druidVines = this.Config.Bind<float>("Class Modifiers", "vl_svr_druidVines", 100f, "Modifies the damage of Vines"); 
+            vl_svr_druidRegen = this.Config.Bind<float>("Class Modifiers", "vl_svr_druidRegen", 100f, "Modifies the amount healed by Regenerate"); 
+            vl_svr_druidDefenders = this.Config.Bind<float>("Class Modifiers", "vl_svr_druidDefenders", 100f, "Modifies the damage of summoned Defenders"); 
+            vl_svr_druidBonusSeeds = this.Config.Bind<float>("Class Modifiers", "vl_svr_druidBonusSeeds", 100f, "Modifies the stamina regeneration from consuming seeds"); 
 
-            vl_svr_duelistSeismicSlash = this.Config.Bind<float>("Class Modifiers", "vl_svr_duelistSeismicSlash", 1f, "Modifies the damage dealt by Seismic Slash"); 
-            vl_svr_duelistRiposte = this.Config.Bind<float>("Class Modifiers", "vl_svr_duelistRiposte", 1f, "Modifies the damage dealt by Riposte"); 
-            vl_svr_duelistHipShot = this.Config.Bind<float>("Class Modifiers", "vl_svr_duelistHipShot", 1f, "Modifies the damage dealt by Hip Shot"); 
-            vl_svr_duelistBonusParry = this.Config.Bind<float>("Class Modifiers", "vl_svr_duelistBonusParry", 1f, "Modifies the parry bonus"); 
+            vl_svr_duelistSeismicSlash = this.Config.Bind<float>("Class Modifiers", "vl_svr_duelistSeismicSlash", 100f, "Modifies the damage dealt by Seismic Slash"); 
+            vl_svr_duelistRiposte = this.Config.Bind<float>("Class Modifiers", "vl_svr_duelistRiposte", 100f, "Modifies the damage dealt by Riposte"); 
+            vl_svr_duelistHipShot = this.Config.Bind<float>("Class Modifiers", "vl_svr_duelistHipShot", 100f, "Modifies the damage dealt by Hip Shot"); 
+            vl_svr_duelistBonusParry = this.Config.Bind<float>("Class Modifiers", "vl_svr_duelistBonusParry", 100f, "Modifies the parry bonus"); 
 
-            vl_svr_enchanterWeaken = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterWeaken", 1f, "Modifies the power of Weaken"); 
-            vl_svr_enchanterCharm = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterCharm", 1f, "Modifies the duration of Charm"); 
-            vl_svr_enchanterBiome = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterBiome", 1f, "Modifies the duration of Biome buffs"); 
-            vl_svr_enchanterBiomeShock = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterBiomeShock", 1f, "Modifies the damage dealt by Biome Shock"); 
-            vl_svr_enchanterBonusElementalBlock = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterBonusElementalBlock", 1f, "Modifies the amount of stamina gained when blocking elemental damage"); 
-            vl_svr_enchanterBonusElementalTouch = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterBonusElementalTouch", 1f, "Modifies the damage of elemental attacks caused by elemental touch"); 
+            vl_svr_enchanterWeaken = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterWeaken", 100f, "Modifies the power of Weaken"); 
+            vl_svr_enchanterCharm = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterCharm", 100f, "Modifies the duration of Charm"); 
+            vl_svr_enchanterBiome = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterBiome", 100f, "Modifies the duration of Biome buffs"); 
+            vl_svr_enchanterBiomeShock = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterBiomeShock", 100f, "Modifies the damage dealt by Biome Shock"); 
+            vl_svr_enchanterBonusElementalBlock = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterBonusElementalBlock", 100f, "Modifies the amount of stamina gained when blocking elemental damage"); 
+            vl_svr_enchanterBonusElementalTouch = this.Config.Bind<float>("Class Modifiers", "vl_svr_enchanterBonusElementalTouch", 100f, "Modifies the damage of elemental attacks caused by elemental touch"); 
 
-            vl_svr_mageFireball = this.Config.Bind<float>("Class Modifiers", "vl_svr_mageFireball", 1f, "Modifies the damage and speed of Fireball"); 
-            vl_svr_mageFrostDagger = this.Config.Bind<float>("Class Modifiers", "vl_svr_mageFrostDagger", 1f, "Modifies the damage of Frost Daggers"); 
-            vl_svr_mageFrostNova = this.Config.Bind<float>("Class Modifiers", "vl_svr_mageFrostNova", 1f, "Modifies the damage of Frost Nova"); 
-            vl_svr_mageInferno = this.Config.Bind<float>("Class Modifiers", "vl_svr_mageInferno", 1f, "Modifies the damage of Inferno"); 
-            vl_svr_mageMeteor = this.Config.Bind<float>("Class Modifiers", "vl_svr_mageMeteor", 1f, "Modifies the damage of Meteors"); 
+            vl_svr_mageFireball = this.Config.Bind<float>("Class Modifiers", "vl_svr_mageFireball", 100f, "Modifies the damage and speed of Fireball"); 
+            vl_svr_mageFrostDagger = this.Config.Bind<float>("Class Modifiers", "vl_svr_mageFrostDagger", 100f, "Modifies the damage of Frost Daggers"); 
+            vl_svr_mageFrostNova = this.Config.Bind<float>("Class Modifiers", "vl_svr_mageFrostNova", 100f, "Modifies the damage of Frost Nova"); 
+            vl_svr_mageInferno = this.Config.Bind<float>("Class Modifiers", "vl_svr_mageInferno", 100f, "Modifies the damage of Inferno"); 
+            vl_svr_mageMeteor = this.Config.Bind<float>("Class Modifiers", "vl_svr_mageMeteor", 100f, "Modifies the damage of Meteors"); 
 
-            vl_svr_metavokerLight = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerLight", 1f, "Modifies the damage and force of Light"); 
-            vl_svr_metavokerReplica = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerReplica", 1f, "Modifies the damage dealt by Replicas"); 
-            vl_svr_metavokerWarpDamage = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerWarpDamage", 1f, "Modifies the damage dealt by excess Warp energy"); 
-            vl_svr_metavokerWarpDistance = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerWarpDistance", 1f, "Modifies the distance travelled when warping\n**WARNING: excessive warp distance can cause unpredictable results"); 
-            vl_svr_metavokerBonusSafeFallCost = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerBonusSafeFallCost", 1f, "Modifies the stamina cost of safe fall"); 
-            vl_svr_metavokerBonusForceWave = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerBonusForceWave", 1f, "Modifies the force and damage of Force Wall"); 
+            vl_svr_metavokerLight = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerLight", 100f, "Modifies the damage and force of Light"); 
+            vl_svr_metavokerReplica = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerReplica", 100f, "Modifies the damage dealt by Replicas"); 
+            vl_svr_metavokerWarpDamage = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerWarpDamage", 100f, "Modifies the damage dealt by excess Warp energy"); 
+            vl_svr_metavokerWarpDistance = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerWarpDistance", 100f, "Modifies the distance travelled when warping\n**WARNING: excessive warp distance can cause unpredictable results"); 
+            vl_svr_metavokerBonusSafeFallCost = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerBonusSafeFallCost", 100f, "Modifies the stamina cost of safe fall"); 
+            vl_svr_metavokerBonusForceWave = this.Config.Bind<float>("Class Modifiers", "vl_svr_metavokerBonusForceWave", 100f, "Modifies the force and damage of Force Wall"); 
 
-            vl_svr_monkChiPunch = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkChiPunch", 1f, "Modifies the power of Chi Punch"); 
-            vl_svr_monkChiSlam = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkChiSlam", 1f, "Modifies the power of Chi Slam"); 
-            vl_svr_monkChiBlast = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkChiBlast", 1f, "Modifies the power of Chi Blast"); 
-            vl_svr_monkFlyingKick = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkFlyingKick", 1f, "Modifies the power of Flying Kick"); 
-            vl_svr_monkBonusBlock = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkBonusBlock", 1f, "Modifies the block bonus while unarmed");
-            vl_svr_monkSurge = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkSurge", 1f, "Modifies the health and stamina restored while Chi surging");
+            vl_svr_monkChiPunch = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkChiPunch", 100f, "Modifies the power of Chi Punch"); 
+            vl_svr_monkChiSlam = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkChiSlam", 100f, "Modifies the power of Chi Slam"); 
+            vl_svr_monkChiBlast = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkChiBlast", 100f, "Modifies the power of Chi Blast"); 
+            vl_svr_monkFlyingKick = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkFlyingKick", 100f, "Modifies the power of Flying Kick"); 
+            vl_svr_monkBonusBlock = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkBonusBlock", 100f, "Modifies the block bonus while unarmed");
+            vl_svr_monkSurge = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkSurge", 100f, "Modifies the health and stamina restored while Chi surging");
+            vl_svr_monkChiDuration = this.Config.Bind<float>("Class Modifiers", "vl_svr_monkChiDuration", 100f, "Modifies how quickly chi decreases\nLower is faster");
 
-            vl_svr_priestHeal = this.Config.Bind<float>("Class Modifiers", "vl_svr_priestHeal", 1f, "Modifies the power of Heal"); 
-            vl_svr_priestPurgeHeal = this.Config.Bind<float>("Class Modifiers", "vl_svr_priestPurgeHeal", 1f, "Modifies the healing amount of Purge"); 
-            vl_svr_priestPurgeDamage = this.Config.Bind<float>("Class Modifiers", "vl_svr_priestPurgeDamage", 1f, "Modifies the damage amount of Purge"); 
-            vl_svr_priestSanctify = this.Config.Bind<float>("Class Modifiers", "vl_svr_priestSanctify", 1f, "Modifies the power of Sanctify"); 
-            vl_svr_priestBonusDyingLightCooldown = this.Config.Bind<float>("Class Modifiers", "vl_svr_priestBonusDyingLightCooldown", 1f, "Modifies the cooldown of Dying Light"); 
+            vl_svr_priestHeal = this.Config.Bind<float>("Class Modifiers", "vl_svr_priestHeal", 100f, "Modifies the power of Heal"); 
+            vl_svr_priestPurgeHeal = this.Config.Bind<float>("Class Modifiers", "vl_svr_priestPurgeHeal", 100f, "Modifies the healing amount of Purge"); 
+            vl_svr_priestPurgeDamage = this.Config.Bind<float>("Class Modifiers", "vl_svr_priestPurgeDamage", 100f, "Modifies the damage amount of Purge"); 
+            vl_svr_priestSanctify = this.Config.Bind<float>("Class Modifiers", "vl_svr_priestSanctify", 100f, "Modifies the power of Sanctify"); 
+            vl_svr_priestBonusDyingLightCooldown = this.Config.Bind<float>("Class Modifiers", "vl_svr_priestBonusDyingLightCooldown", 100f, "Modifies the cooldown of Dying Light"); 
 
-            vl_svr_rangerPowerShot = this.Config.Bind<float>("Class Modifiers", "vl_svr_rangerPowerShot", 1f, "Modifies the damage bonus of Power Shot"); 
-            vl_svr_rangerShadowWolf = this.Config.Bind<float>("Class Modifiers", "vl_svr_rangerShadowWolf", 1f, "Modifies the damage of Shadow Wolves"); 
-            vl_svr_rangerShadowStalk = this.Config.Bind<float>("Class Modifiers", "vl_svr_rangerShadowStalk", 1f, "Modifies the movement speed from Shadow Stalk"); 
-            vl_svr_rangerBonusPoisonResistance = this.Config.Bind<float>("Class Modifiers", "vl_svr_rangerBonusPoisonResistance", 1f, "Modifies the bonus from Poison Resitance"); 
-            vl_svr_rangerBonusRunCost = this.Config.Bind<float>("Class Modifiers", "vl_svr_rangerBonusRunCost", 1f, "Modifies the bonus stamina reduction while running"); 
+            vl_svr_rangerPowerShot = this.Config.Bind<float>("Class Modifiers", "vl_svr_rangerPowerShot", 100f, "Modifies the damage bonus of Power Shot"); 
+            vl_svr_rangerShadowWolf = this.Config.Bind<float>("Class Modifiers", "vl_svr_rangerShadowWolf", 100f, "Modifies the damage of Shadow Wolves"); 
+            vl_svr_rangerShadowStalk = this.Config.Bind<float>("Class Modifiers", "vl_svr_rangerShadowStalk", 100f, "Modifies the movement speed from Shadow Stalk"); 
+            vl_svr_rangerBonusPoisonResistance = this.Config.Bind<float>("Class Modifiers", "vl_svr_rangerBonusPoisonResistance", 100f, "Modifies the bonus from Poison Resitance"); 
+            vl_svr_rangerBonusRunCost = this.Config.Bind<float>("Class Modifiers", "vl_svr_rangerBonusRunCost", 100f, "Modifies the bonus stamina reduction while running"); 
 
-            vl_svr_rogueBackstab = this.Config.Bind<float>("Class Modifiers", "vl_svr_rogueBackstab", 1f, "Modifies the damage of Backstab"); 
-            vl_svr_rogueFadeCooldown = this.Config.Bind<float>("Class Modifiers", "vl_svr_rogueFadeCooldown", 1f, "Modifies the cooldown of Fade"); 
-            vl_svr_roguePoisonBomb = this.Config.Bind<float>("Class Modifiers", "vl_svr_roguePoisonBomb", 1f, "Modifies the damage dealt by Poison Bomb"); 
-            vl_svr_rogueBonusThrowingDagger = this.Config.Bind<float>("Class Modifiers", "vl_svr_rogueBonusThrowingDagger", 1f, "Modifies the damage dealt by Throwing knives"); 
+            vl_svr_rogueBackstab = this.Config.Bind<float>("Class Modifiers", "vl_svr_rogueBackstab", 100f, "Modifies the damage of Backstab"); 
+            vl_svr_rogueFadeCooldown = this.Config.Bind<float>("Class Modifiers", "vl_svr_rogueFadeCooldown", 100f, "Modifies the cooldown of Fade"); 
+            vl_svr_roguePoisonBomb = this.Config.Bind<float>("Class Modifiers", "vl_svr_roguePoisonBomb", 100f, "Modifies the damage dealt by Poison Bomb"); 
+            vl_svr_rogueBonusThrowingDagger = this.Config.Bind<float>("Class Modifiers", "vl_svr_rogueBonusThrowingDagger", 100f, "Modifies the damage dealt by Throwing knives"); 
+            vl_svr_rogueTrickCharge = this.Config.Bind<float>("Class Modifiers", "vl_svr_rogueTrickCharge", 100f, "Modifies how quickly trick points increase");
 
-            vl_svr_shamanSpiritShock = this.Config.Bind<float>("Class Modifiers", "vl_svr_shamanSpiritShock", 1f, "Modifies the power of Spirit Shock"); 
-            vl_svr_shamanEnrage = this.Config.Bind<float>("Class Modifiers", "vl_svr_shamanEnrage", 1f, "Modifies the stamina regeneration from Enrage"); 
-            vl_svr_shamanShell = this.Config.Bind<float>("Class Modifiers", "vl_svr_shamanShell", 1f, "Modifies the elemental protection applied by Shell"); 
-            vl_svr_shamanBonusSpiritGuide = this.Config.Bind<float>("Class Modifiers", "vl_svr_shamanBonusSpiritGuide", 1f, "Modifies the amount of stamina gained from Spirit Guide"); 
-            vl_svr_shamanBonusWaterGlideCost = this.Config.Bind<float>("Class Modifiers", "vl_svr_shamanBonusWaterGlideCost", 1f, "Modifies the stamina cost to Water Glide"); 
+            vl_svr_shamanSpiritShock = this.Config.Bind<float>("Class Modifiers", "vl_svr_shamanSpiritShock", 100f, "Modifies the power of Spirit Shock"); 
+            vl_svr_shamanEnrage = this.Config.Bind<float>("Class Modifiers", "vl_svr_shamanEnrage", 100f, "Modifies the stamina regeneration from Enrage"); 
+            vl_svr_shamanShell = this.Config.Bind<float>("Class Modifiers", "vl_svr_shamanShell", 100f, "Modifies the elemental protection applied by Shell"); 
+            vl_svr_shamanBonusSpiritGuide = this.Config.Bind<float>("Class Modifiers", "vl_svr_shamanBonusSpiritGuide", 100f, "Modifies the amount of stamina gained from Spirit Guide"); 
+            vl_svr_shamanBonusWaterGlideCost = this.Config.Bind<float>("Class Modifiers", "vl_svr_shamanBonusWaterGlideCost", 100f, "Modifies the stamina cost to Water Glide"); 
 
-            vl_svr_valkyrieLeap = this.Config.Bind<float>("Class Modifiers", "vl_svr_valkyrieLeap", 1f, "Modifies the damage of Leap"); 
-            vl_svr_valkyrieStaggerCooldown = this.Config.Bind<float>("Class Modifiers", "vl_svr_valkyrieStaggerCooldown", 1f, "Modifies the cooldown of Stagger"); 
-            vl_svr_valkyrieBulwark = this.Config.Bind<float>("Class Modifiers", "vl_svr_valkyrieBulwark", 1f, "Modifies the damage reduction of Bulwark"); 
-            vl_svr_valkyrieBonusChillWave = this.Config.Bind<float>("Class Modifiers", "vl_svr_valkyrieBonusChillWave", 1f, "Modifies the damage from Chill Wave"); 
-            vl_svr_valkyrieBonusIceLance = this.Config.Bind<float>("Class Modifiers", "vl_svr_valkyrieBonusIceLance", 1f, "Modifies the damage from Ice Lance"); 
+            vl_svr_valkyrieLeap = this.Config.Bind<float>("Class Modifiers", "vl_svr_valkyrieLeap", 100f, "Modifies the damage of Leap"); 
+            vl_svr_valkyrieStaggerCooldown = this.Config.Bind<float>("Class Modifiers", "vl_svr_valkyrieStaggerCooldown", 100f, "Modifies the cooldown of Stagger"); 
+            vl_svr_valkyrieBulwark = this.Config.Bind<float>("Class Modifiers", "vl_svr_valkyrieBulwark", 100f, "Modifies the damage reduction of Bulwark"); 
+            vl_svr_valkyrieBonusChillWave = this.Config.Bind<float>("Class Modifiers", "vl_svr_valkyrieBonusChillWave", 100f, "Modifies the damage from Chill Wave"); 
+            vl_svr_valkyrieBonusIceLance = this.Config.Bind<float>("Class Modifiers", "vl_svr_valkyrieBonusIceLance", 100f, "Modifies the damage from Ice Lance");
+            vl_svr_valkyrieChargeDuration = this.Config.Bind<float>("Class Modifiers", "vl_svr_valkyrieChargeDuration", 100f, "Modifies how quickly ice charges decrease");
 
             VL_GlobalConfigs.ConfigStrings = new Dictionary<string, float>();
             VL_GlobalConfigs.ConfigStrings.Clear();
@@ -2688,6 +2694,7 @@ namespace ValheimLegends
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_monkFlyingKick", vl_svr_monkFlyingKick.Value);
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_monkBonusBlock", vl_svr_monkBonusBlock.Value);
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_monkSurge", vl_svr_monkSurge.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_monkChiDuration", vl_svr_monkChiDuration.Value);
 
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_priestHeal", vl_svr_priestHeal.Value);
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_priestPurgeHeal", vl_svr_priestPurgeHeal.Value);
@@ -2705,6 +2712,7 @@ namespace ValheimLegends
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_rogueFadeCooldown", vl_svr_rogueFadeCooldown.Value);
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_roguePoisonBomb", vl_svr_roguePoisonBomb.Value);
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_rogueBonusThrowingDagger", vl_svr_rogueBonusThrowingDagger.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_rogueTrickCharge", vl_svr_rogueTrickCharge.Value);
 
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_shamanSpiritShock", vl_svr_shamanSpiritShock.Value);
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_shamanEnrage", vl_svr_shamanEnrage.Value);
@@ -2717,10 +2725,11 @@ namespace ValheimLegends
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_valkyrieBulwark", vl_svr_valkyrieBulwark.Value);
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_valkyrieBonusChillWave", vl_svr_valkyrieBonusChillWave.Value);
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_valkyrieBonusIceLance", vl_svr_valkyrieBonusIceLance.Value);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_valkyrieChargeDuration", vl_svr_valkyrieChargeDuration.Value);
 
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_enforceConfigClass", vl_svr_enforceConfigClass.Value ? 1f : 0f);
             VL_GlobalConfigs.ConfigStrings.Add("vl_svr_aoeRequiresLoS", vl_svr_aoeRequiresLoS.Value ? 1f : 0f);
-            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_allowAltarClassChange", vl_svr_aoeRequiresLoS.Value ? 1f : 0f);
+            VL_GlobalConfigs.ConfigStrings.Add("vl_svr_allowAltarClassChange", vl_svr_allowAltarClassChange.Value ? 1f : 0f);
             //VL_GlobalConfigs.ConfigStrings.Add("vl_svr_version", Version);
 
             //assets
@@ -2739,14 +2748,14 @@ namespace ValheimLegends
             Sprite icon_evocation = Sprite.Create(tex_evocation, new Rect(0f, 0f, (float)tex_evocation.width, (float)tex_evocation.height), new Vector2(0.5f, 0.5f));
             Texture2D tex_illusion = VL_Utility.LoadTextureFromAssets("illusion_skill.png");
             Sprite icon_illusion = Sprite.Create(tex_illusion, new Rect(0f, 0f, (float)tex_illusion.width, (float)tex_illusion.height), new Vector2(0.5f, 0.5f));
-
+            
             Texture2D tex_movement = VL_Utility.LoadTextureFromAssets("movement_icon.png");
             Ability3_Sprite = Sprite.Create(tex_movement, new Rect(0f, 0f, (float)tex_movement.width, (float)tex_movement.height), new Vector2(0.5f, 0.5f));
             Texture2D tex_strength = VL_Utility.LoadTextureFromAssets("strength_icon.png");
             Ability2_Sprite = Sprite.Create(tex_strength, new Rect(0f, 0f, (float)tex_strength.width, (float)tex_strength.height), new Vector2(0.5f, 0.5f));
             Texture2D tex_protection = VL_Utility.LoadTextureFromAssets("protection_icon.png");
             Ability1_Sprite = Sprite.Create(tex_protection, new Rect(0f, 0f, (float)tex_protection.width, (float)tex_protection.height), new Vector2(0.5f, 0.5f));
-
+            
             Texture2D tex_riposte = VL_Utility.LoadTextureFromAssets("riposte_icon.png");
             RiposteIcon = Sprite.Create(tex_riposte, new Rect(0f, 0f, (float)tex_riposte.width, (float)tex_riposte.height), new Vector2(0.5f, 0.5f));
             Texture2D tex_rogue = VL_Utility.LoadTextureFromAssets("rogue_icon.png");
@@ -2759,7 +2768,7 @@ namespace ValheimLegends
             RangerIcon = Sprite.Create(tex_ranger, new Rect(0f, 0f, (float)tex_ranger.width, (float)tex_ranger.height), new Vector2(0.5f, 0.5f));
             Texture2D tex_valkyrie = VL_Utility.LoadTextureFromAssets("valkyrie_icon.png");
             ValkyrieIcon = Sprite.Create(tex_valkyrie, new Rect(0f, 0f, (float)tex_valkyrie.width, (float)tex_valkyrie.height), new Vector2(0.5f, 0.5f));
-
+           
             Texture2D tex_biome_meadows = VL_Utility.LoadTextureFromAssets("biome_meadows_icon.png");
             BiomeMeadowsIcon = Sprite.Create(tex_biome_meadows, new Rect(0f, 0f, (float)tex_biome_meadows.width, (float)tex_biome_meadows.height), new Vector2(0.5f, 0.5f));
             Texture2D tex_biome_blackforest = VL_Utility.LoadTextureFromAssets("biome_blackforest_icon.png");
@@ -2776,10 +2785,10 @@ namespace ValheimLegends
             BiomeMistIcon = Sprite.Create(tex_biome_mist, new Rect(0f, 0f, (float)tex_biome_mist.width, (float)tex_biome_mist.height), new Vector2(0.5f, 0.5f));
             Texture2D tex_biome_ash = VL_Utility.LoadTextureFromAssets("biome_ash_icon.png");
             BiomeAshIcon = Sprite.Create(tex_biome_ash, new Rect(0f, 0f, (float)tex_biome_ash.width, (float)tex_biome_ash.height), new Vector2(0.5f, 0.5f));
-
+            
             LoadModAssets_Awake();
             VL_Utility.SetTimer();
-
+            
             //skills            
             AbjurationSkillDef = new Skills.SkillDef
             {
@@ -2823,13 +2832,14 @@ namespace ValheimLegends
                 m_description = "Skill in creating convincing illusions",
                 m_increseStep = 1f
             };
+            
             legendsSkills.Add(DisciplineSkillDef);
             legendsSkills.Add(AbjurationSkillDef);
             legendsSkills.Add(AlterationSkillDef);
             legendsSkills.Add(ConjurationSkillDef);
             legendsSkills.Add(EvocationSkillDef);
             legendsSkills.Add(IllusionSkillDef);
-
+            
             _Harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), (string)"valheim.torann.valheimlegends");
             
         }

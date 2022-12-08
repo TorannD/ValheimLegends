@@ -21,7 +21,7 @@ namespace ValheimLegends
 
         public static string GetModDataPath(this PlayerProfile profile)
         {
-            return Path.Combine(Utils.GetSaveDataPath(), "ModData", ModID, "char_" + profile.GetFilename());
+            return Path.Combine(Utils.GetSaveDataPath(FileHelpers.FileSource.Local), "ModData", ModID, "char_" + profile.GetFilename());
         }
         public static TData LoadModData<TData>(this PlayerProfile profile) where TData : new()
         {
@@ -122,7 +122,7 @@ namespace ValheimLegends
             }
             if(splash_alternate == default(Vector3))
             {
-                splash_alternate = splash_center + new Vector3(0f, .2f, 0f);
+                splash_alternate = splash_center + new Vector3(0f, .2f, 0f); //y was .2f
             }
             if(hit_char != null)
             {
@@ -196,6 +196,7 @@ namespace ValheimLegends
 
         private static bool CollidedWithTarget(Character chr, Collider col, RaycastHit hit)
         {
+            //ZLog.Log("chr: " + chr + " chr.collider: " + chr.GetCollider() + " hit.collider: " + hit.collider);
             if (hit.collider == chr.GetCollider())
             {
                 //ZLog.Log("returning collider direct");
@@ -222,6 +223,7 @@ namespace ValheimLegends
                 //ZLog.Log("returning collider as same char");
                 return true;
             }
+            //ZLog.Log("did not find collision with character");
             return false;
         }
 

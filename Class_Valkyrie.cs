@@ -124,7 +124,7 @@ namespace ValheimLegends
                 hitData.m_damage.m_spirit= UnityEngine.Random.Range((1f + (.2f * sLevel)), (2f + (.3f * sLevel))) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_valkyrieBonusIceLance;
                 hitData.SetAttacker(player);
                 Vector3 a = Vector3.MoveTowards(GO_Harpoon.transform.position, target, 1f);
-                P_Harpoon.Setup(player, (a - GO_Harpoon.transform.position) * 40f, -1f, hitData, null);
+                P_Harpoon.Setup(player, (a - GO_Harpoon.transform.position) * 40f, -1f, hitData, null, null);
                 Traverse.Create(root: P_Harpoon).Field("m_skill").SetValue(ValheimLegends.DisciplineSkill);
                 GO_Harpoon = null;
             }

@@ -35,7 +35,7 @@ namespace ValheimLegends
                         {
                             if (player.IsPlayer())
                             {
-                                Hud.instance.StaminaBarNoStaminaFlash();
+                                Hud.instance.StaminaBarEmptyFlash();
                             }
                             flag = false;
                             isWaterWalking = false;

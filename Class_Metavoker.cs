@@ -74,7 +74,7 @@ namespace ValheimLegends
                                 hitData.SetAttacker(player);
                                 hitData.m_skill = ValheimLegends.EvocationSkill;
                                 //Vector3 a = Vector3.MoveTowards(GO_DupeProj.transform.position, target, 1f);
-                                P_DupeProj.Setup(player, proj.GetVelocity() * -1f, -1f, hitData, null);
+                                P_DupeProj.Setup(player, proj.GetVelocity() * -1f, -1f, hitData, null, null);
                                 Traverse.Create(root: P_DupeProj).Field("m_skill").SetValue(ValheimLegends.EvocationSkill);
                                 GO_DupeProj = null;
                             }
@@ -169,7 +169,7 @@ namespace ValheimLegends
                         {
                             if (player.IsPlayer())
                             {
-                                Hud.instance.StaminaBarNoStaminaFlash();
+                                Hud.instance.StaminaBarEmptyFlash();
                             }
                             flag = false;
                         }
@@ -514,7 +514,7 @@ namespace ValheimLegends
                     hitData.m_pushForce = (100f + 2*sLevel) * VL_GlobalConfigs.c_meteavokerLight;
                     hitData.SetAttacker(player);
                     Vector3 a = Vector3.MoveTowards(GO_LL.transform.position, target, 1f);
-                    P_LL.Setup(player, (a - GO_LL.transform.position) * 80f, -1f, hitData, null);
+                    P_LL.Setup(player, (a - GO_LL.transform.position) * 80f, -1f, hitData, null, null);
                     Traverse.Create(root: P_LL).Field("m_skill").SetValue(ValheimLegends.IllusionSkill);
                     //P_Light.Setup(player, (a - GO_Light.transform.position) * 80f, -1f, hitData, null);
                     //Traverse.Create(root: P_Light).Field("m_skill").SetValue(ValheimLegends.IllusionSkill);
@@ -570,7 +570,7 @@ namespace ValheimLegends
                         //hitData.m_pushForce = 2f;
                         hitData.m_skill = ValheimLegends.EvocationSkill;
                         Vector3 a = Vector3.MoveTowards(GO_Light.transform.position, target, 1f);                        
-                        P_Light.Setup(player, Vector3.zero, -1f, hitData, null);
+                        P_Light.Setup(player, Vector3.zero, -1f, hitData, null, null);
                         Traverse.Create(root: P_Light).Field("m_skill").SetValue(ValheimLegends.IllusionSkill);
                         //GO_Light = null;
 

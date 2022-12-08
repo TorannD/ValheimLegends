@@ -198,7 +198,7 @@ namespace ValheimLegends
                         Character.GetCharactersInRange(player.GetCenterPoint(), 500f, allCharacters);
                         foreach (Character ch in allCharacters)
                         {
-                            if (ch.GetBaseAI() != null && ch.GetBaseAI() is MonsterAI && ch.GetBaseAI().IsEnemey(player))
+                            if (ch.GetBaseAI() != null && ch.GetBaseAI() is MonsterAI && ch.GetBaseAI().IsEnemy(player))
                             {
                                 MonsterAI ai = ch.GetBaseAI() as MonsterAI;
                                 if (ai != null && ai.GetTargetCreature() == player)

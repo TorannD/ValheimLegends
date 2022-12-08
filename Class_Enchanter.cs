@@ -73,7 +73,7 @@ namespace ValheimLegends
                 HitData hitData = new HitData();
                 hitData.m_skill = ValheimLegends.AlterationSkill;
                 Vector3 a = Vector3.MoveTowards(GO_Charm.transform.position, target, 1f);
-                P_Charm.Setup(player, (a - GO_Charm.transform.position) * 40, -1f, hitData, null);
+                P_Charm.Setup(player, (a - GO_Charm.transform.position) * 40, -1f, hitData, null, null);
                 Traverse.Create(root: P_Charm).Field("m_skill").SetValue(ValheimLegends.AlterationSkill);
             }
             else if(QueuedAttack == EnchanterAttackType.Shock)

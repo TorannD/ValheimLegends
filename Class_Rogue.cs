@@ -69,7 +69,7 @@ namespace ValheimLegends
                 hitData.m_skill = ValheimLegends.AlterationSkill;
                 hitData.SetAttacker(player);
                 Vector3 a = Vector3.MoveTowards(GO_Bomb.transform.position, target, 1f);
-                P_Bomb.Setup(player, (a - GO_Bomb.transform.position) * 25f, -1f, hitData, null);
+                P_Bomb.Setup(player, (a - GO_Bomb.transform.position) * 25f, -1f, hitData, null, null);
                 Traverse.Create(root: P_Bomb).Field("m_skill").SetValue(ValheimLegends.AlterationSkill);
                 GO_Bomb = null;
             }
@@ -96,7 +96,7 @@ namespace ValheimLegends
                 hitData.m_skill = ValheimLegends.DisciplineSkill;
                 hitData.SetAttacker(player);
                 Vector3 a = Vector3.MoveTowards(GO_ThrowingKnife.transform.position, target, 1f);
-                P_ThrowingKnife.Setup(player, (a - GO_ThrowingKnife.transform.position) * 30f, -1f, hitData, null);
+                P_ThrowingKnife.Setup(player, (a - GO_ThrowingKnife.transform.position) * 30f, -1f, hitData, null, null);
                 Traverse.Create(root: P_ThrowingKnife).Field("m_skill").SetValue(ValheimLegends.AlterationSkill);
                 GO_ThrowingKnife = null;
             }

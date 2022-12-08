@@ -177,7 +177,7 @@ namespace ValheimLegends
                 hitData.m_skill = ValheimLegends.DisciplineSkill;
                 hitData.SetAttacker(player);
                 Vector3 a = Vector3.MoveTowards(GO_PsiBolt.transform.position, target, 1f);
-                P_PsiBolt.Setup(player, (a - GO_PsiBolt.transform.position) * 60f, -1f, hitData, null);
+                P_PsiBolt.Setup(player, (a - GO_PsiBolt.transform.position) * 60f, -1f, hitData, null, null);
                 Traverse.Create(root: P_PsiBolt).Field("m_skill").SetValue(ValheimLegends.DisciplineSkill);
                 se_monk.hitCount = 0;
                 GO_PsiBolt = null;

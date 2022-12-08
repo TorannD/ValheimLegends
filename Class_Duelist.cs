@@ -182,7 +182,7 @@ namespace ValheimLegends
                         hitData.m_pushForce = 1f;
                         hitData.m_skill = ValheimLegends.DisciplineSkill;
                         Vector3 a = Vector3.MoveTowards(vector, target, 1f);
-                        P_QuickShot.Setup(player, (a - GO_QuickShot.transform.position) * 100f, -1f, hitData, null);
+                        P_QuickShot.Setup(player, (a - GO_QuickShot.transform.position) * 100f, -1f, hitData, null, null);
                         Traverse.Create(root: P_QuickShot).Field("m_skill").SetValue(ValheimLegends.DisciplineSkill);
                         GO_QuickShot = null;
 

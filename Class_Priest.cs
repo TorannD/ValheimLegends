@@ -265,7 +265,7 @@ namespace ValheimLegends
                         hitData.m_pushForce = 50f;
                         hitData.m_skill = ValheimLegends.EvocationSkill;
                         //Vector3 a = Vector3.MoveTowards(GO_Sanctify.transform.position, target, 1f);
-                        P_Sanctify.Setup(player, new Vector3(0f, -1f, 0f), -1f, hitData, null);
+                        P_Sanctify.Setup(player, new Vector3(0f, -1f, 0f), -1f, hitData, null, null);
                         
                         Traverse.Create(root: P_Sanctify).Field("m_skill").SetValue(ValheimLegends.EvocationSkill);
                         GO_Sanctify = null;

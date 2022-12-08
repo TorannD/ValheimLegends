@@ -120,7 +120,7 @@ namespace ValheimLegends
                         Vector3 a = Vector3.MoveTowards(GO_Root.transform.position, target, 1f);
                         if (P_Root != null && P_Root.name == "Root")
                         {
-                            P_Root.Setup(player, (a - GO_Root.transform.position) * 75f, -1f, hitData, null);
+                            P_Root.Setup(player, (a - GO_Root.transform.position) * 75f, -1f, hitData, null, null);
                             Traverse.Create(root: P_Root).Field("m_skill").SetValue(ValheimLegends.ConjurationSkill);
                         }
                     }
@@ -165,7 +165,7 @@ namespace ValheimLegends
                     hitData.m_pushForce = 10f;
                     hitData.SetAttacker(player);
                     Vector3 a = Vector3.MoveTowards(GO_Root.transform.position, target, 1f);
-                    P_Root.Setup(player, (a - GO_Root.transform.position) * 65f, -1f, hitData, null);
+                    P_Root.Setup(player, (a - GO_Root.transform.position) * 65f, -1f, hitData, null, null);
                     Traverse.Create(root: P_Root).Field("m_skill").SetValue(ValheimLegends.ConjurationSkill);
                 }
                 //GO_Root.SetActive(false);

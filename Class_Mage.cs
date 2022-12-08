@@ -96,7 +96,7 @@ namespace ValheimLegends
                 hitData.m_skill = ValheimLegends.EvocationSkill;
                 hitData.SetAttacker(player);
                 Vector3 a = Vector3.MoveTowards(GO_IceDagger.transform.position, target, 1f);
-                P_IceDagger.Setup(player, (a - GO_IceDagger.transform.position) * 55f, -1f, hitData, null);
+                P_IceDagger.Setup(player, (a - GO_IceDagger.transform.position) * 55f, -1f, hitData, null, null);
                 Traverse.Create(root: P_IceDagger).Field("m_skill").SetValue(ValheimLegends.EvocationSkill);
                 GO_IceDagger = null;
             }
@@ -207,7 +207,7 @@ namespace ValheimLegends
 
                     hitData.m_skill = ValheimLegends.EvocationSkill;
                     Vector3 a = Vector3.MoveTowards(GO_Meteor.transform.position, target, 1f);
-                    P_Meteor.Setup(player, (a - GO_Meteor.transform.position) * UnityEngine.Random.Range(78f, 86f), -1f, hitData, null);
+                    P_Meteor.Setup(player, (a - GO_Meteor.transform.position) * UnityEngine.Random.Range(78f, 86f), -1f, hitData, null, null);
                     Traverse.Create(root: P_Meteor).Field("m_skill").SetValue(ValheimLegends.EvocationSkill);
                     GO_CastFX = UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_guardstone_permitted_removed"), player.transform.position + player.transform.right * UnityEngine.Random.Range(-1f, 1f) + player.transform.up * UnityEngine.Random.Range(0, 1.5f), Quaternion.identity);
                 }
@@ -391,7 +391,7 @@ namespace ValheimLegends
                         hitData.m_skill = ValheimLegends.EvocationSkill;
                         hitData.SetAttacker(player);
                         Vector3 a = Vector3.MoveTowards(GO_Fireball.transform.position, target, 1f);
-                        P_Fireball.Setup(player, (a - GO_Fireball.transform.position) * 25f, -1f, hitData, null);
+                        P_Fireball.Setup(player, (a - GO_Fireball.transform.position) * 25f, -1f, hitData, null, null);
                         Traverse.Create(root: P_Fireball).Field("m_skill").SetValue(ValheimLegends.EvocationSkill);
                         GO_Fireball = null;
 
