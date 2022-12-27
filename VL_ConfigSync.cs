@@ -146,6 +146,17 @@ namespace ValheimLegends
                             VL_GlobalConfigs.ConfigStrings[key] = val2;
                             //ZLog.Log("config value is " + VL_GlobalConfigs.ConfigStrings[key]);
                         }
+                        else if (VL_GlobalConfigs.ItemStrings.ContainsKey(key))
+                        {
+                            //ZLog.Log("VL CLIENT -------------- found config match for: " + key + " ----- changing running modifiers ");
+                            string val = line.Substring(line.IndexOf('=') + 1);
+                            val = val.Trim(trm);
+                            if (val != "")
+                            {
+                                VL_GlobalConfigs.ItemStrings[key] = val;
+                                //ZLog.Log("config value is " + VL_GlobalConfigs.ConfigStrings[key]);
+                            }
+                        }
                     }
                     if (syncOrVersionFailure)
                     {
