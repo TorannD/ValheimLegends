@@ -33,7 +33,7 @@ namespace ValheimLegends
 
         public static void Execute_Attack(Player player, ref Rigidbody playerBody, ref float altitude)
         {
-            SE_Valkyrie se_v = (SE_Valkyrie)player.GetSEMan().GetStatusEffect("SE_VL_Valkyrie");
+            SE_Valkyrie se_v = (SE_Valkyrie)player.GetSEMan().GetStatusEffect("SE_VL_Valkyrie".GetStableHashCode());
             if (QueuedAttack == ValkyrieAttackType.ShieldRelease)
             {
                 Vector3 effects = player.GetEyePoint() + player.GetLookDir() * .2f + player.transform.up * -.4f + player.transform.right * -.4f;
@@ -183,7 +183,7 @@ namespace ValheimLegends
 
             if (player.IsBlocking() && ZInput.GetButtonDown("Attack"))
             {
-                SE_Valkyrie se_v = (SE_Valkyrie)player.GetSEMan().GetStatusEffect("SE_VL_Valkyrie");
+                SE_Valkyrie se_v = (SE_Valkyrie)player.GetSEMan().GetStatusEffect("SE_VL_Valkyrie".GetStableHashCode());
                 if (se_v.hitCount >= VL_Utility.GetHarpoonPullCost)
                 {
                     //Ability Cost
@@ -204,7 +204,7 @@ namespace ValheimLegends
 
             if (VL_Utility.Ability3_Input_Down)
             {
-                SE_Valkyrie se_v = (SE_Valkyrie)player.GetSEMan().GetStatusEffect("SE_VL_Valkyrie");
+                SE_Valkyrie se_v = (SE_Valkyrie)player.GetSEMan().GetStatusEffect("SE_VL_Valkyrie".GetStableHashCode());
                 if (player.IsBlocking())
                 {
                     if (PlayerUsingShield && se_v != null && se_v.hitCount > 0)

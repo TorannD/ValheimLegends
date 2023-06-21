@@ -30,7 +30,7 @@ namespace ValheimLegends
             float sDamageMultiplier = .6f + (sLevel * .005f) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_berserkerDash;
             if(player.GetSEMan().HaveStatusEffect("SE_VL_Berserk") || player.GetSEMan().HaveStatusEffect("SE_VL_Execute"))
             {
-                SE_Berserk se_zerk = (SE_Berserk)player.GetSEMan().GetStatusEffect("SE_VL_Berserk");
+                SE_Berserk se_zerk = (SE_Berserk)player.GetSEMan().GetStatusEffect("SE_VL_Berserk".GetStableHashCode());
                 if (se_zerk != null)
                 {
                     sDamageMultiplier *= se_zerk.damageModifier;
@@ -97,7 +97,7 @@ namespace ValheimLegends
                     float num = Vector3.Distance(ch.transform.position, moveVec);
                     if (BaseAI.IsEnemy(ch, player) && num <= 3f && !list.Contains(ch.GetInstanceID()))
                     {
-                        SE_Execute se_exec = (SE_Execute)player.GetSEMan().GetStatusEffect("SE_VL_Execute");
+                        SE_Execute se_exec = (SE_Execute)player.GetSEMan().GetStatusEffect("SE_VL_Execute".GetStableHashCode());
                         if (se_exec != null)
                         {
                             hitData.ApplyModifier(se_exec.damageBonus);
@@ -246,7 +246,7 @@ namespace ValheimLegends
                         //Apply effects
                         if (player.GetSEMan().HaveStatusEffect("SE_VL_Execute"))
                         {
-                            StatusEffect se_pw_rem = player.GetSEMan().GetStatusEffect("SE_VL_Execute");
+                            StatusEffect se_pw_rem = player.GetSEMan().GetStatusEffect("SE_VL_Execute".GetStableHashCode());
                             player.GetSEMan().RemoveStatusEffect(se_pw_rem);
                         }
                         player.GetSEMan().AddStatusEffect(se_execute);

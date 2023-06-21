@@ -51,7 +51,7 @@ namespace ValheimLegends
                         //Apply effects
                         if (player.GetSEMan().HaveStatusEffect("SE_VL_PowerShot"))
                         {
-                            StatusEffect se_pw_rem = player.GetSEMan().GetStatusEffect("SE_VL_PowerShot");
+                            StatusEffect se_pw_rem = player.GetSEMan().GetStatusEffect("SE_VL_PowerShot".GetStableHashCode());
                             player.GetSEMan().RemoveStatusEffect(se_pw_rem);
                         }
                         player.GetSEMan().AddStatusEffect(se_powershot);

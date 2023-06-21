@@ -47,7 +47,7 @@ namespace ValheimLegends
                         {
                             if (p.GetSEMan().HaveStatusEffect(effect))
                             {
-                                p.GetSEMan().RemoveStatusEffect(effect);
+                                p.GetSEMan().RemoveStatusEffect(effect.GetStableHashCode());
                                 break;
                             }
                         }

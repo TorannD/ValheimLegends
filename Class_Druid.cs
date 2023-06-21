@@ -344,7 +344,7 @@ namespace ValheimLegends
                                 }
                                 else if (p.IsPlayer())
                                 {
-                                    p.GetSEMan().AddStatusEffect(se_regen.name, true);
+                                    p.GetSEMan().AddStatusEffect(se_regen.name.GetStableHashCode(), true);
                                 }
                                 else
                                 {

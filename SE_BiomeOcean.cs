@@ -30,7 +30,7 @@ namespace ValheimLegends
 
         public override void ModifySpeed(float baseSpeed, ref float speed)
         {
-            if (m_character.IsSwiming())
+            if (m_character.IsSwimming())
             {
                 speed *= swimSpeed;
             }

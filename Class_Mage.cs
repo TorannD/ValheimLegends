@@ -277,7 +277,7 @@ namespace ValheimLegends
                         //Apply effects
                         if(player.GetSEMan().HaveStatusEffect("Burning"))
                         {
-                            player.GetSEMan().RemoveStatusEffect("Burning");
+                            player.GetSEMan().RemoveStatusEffect("Burning".GetStableHashCode());
                         }
 
                         List<Character> allCharacters = Character.GetAllCharacters();                        
@@ -294,7 +294,7 @@ namespace ValheimLegends
                                 hitData.m_skill = ValheimLegends.EvocationSkill;
                                 ch.Damage(hitData);
                                 SE_Slow se_frost = (SE_Slow)ScriptableObject.CreateInstance(typeof(SE_Slow));
-                                ch.GetSEMan().AddStatusEffect(se_frost.name, true);
+                                ch.GetSEMan().AddStatusEffect(se_frost.name.GetStableHashCode(), true);
                             }
                         }
 

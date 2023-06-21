@@ -147,7 +147,7 @@ namespace ValheimLegends
             }
             else if (QueuedAttack == MonkAttackType.Surge)
             {
-                SE_Monk se_monk = (SE_Monk)player.GetSEMan().GetStatusEffect("SE_VL_Monk");
+                SE_Monk se_monk = (SE_Monk)player.GetSEMan().GetStatusEffect("SE_VL_Monk".GetStableHashCode());
                 se_monk.surging = true;
                 UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_Potion_frostresist"), player.transform.position, Quaternion.identity);
                 ValheimLegends.isChanneling = false;
@@ -156,7 +156,7 @@ namespace ValheimLegends
             {
                 //Skill influence
                 float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
-                SE_Monk se_monk = (SE_Monk)player.GetSEMan().GetStatusEffect("SE_VL_Monk");
+                SE_Monk se_monk = (SE_Monk)player.GetSEMan().GetStatusEffect("SE_VL_Monk".GetStableHashCode());
                 Vector3 vector = player.GetEyePoint() + player.GetLookDir() * .4f + player.transform.up * .1f + player.transform.right * .22f;
                 GameObject prefab = ZNetScene.instance.GetPrefab("VL_PsiBolt");
                 GameObject GO_PsiBolt = UnityEngine.Object.Instantiate(prefab, vector, Quaternion.identity);
@@ -186,7 +186,7 @@ namespace ValheimLegends
             {
                 float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.DisciplineSkillDef).m_level;
                 float sDamageMultiplier = .5f + (sLevel * .005f) * VL_GlobalConfigs.g_DamageModifer * VL_GlobalConfigs.c_monkFlyingKick;
-                SE_Monk se_monk = (SE_Monk)player.GetSEMan().GetStatusEffect("SE_VL_Monk");
+                SE_Monk se_monk = (SE_Monk)player.GetSEMan().GetStatusEffect("SE_VL_Monk".GetStableHashCode());
                 //RaycastHit hitInfo = default(RaycastHit);
                 Vector3 lookVec = player.GetLookDir();
                 lookVec.y = 0f;
@@ -335,7 +335,7 @@ namespace ValheimLegends
 
         public static void Process_Input(Player player, ref Rigidbody playerBody, ref float altitude, ref Animator anim)
         {
-            SE_Monk se_monk = (SE_Monk)player.GetSEMan().GetStatusEffect("SE_VL_Monk");
+            SE_Monk se_monk = (SE_Monk)player.GetSEMan().GetStatusEffect("SE_VL_Monk".GetStableHashCode());
 
             if (VL_Utility.Ability3_Input_Down)
             {
