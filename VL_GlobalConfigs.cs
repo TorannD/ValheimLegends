@@ -9,6 +9,7 @@ namespace ValheimLegends
     public class VL_GlobalConfigs
     {
         public static Dictionary<string, float> ConfigStrings;
+        public static Dictionary<string, string> ItemStrings;
 
         public static float g_CooldownModifer
         {
@@ -157,6 +158,20 @@ namespace ValheimLegends
                 }
             }
         }
+        public static string c_berserkerItem
+        {
+            get
+            {
+                try
+                {
+                    return ItemStrings["vl_svr_berserkerItem"];
+                }
+                catch
+                {
+                    return "item_bonefragments";
+                }
+            }
+        }
 
         public static float c_druidVines
         {
@@ -214,6 +229,20 @@ namespace ValheimLegends
                 }
             }
         }
+        public static string c_druidItem
+        {
+            get
+            {
+                try
+                {
+                    return ItemStrings["vl_svr_druidItem"];
+                }
+                catch
+                {
+                    return "item_dandelion";
+                }
+            }
+        }
 
         public static float c_duelistSeismicSlash
         {
@@ -268,6 +297,20 @@ namespace ValheimLegends
                 catch
                 {
                     return 1f;
+                }
+            }
+        }
+        public static string c_duelistItem
+        {
+            get
+            {
+                try
+                {
+                    return ItemStrings["vl_svr_duelistItem"];
+                }
+                catch
+                {
+                    return "item_thistle";
                 }
             }
         }
@@ -356,6 +399,20 @@ namespace ValheimLegends
                 }
             }
         }
+        public static string c_enchanterItem
+        {
+            get
+            {
+                try
+                {
+                    return ItemStrings["vl_svr_enchanterItem"];
+                }
+                catch
+                {
+                    return "item_resin";
+                }
+            }
+        }
 
         public static float c_mageFireball
         {
@@ -424,6 +481,20 @@ namespace ValheimLegends
                 catch
                 {
                     return 1f;
+                }
+            }
+        }
+        public static string c_mageItem
+        {
+            get
+            {
+                try
+                {
+                    return ItemStrings["vl_svr_mageItem"];
+                }
+                catch
+                {
+                    return "item_coal";
                 }
             }
         }
@@ -509,6 +580,20 @@ namespace ValheimLegends
                 catch
                 {
                     return 1f;
+                }
+            }
+        }
+        public static string c_metavokerItem
+        {
+            get
+            {
+                try
+                {
+                    return ItemStrings["vl_svr_metavokerItem"];
+                }
+                catch
+                {
+                    return "item_raspberries";
                 }
             }
         }
@@ -611,6 +696,20 @@ namespace ValheimLegends
                 }
             }
         }
+        public static string c_monkItem
+        {
+            get
+            {
+                try
+                {
+                    return ItemStrings["vl_svr_monkItem"];
+                }
+                catch
+                {
+                    return "item_wood";
+                }
+            }
+        }
 
         public static float c_priestHeal
         {
@@ -679,6 +778,20 @@ namespace ValheimLegends
                 catch
                 {
                     return 1f;
+                }
+            }
+        }
+        public static string c_priestItem
+        {
+            get
+            {
+                try
+                {
+                    return ItemStrings["vl_svr_priestItem"];
+                }
+                catch
+                {
+                    return "item_stone";
                 }
             }
         }
@@ -753,6 +866,20 @@ namespace ValheimLegends
                 }
             }
         }
+        public static string c_rangerItem
+        {
+            get
+            {
+                try
+                {
+                    return ItemStrings["vl_svr_rangerItem"];
+                }
+                catch
+                {
+                    return "item_boar_meat";
+                }
+            }
+        }
 
         public static float c_rogueBackstab
         {
@@ -768,7 +895,6 @@ namespace ValheimLegends
                 }
             }
         }
-
         public static float c_rogueFadeCooldown
         {
             get
@@ -822,6 +948,20 @@ namespace ValheimLegends
                 catch
                 {
                     return 1f;
+                }
+            }
+        }
+        public static string c_rogueItem
+        {
+            get
+            {
+                try
+                {
+                    return ItemStrings["vl_svr_rogueItem"];
+                }
+                catch
+                {
+                    return "item_honey";
                 }
             }
         }
@@ -893,6 +1033,20 @@ namespace ValheimLegends
                 catch
                 {
                     return 1f;
+                }
+            }
+        }
+        public static string c_shamanItem
+        {
+            get
+            {
+                try
+                {
+                    return ItemStrings["vl_svr_shamanItem"];
+                }
+                catch
+                {
+                    return "item_greydwarfeye";
                 }
             }
         }
@@ -978,6 +1132,20 @@ namespace ValheimLegends
                 catch
                 {
                     return 1f;
+                }
+            }
+        }
+        public static string c_valkyrieItem
+        {
+            get
+            {
+                try
+                {
+                    return ItemStrings["vl_svr_valkyrieItem"];
+                }
+                catch
+                {
+                    return "item_flint";
                 }
             }
         }

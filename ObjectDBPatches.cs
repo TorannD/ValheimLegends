@@ -30,7 +30,7 @@ namespace ValheimLegends
             }
         }
 
-        [HarmonyPatch(typeof(ObjectDB), "GetStatusEffect")]
+        [HarmonyPatch(typeof(ObjectDB), "GetStatusEffect", new Type[] { typeof(string) })]
         public static class ObjectDBGetStatusEffect
         {
             public static void Postfix(ObjectDB __instance, string name, StatusEffect __result)

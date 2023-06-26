@@ -30,7 +30,8 @@ namespace ValheimLegends
                 if (p.GetCurrentWeapon() != null)
                 {
                     ItemDrop.ItemData.SharedData sid = p.GetCurrentWeapon().m_shared;
-                    if (sid != null && (sid.m_name.ToLower().Contains("knife") || sid.m_name.Contains("dagger")) && p.GetLeftItem() == null)
+                    ItemDrop.ItemData leftItem = Traverse.Create(root: p).Field("m_leftItem").GetValue<ItemDrop.ItemData>();
+                    if (sid != null && (sid.m_name.ToLower().Contains("knife") || sid.m_name.Contains("dagger")) && leftItem == null)
                     {
                         return true;
                     }
@@ -107,7 +108,7 @@ namespace ValheimLegends
         {
             if (ZInput.GetButtonDown("Jump") && !player.IsDead() && !player.InAttack() && !player.IsEncumbered() && !player.InDodge() && !player.IsKnockedBack())
             {
-                SE_Rogue se_r = (SE_Rogue)player.GetSEMan().GetStatusEffect("SE_VL_Rogue");
+                SE_Rogue se_r = (SE_Rogue)player.GetSEMan().GetStatusEffect("SE_VL_Rogue".GetStableHashCode());
                 if (!player.IsOnGround() && canDoubleJump && se_r != null && se_r.hitCount > 0)
                 {
                     Vector3 velVec = player.GetVelocity();
@@ -126,7 +127,7 @@ namespace ValheimLegends
 
             if (player.IsBlocking() && ZInput.GetButtonDown("Attack"))
             {
-                SE_Rogue se_r = (SE_Rogue)player.GetSEMan().GetStatusEffect("SE_VL_Rogue");
+                SE_Rogue se_r = (SE_Rogue)player.GetSEMan().GetStatusEffect("SE_VL_Rogue".GetStableHashCode());
                 if (se_r != null && se_r.hitCount > 0)
                 {
                     se_r.hitCount--;
@@ -297,7 +298,7 @@ namespace ValheimLegends
                         player.transform.position = fadePoint;
                         if (canGainTrick)
                         {
-                            SE_Rogue se_r = (SE_Rogue)player.GetSEMan().GetStatusEffect("SE_VL_Rogue");
+                            SE_Rogue se_r = (SE_Rogue)player.GetSEMan().GetStatusEffect("SE_VL_Rogue".GetStableHashCode());
                             se_r.hitCount++;
                             canGainTrick = false;
                         }

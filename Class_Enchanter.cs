@@ -230,7 +230,7 @@ namespace ValheimLegends
                             }
                             else if (p.IsPlayer())
                             {
-                                p.GetSEMan().AddStatusEffect(SE_BiomeMeadows.name, true);
+                                p.GetSEMan().AddStatusEffect(SE_BiomeMeadows.name.GetStableHashCode(), true);
                             }
                             else
                             {
@@ -257,7 +257,7 @@ namespace ValheimLegends
                             }
                             else if (p.IsPlayer())
                             {
-                                p.GetSEMan().AddStatusEffect(SE_BiomeBlackForest.name, true);
+                                p.GetSEMan().AddStatusEffect(SE_BiomeBlackForest.name.GetStableHashCode(), true);
                             }
                             else
                             {
@@ -284,7 +284,7 @@ namespace ValheimLegends
                             }
                             else if (p.IsPlayer())
                             {
-                                p.GetSEMan().AddStatusEffect(SE_BiomeSwamp.name, true);
+                                p.GetSEMan().AddStatusEffect(SE_BiomeSwamp.name.GetStableHashCode(), true);
                             }
                             else
                             {
@@ -312,7 +312,7 @@ namespace ValheimLegends
                             }
                             else if (p.IsPlayer())
                             {
-                                p.GetSEMan().AddStatusEffect(SE_BiomeMountain.name, true);
+                                p.GetSEMan().AddStatusEffect(SE_BiomeMountain.name.GetStableHashCode(), true);
                             }
                             else
                             {
@@ -339,7 +339,7 @@ namespace ValheimLegends
                             }
                             else if (p.IsPlayer())
                             {
-                                p.GetSEMan().AddStatusEffect(SE_BiomePlains.name, true);
+                                p.GetSEMan().AddStatusEffect(SE_BiomePlains.name.GetStableHashCode(), true);
                             }
                             else
                             {
@@ -366,7 +366,7 @@ namespace ValheimLegends
                             }
                             else if (p.IsPlayer())
                             {
-                                p.GetSEMan().AddStatusEffect(SE_BiomeOcean.name, true);
+                                p.GetSEMan().AddStatusEffect(SE_BiomeOcean.name.GetStableHashCode(), true);
                             }
                             else
                             {
@@ -393,7 +393,7 @@ namespace ValheimLegends
                             }
                             else if (p.IsPlayer())
                             {
-                                p.GetSEMan().AddStatusEffect(SE_BiomeMist.name, true);
+                                p.GetSEMan().AddStatusEffect(SE_BiomeMist.name.GetStableHashCode(), true);
                             }
                             else
                             {
@@ -420,7 +420,7 @@ namespace ValheimLegends
                             }
                             else if (p.IsPlayer())
                             {
-                                p.GetSEMan().AddStatusEffect(SE_BiomeAsh.name, true);
+                                p.GetSEMan().AddStatusEffect(SE_BiomeAsh.name.GetStableHashCode(), true);
                             }
                             else
                             {
@@ -533,7 +533,7 @@ namespace ValheimLegends
                             {
                                 if (ch.IsPlayer())
                                 {
-                                    ch.GetSEMan().AddStatusEffect(se_weaken.name, true);
+                                    ch.GetSEMan().AddStatusEffect(se_weaken.name.GetStableHashCode(), true);
                                 }
                                 else
                                 {

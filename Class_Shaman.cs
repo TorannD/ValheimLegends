@@ -181,7 +181,7 @@ namespace ValheimLegends
                                 }
                                 else if (p.IsPlayer())
                                 {
-                                    p.GetSEMan().AddStatusEffect(se_shell.name, true);
+                                    p.GetSEMan().AddStatusEffect(se_shell.name.GetStableHashCode(), true);
                                 }
                                 else
                                 {
@@ -259,7 +259,7 @@ namespace ValheimLegends
                                 }
                                 else if (p.IsPlayer())
                                 {
-                                    p.GetSEMan().AddStatusEffect(se_enrage.name, true);
+                                    p.GetSEMan().AddStatusEffect(se_enrage.name.GetStableHashCode(), true);
                                 }
                                 else
                                 {
