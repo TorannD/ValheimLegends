@@ -32,96 +32,96 @@ namespace ValheimLegends
 
         [HarmonyPatch(typeof(ObjectDB), "GetStatusEffect", 
             new Type[] {
-                typeof(string)
+                typeof(int)
             })]
         public static class ObjectDBGetStatusEffect
         {
-            public static void Postfix(ObjectDB __instance, string name, StatusEffect __result)
+            public static void Postfix(ObjectDB __instance, int nameHash, StatusEffect __result)
             {
                 if (__result != null)
                 {
-                    if (name == "SE_Regeneration" || name == "SE_VL_Regeneration")
+                    if (nameHash == "SE_Regeneration".GetHashCode() || nameHash == "SE_VL_Regeneration".GetHashCode())
                     {
                         (__result as SE_Regeneration).m_icon = SE_Regeneration.AbilityIcon;
                     }
-                    else if (name == "SE_Bulwark")
+                    else if (nameHash == "SE_Bulwark".GetHashCode())
                     {
                         (__result as SE_Bulwark).m_icon = SE_Bulwark.AbilityIcon;
                     }
-                    else if (name == "SE_Enrage" || name == "SE_VL_Enrage")
+                    else if (nameHash == "SE_Enrage".GetHashCode() || nameHash == "SE_VL_Enrage".GetHashCode())
                     {
                         (__result as SE_Enrage).m_icon = SE_Enrage.AbilityIcon;
                     }
-                    else if (name == "SE_Shell" || name == "SE_VL_Shell")
+                    else if (nameHash == "SE_Shell".GetHashCode() || nameHash == "SE_VL_Shell".GetHashCode())
                     {
                         (__result as SE_Shell).m_icon = SE_Shell.AbilityIcon;
                     }
-                    else if (name == "SE_SpiritDrain")
+                    else if (nameHash == "SE_SpiritDrain".GetHashCode())
                     {
                         (__result as SE_SpiritDrain).m_icon = SE_SpiritDrain.AbilityIcon;
                     }
-                    else if (name == "SE_Berserk")
+                    else if (nameHash == "SE_Berserk".GetHashCode())
                     {
                         (__result as SE_Berserk).m_icon = SE_Berserk.AbilityIcon;
                     }
-                    else if (name == "SE_Execute")
+                    else if (nameHash == "SE_Execute".GetHashCode())
                     {
                         (__result as SE_Execute).m_icon = SE_Execute.AbilityIcon;
                     }
-                    else if (name == "SE_Slow")
+                    else if (nameHash == "SE_Slow".GetHashCode())
                     {
                         (__result as SE_Slow).m_icon = SE_Slow.AbilityIcon;
                     }
-                    else if (name == "SE_PowerShot")
+                    else if (nameHash == "SE_PowerShot".GetHashCode())
                     {
                         (__result as SE_PowerShot).m_icon = SE_PowerShot.AbilityIcon;
                     }
-                    else if (name == "SE_ShadowStalk")
+                    else if (nameHash == "SE_ShadowStalk".GetHashCode())
                     {
                         (__result as SE_ShadowStalk).m_icon = SE_ShadowStalk.AbilityIcon;
                     }
-                    else if (name == "SE_Companion")
+                    else if (nameHash == "SE_Companion".GetHashCode())
                     {
                         (__result as SE_Companion).m_icon = SE_Companion.AbilityIcon;
                     }
-                    else if (name == "SE_RootsBuff")
+                    else if (nameHash == "SE_RootsBuff".GetHashCode())
                     {
                         (__result as SE_RootsBuff).m_icon = SE_RootsBuff.AbilityIcon;
                     }
-                    else if (name == "SE_Riposte")
+                    else if (nameHash == "SE_Riposte".GetHashCode())
                     {
                         (__result as SE_Riposte).m_icon = SE_Riposte.AbilityIcon;
                     }
-                    else if (name == "SE_Rogue")
+                    else if (nameHash == "SE_Rogue".GetHashCode())
                     {
                         (__result as SE_Rogue).m_icon = SE_Rogue.AbilityIcon;
                     }
-                    else if (name == "SE_Monk")
+                    else if (nameHash == "SE_Monk".GetHashCode())
                     {
                         (__result as SE_Monk).m_icon = SE_Monk.AbilityIcon;
                     }
-                    else if (name == "SE_Ranger")
+                    else if (nameHash == "SE_Ranger".GetHashCode())
                     {
                         (__result as SE_Ranger).m_icon = SE_Ranger.AbilityIcon;
                     }
-                    else if (name == "SE_Valkyrie")
+                    else if (nameHash == "SE_Valkyrie".GetHashCode())
                     {
                         (__result as SE_Valkyrie).m_icon = SE_Valkyrie.AbilityIcon;
                     }
-                    else if (name == "SE_Weaken")
+                    else if (nameHash == "SE_Weaken".GetHashCode())
                     {
                         (__result as SE_Weaken).m_icon = SE_Weaken.AbilityIcon;
                     }
 
-                    if (name == "SE_Ability1_CD")
+                    if (nameHash == "SE_Ability1_CD".GetHashCode())
                     {
                         (__result as SE_Ability1_CD).m_icon = SE_Ability1_CD.AbilityIcon;
                     }
-                    else if (name == "SE_Ability2_CD")
+                    else if (nameHash == "SE_Ability2_CD".GetHashCode())
                     {
                         (__result as SE_Ability2_CD).m_icon = SE_Ability2_CD.AbilityIcon;
                     }
-                    else if (name == "SE_Ability3_CD")
+                    else if (nameHash == "SE_Ability3_CD".GetHashCode())
                     {
                         (__result as SE_Ability3_CD).m_icon = SE_Ability3_CD.AbilityIcon;
                     }

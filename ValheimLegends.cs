@@ -15,14 +15,14 @@ using System.Threading;
 
 namespace ValheimLegends
 {
-    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.4.9")]
+    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.4.91")]
     public class ValheimLegends : BaseUnityPlugin
     {
 
         public static Harmony _Harmony;
 
-        public const string Version = "0.4.9";
-        public const float VersionF = 0.49f;
+        public const string Version = "0.4.91";
+        public const float VersionF = 0.491f;
         public const string ModName = "Valheim Legends";
         public static bool playerEnabled = true;
 
