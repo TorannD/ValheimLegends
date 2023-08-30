@@ -2,27 +2,24 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using BepInEx;
-using BepInEx.Logging;
 using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using System.Reflection;
 using System.IO;
 using UnityEngine.UI;
-using System.Threading;
 
 namespace ValheimLegends
 {
-    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.4.91")]
+    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.4.92")]
     public class ValheimLegends : BaseUnityPlugin
     {
 
         public static Harmony _Harmony;
 
-        public const string Version = "0.4.91";
-        public const float VersionF = 0.491f;
+        public const string Version = "0.4.92";
+        public const float VersionF = 0.492f;
         public const string ModName = "Valheim Legends";
         public static bool playerEnabled = true;
 
@@ -628,14 +625,14 @@ namespace ValheimLegends
             }
         }
 
-        [HarmonyPatch(typeof(Terminal), "InputText", null)]
+        [HarmonyPatch(typeof(Terminal), "TryRunCommand", null)]
         public class Cheats_VL_Patch
         {
-            public static void Postfix(Console __instance, InputField ___m_input)
+            public static void Postfix(Terminal __instance, string text, bool silentFail, bool skipAllowedCheck)
             {
                 if ((bool)ZNet.instance && ZNet.instance.IsServer() && (bool)Player.m_localPlayer && __instance.IsCheatsEnabled() && playerEnabled)
                 {
-                    string text = ___m_input.text;
+                    //string text = ___m_input.text;
                     string[] array = text.Split(' ');
                     if (array.Length > 1)
                     {
