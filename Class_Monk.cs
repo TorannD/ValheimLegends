@@ -280,7 +280,8 @@ namespace ValheimLegends
                     ValheimLegends.isChargingDash = true;
                     ValheimLegends.dashCounter = 0;
                 }
-                player.transform.position = yVec;
+                //player.transform.position = yVec;
+                playerBody.position = yVec;
                 bool flagHitE = false;
                 if (fkickCount >= 9)
                 {

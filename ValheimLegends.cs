@@ -9,17 +9,18 @@ using UnityEngine;
 using System.Reflection;
 using System.IO;
 using UnityEngine.UI;
+using TMPro;
 
 namespace ValheimLegends
 {
-    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.4.92")]
+    [BepInPlugin("ValheimLegends", "ValheimLegends", "0.4.94")]
     public class ValheimLegends : BaseUnityPlugin
     {
 
         public static Harmony _Harmony;
 
-        public const string Version = "0.4.92";
-        public const float VersionF = 0.492f;
+        public const string Version = "0.4.94";
+        public const float VersionF = 0.494f;
         public const string ModName = "Valheim Legends";
         public static bool playerEnabled = true;
 
@@ -1774,7 +1775,7 @@ namespace ValheimLegends
                                 {
                                     component.color = Color.white;
                                     iconText = Ability1_Hotkey.Value;
-                                    if(ValheimLegends.Ability1_Hotkey_Combo.Value != "")
+                                    if (ValheimLegends.Ability1_Hotkey_Combo.Value != "")
                                     {
                                         iconText += " + " + Ability1_Hotkey_Combo.Value;
                                     }
@@ -1782,7 +1783,6 @@ namespace ValheimLegends
                             }
                             else if (j == 1)
                             {
-
                                 component.sprite = Ability2_Sprite;
                                 if (Player.m_localPlayer.GetSEMan().HaveStatusEffect("SE_VL_Ability2_CD"))
                                 {
@@ -1819,7 +1819,7 @@ namespace ValheimLegends
                             }
 
                             //rectTransform2.GetComponentInChildren<Text>().text = Localization.instance.Localize((Ability1.Name).ToString());
-                            Text component2 = rectTransform2.Find("TimeText").GetComponent<Text>();
+                            TMP_Text component2 = rectTransform2.Find("TimeText").GetComponent<TMP_Text>();
                             if (!string.IsNullOrEmpty(iconText))
                             {
                                 component2.gameObject.SetActive(value: true);
@@ -2064,6 +2064,7 @@ namespace ValheimLegends
                 if (VL_Utility.ReadyTime)
                 {                    
                     Player localPlayer = Player.m_localPlayer;
+                    Vector3 playerPos = __instance.transform.position;
                     if (localPlayer != null && playerEnabled)
                     {
                         //for log checking only
@@ -2167,7 +2168,7 @@ namespace ValheimLegends
                         if (vl_player.vl_class == PlayerClass.Berserker && dashCounter >= 12)
                         {
                             isChargingDash = false;
-                            Class_Berserker.Execute_Dash(localPlayer, ref ___m_maxAirAltitude);
+                            Class_Berserker.Execute_Dash(localPlayer, ref ___m_maxAirAltitude, ref ___m_body);
                         }
                         else if (vl_player.vl_class == PlayerClass.Valkyrie && dashCounter >= (int)Class_Valkyrie.QueuedAttack)
                         {

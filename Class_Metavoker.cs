@@ -280,10 +280,10 @@ namespace ValheimLegends
             }
             else if (((VL_Utility.Ability3_Input_Up || player.GetStamina() <= VL_Utility.GetWarpCostPerUpdate || player.GetStamina() <= 2f) && ValheimLegends.isChanneling))// || Mathf.Max(0f, altitude - player.transform.position.y) > 2f)
             {
-                //player.Message(MessageHud.MessageType.Center, "root - deactivate");
+                
                 float sLevel = player.GetSkills().GetSkillList().FirstOrDefault((Skills.Skill x) => x.m_info == ValheimLegends.EvocationSkillDef).m_level;
                 warpDistance = warpDistance * (1f + (.01f * sLevel)) * VL_GlobalConfigs.c_metavokerWarpDistance;
-                //ZLog.Log("triggering warp with  distance of " + warpDistance);
+                
                 ValheimLegends.isChanneling = false;
                 RaycastHit hitInfo = default(RaycastHit);
                 //((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(Player.m_localPlayer)).SetTrigger("unarmed_attack0");
@@ -306,7 +306,7 @@ namespace ValheimLegends
                 Vector3 moveVec = Vector3.MoveTowards(player.transform.position, target, (float)warpMagnitude);
                 //moveVec.y = ((ZoneSystem.instance.GetSolidHeight(moveVec) - ZoneSystem.instance.GetGroundHeight(moveVec) <= 1f) ? ZoneSystem.instance.GetSolidHeight(moveVec) : ZoneSystem.instance.GetGroundHeight(moveVec));
                 Vector3 effectVec = (moveVec + (player.GetLookDir() * -10f));
-                
+                //ZLog.Log("Playervec is : " + player.transform.position + " moveVec is: " + moveVec);
                 UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("fx_VL_ParticleLightburst"), player.GetEyePoint(), Quaternion.LookRotation(player.GetLookDir()));
                 if (warpMagnitude > 0f)
                 {
@@ -355,12 +355,10 @@ namespace ValheimLegends
                 }
                 else
                 {
-                    //ZLog.Log("zone loaded?" + ZoneSystem.instance.IsZoneLoaded(moveVec));
-                    player.transform.position = moveVec;
+                    //player.transform.position = moveVec;
+                    playerBody.position = moveVec;
                 }
-                
-                
-                //player.TeleportTo(moveVec, player.transform.rotation, false);
+
                 altitude = 0f;
                 
             }

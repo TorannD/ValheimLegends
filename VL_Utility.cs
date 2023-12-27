@@ -7,6 +7,7 @@ using UnityEngine;
 using HarmonyLib;
 using System.IO;
 using UnityEngine.UI;
+using TMPro;
 
 namespace ValheimLegends
 {
@@ -88,20 +89,20 @@ namespace ValheimLegends
                 Quaternion rot = new Quaternion(0, 0, 0, 1);
                 Transform t = hud.m_statusEffectListRoot;
                 RectTransform rectTransform = UnityEngine.Object.Instantiate(hud.m_statusEffectTemplate, pos, rot, t);
-                rectTransform.gameObject.SetActive(value: true);
-                rectTransform.GetComponentInChildren<Text>().text = Localization.instance.Localize((ValheimLegends.Ability1_Name).ToString());
+                rectTransform.gameObject.SetActive(true);
+                rectTransform.GetComponentInChildren<TMP_Text>().text = Localization.instance.Localize((ValheimLegends.Ability1_Name).ToString());
                 ValheimLegends.abilitiesStatus.Add(rectTransform);
                 pos.x += xStep;
                 pos.y += yStep;
                 RectTransform rectTransform2 = UnityEngine.Object.Instantiate(hud.m_statusEffectTemplate, pos, rot, t);
                 rectTransform2.gameObject.SetActive(value: true);
-                rectTransform2.GetComponentInChildren<Text>().text = Localization.instance.Localize((ValheimLegends.Ability2_Name).ToString());
+                rectTransform2.GetComponentInChildren<TMP_Text>().text = Localization.instance.Localize((ValheimLegends.Ability2_Name).ToString());
                 ValheimLegends.abilitiesStatus.Add(rectTransform2);
                 pos.x += xStep;
                 pos.y += yStep;
                 RectTransform rectTransform3 = UnityEngine.Object.Instantiate(hud.m_statusEffectTemplate, pos, rot, t);
                 rectTransform3.gameObject.SetActive(value: true);
-                rectTransform3.GetComponentInChildren<Text>().text = Localization.instance.Localize((ValheimLegends.Ability3_Name).ToString());
+                rectTransform3.GetComponentInChildren<TMP_Text>().text = Localization.instance.Localize((ValheimLegends.Ability3_Name).ToString());
                 ValheimLegends.abilitiesStatus.Add(rectTransform3);
             }
         }

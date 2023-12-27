@@ -211,7 +211,8 @@ namespace ValheimLegends
                                 backstabPoint.y += .1f;
                                 //Lingering effects
                                 //Apply effects
-                                player.transform.position = backstabPoint;                                
+                                //player.transform.position = backstabPoint;       
+                                playerBody.position = backstabPoint;
                                 player.transform.rotation = ch.transform.rotation;
                                 ((ZSyncAnimation)typeof(Player).GetField("m_zanim", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player)).SetTrigger("knife_stab2");
                                 if (BaseAI.IsEnemy(player, ch))

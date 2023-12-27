@@ -21,7 +21,7 @@ namespace ValheimLegends
 
         private static GameObject GO_CastFX;
 
-        public static void Execute_Dash(Player player, ref float altitude)
+        public static void Execute_Dash(Player player, ref float altitude, ref Rigidbody playerBody)
         {
             UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("sfx_perfectblock"), player.transform.position, Quaternion.identity);
             UnityEngine.Object.Instantiate(ZNetScene.instance.GetPrefab("vfx_stonegolem_attack_hit"), player.transform.position, Quaternion.identity);
@@ -119,7 +119,8 @@ namespace ValheimLegends
             {
                 yVec.y = ZoneSystem.instance.GetSolidHeight(yVec);
             }
-            player.transform.position = yVec;
+            //player.transform.position = yVec;
+            playerBody.position = yVec;
             altitude = 0f;
             player.transform.rotation = Quaternion.LookRotation(fwdVec);
         }
